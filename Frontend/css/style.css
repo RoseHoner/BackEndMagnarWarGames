@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-image: url('../imgs/mapa/mapafinal.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+#overlay {
+  background-color: rgba(0, 0, 0, 0.4);
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* centra vertical */
+  align-items: center;     /* centra horizontal */
+  padding: 30px;
+  box-sizing: border-box;
+  color: white;
+  text-shadow: 1px 1px 4px black;
+  overflow-y: auto;
+}
+
+h1, h2, h3, p, li{
+  color: white;
+}
+
+button {
+  color: black;
+}
+
+#intro-logo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeOut 3s ease forwards;
+  animation-delay: 2s;
+}
+
+#intro-logo img {
+  width: 200px;
+  animation: fadeIn 1.5s ease;
+  filter: drop-shadow(0 0 15px white);
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}

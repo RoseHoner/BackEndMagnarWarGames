@@ -1,0 +1,48 @@
+body {
+    color: white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background-image: url('../imgs/mapa/mapafinal.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+  }
+  #form-nombre input {
+    padding: 8px;
+    margin-top: 10px;
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+  li {
+    margin: 10px 0;
+    font-weight: bold;
+  }
+  .casa {
+    display: inline-block;
+    margin: 10px;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+  }
+  .casa img {
+    width: 80px;
+    height: 80px;
+  }
+  .casa.selected {
+    border-color: rgb(179, 240, 174);
+    background-color: #045704;
+  }
+  .casa.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  input[readonly] {
+    background-color: #eee;
+    border: 1px solid #ccc;
+  }
