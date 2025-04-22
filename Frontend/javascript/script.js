@@ -5,11 +5,12 @@ function crearPartida() {
   const partida = document.getElementById('partida').value;
   const clave = document.getElementById('clave').value;
 
+  localStorage.setItem('nombreJugador', nombre); // 👈 AÑADIR AQUÍ
+
   socket.emit('crear-partida', { nombre, partida, clave });
 
-  // Redirige al lobby con los datos
   const params = new URLSearchParams({ nombre, partida, clave });
-  window.location.href = `lobby.html?${params.toString()}`;
+  window.location.href = `lobby.html?partida=${partida}&clave=${clave}&nombre=${nombre}&host=true`;
 }
 
 function unirsePartida() {
@@ -17,7 +18,8 @@ function unirsePartida() {
   const partida = document.getElementById('partida').value;
   const clave = document.getElementById('clave').value;
 
-  // Redirige directamente al lobby
+  localStorage.setItem('nombreJugador', nombre); // 👈 AÑADIR AQUÍ
+
   const params = new URLSearchParams({ nombre, partida, clave });
   window.location.href = `lobby.html?${params.toString()}`;
 }

@@ -13,11 +13,52 @@ const io = new Server(server, {
   }
 });
 
+const turnos = {}; // { partida1: { jugadores: [...], listos: [...] } }
+
 // Estructura de datos
 const rooms = {}; // { partida: { password, players: [], casas: {} } }
 
 io.on('connection', (socket) => {
+  socket.on('marcar-listo', ({ partida, nombre }) => {
+    const room = rooms[partida];
+    if (!room) return;
+  
+    if (!turnos[partida]) {
+      turnos[partida] = { listos: [] };
+    }
+  
+    const sala = turnos[partida];
+  
+    if (!sala.listos.includes(nombre)) {
+      sala.listos.push(nombre);
+    }
+  
+    io.to(partida).emit('jugadores-listos', {
+      listos: sala.listos.length,
+      total: room.players.length
+    });
+  
+    if (sala.listos.length === room.players.length) {
+      io.to(partida).emit('todos-listos');
+      sala.listos = [];
+      console.log(`🚀 Todos listos en ${partida}`);
+    }
+  
+    console.log(`✅ ${nombre} marcó listo en ${partida}`);
+  });
   console.log('Jugador conectado');
+
+  socket.on('iniciar-juego', ({ partida }) => {
+    const room = rooms[partida];
+    if (!room) return;
+  
+    const total = room.players.length;
+    const conCasa = Object.keys(room.casas || {}).length;
+  
+    if (total === conCasa) {
+      io.to(partida).emit('juego-iniciado', room.casas); // 🔥 ESTA LÍNEA ES LA CLAVE
+    }
+  });
 
   // Crear partida
   socket.on('crear-partida', ({ nombre, partida, clave }) => {
@@ -44,7 +85,9 @@ io.on('connection', (socket) => {
     //verificar si la partida existe
     if (!room) return socket.emit('error', 'La partida no existe');
     //verificar si la contraseña es correcta
-    if (room.password !== clave) return socket.emit('error', 'Contraseña incorrecta');
+    if (clave !== undefined && room.password !== clave) {
+      return socket.emit('error', 'Contraseña incorrecta');
+    }
   
     if (!room.players.includes(nombre)) {
       room.players.push(nombre);

@@ -1,0 +1,101 @@
+body {
+    color: white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background-image: url('../imgs/mapa/mapafinal.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+  }
+  
+  .esquina-izquierda {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+  }
+  
+  .esquina-derecha {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 54px;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid gold;
+  }
+
+  .top-center {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 54px;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid white;
+  }
+  
+  
+  .ventana-oro {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #222;
+    padding: 30px;
+    border: 2px solid #444;
+    border-radius: 12px;
+    text-align: center;
+    z-index: 999;
+  }
+  
+  .ventana-oro input {
+    padding: 8px;
+    font-size: 40px;
+    width: 300px;
+    margin-top: 10px;
+  }
+
+  .ventana-oro button{
+    font-size: 60px;
+    padding: 20px;
+  }
+
+  .turno-texto {
+    position: absolute;
+    top: 300px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 70px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 3px black;
+  }
+  
+  .accion-texto {
+    position: absolute;
+    top: 370px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 45px;
+    font-style: italic;
+    color: #ccc;
+    text-shadow: 1px 1px 2px black;
+  }
+
+  #tropas-jugador img {
+    width: 68px;
+    filter: drop-shadow(0 0 3px white);
+  }
+
+  #oro-jugador img {
+    width: 68px;
+    filter: drop-shadow(0 0 3px gold);
+  }
+
+  

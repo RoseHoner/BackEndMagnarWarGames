@@ -3,16 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>Lobby de la Partida</title>
-  <link rel="stylesheet" href="../css/styleLobby.css" />
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <link rel="stylesheet" href="../css/styleLobby.css">
 </head>
 <body>
-    <img src="../imgs/logos/magnar_wargames.png" alt="Logo del juego" style="width: 250px;
-      padding: 5px;
-      background-color: rgba(0, 0, 0, 0.4);
-      border: 2px solid white;
-      border-radius: 15px;
-      box-shadow: 0 0 20px rgba(255,255,255,0.3);" />
   <div id="form-nombre" style="display:none;">
     <h2>Ingresa tu nombre para unirte a la partida</h2>
     <input type="text" id="nombre" placeholder="Tu nombre" />
@@ -36,149 +30,12 @@
     <div id="seleccion-casa" style="margin-top: 30px;">
       <h3>Elige tu casa</h3>
       <div id="casas-container"></div>
+      <button id="boton-jugar" style="display: none; margin-top: 20px;" onclick="iniciarJuego()">
+        🎮 Empezar partida
+      </button>
     </div>
   </div>
 
-  <script>
-    const socket = io('http://localhost:3000');
-    const casas = [
-      { nombre: "Stark", emoji: "🐺" },
-      { nombre: "Lannister", emoji: "🦁" },
-      { nombre: "Targaryen", emoji: "🐉" },
-      { nombre: "Baratheon", emoji: "🦌" },
-      { nombre: "Greyjoy", emoji: "🐙" },
-      { nombre: "Martell", emoji: "🌞" },
-      { nombre: "Tyrell", emoji: "🌹" },
-      { nombre: "Arryn", emoji: "🦅" },
-      { nombre: "Tully", emoji: "🐟" }
-    ];
-
-    const params = new URLSearchParams(window.location.search);
-    const partida = params.get('partida');
-    const clave = params.get('clave');
-    let nombre = params.get('nombre');
-    let casaSeleccionada = null;
-
-    document.getElementById('partida-nombre').innerText = `Partida: ${partida}`;
-
-    if (!nombre) {
-      document.getElementById('form-nombre').style.display = 'block';
-    } else {
-      conectarAlLobby();
-    }
-
-    function unirse() {
-      const input = document.getElementById('nombre').value;
-      if (!input) return alert('Pon tu nombre pa entrar');
-      nombre = input;
-
-      const nuevaURL = `?partida=${partida}&clave=${clave}&nombre=${nombre}`;
-      window.history.replaceState({}, '', nuevaURL);
-
-      document.getElementById('form-nombre').style.display = 'none';
-      conectarAlLobby();
-    }
-
-    function conectarAlLobby() {
-      socket.emit('unirse-partida', { nombre, partida, clave });
-      document.getElementById('lobby').style.display = 'block';
-      const linkInput = document.getElementById('link-invitacion');
-      linkInput.value = `${window.location.origin}/lobby.html?partida=${partida}&clave=${clave}`;
-      renderizarCasas();
-    }
-
-    function copiarLink() {
-      const input = document.getElementById('link-invitacion');
-      input.select();
-      input.setSelectionRange(0, 99999);
-      document.execCommand("copy");
-      alert("¡Link copiado al portapapeles!");
-    }
-
-    function renderizarCasas() {
-      const contenedor = document.getElementById('casas-container');
-      contenedor.innerHTML = '';
-      casas.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'casa';
-        div.dataset.casa = c.nombre;
-        div.innerHTML = `<div style="font-size: 40px">${c.emoji}</div><div>${c.nombre}</div>`;
-        div.addEventListener('click', () => seleccionarCasa(c.nombre));
-        contenedor.appendChild(div);
-      });
-    }
-
-    function seleccionarCasa(casa) {
-      if (casaSeleccionada === casa) {
-        socket.emit('quitar-casa', { partida, nombre });
-        casaSeleccionada = null;
-      } else {
-        socket.emit('elegir-casa', { partida, nombre, casa });
-      }
-    }
-
-    let casasActuales = {};
-
-    socket.on('jugadores-actualizados', (jugadores) => {
-        actualizarLista(jugadores, casasActuales);
-    });
-
-    socket.on('casas-actualizadas', (casas) => {
-        casasActuales = casas;
-        const jugadores = Array.from(document.querySelectorAll('#lista-jugadores li')).map(li => li.dataset.nombre);
-        actualizarLista(jugadores, casas);
-    });
-
-    socket.on('casas-actualizadas', (casasSeleccionadas) => {
-      const contenedor = document.getElementById('casas-container');
-      casaSeleccionada = casasSeleccionadas[nombre] || null;
-
-      Array.from(contenedor.children).forEach(div => {
-        const casa = div.dataset.casa;
-        div.classList.remove('selected', 'disabled');
-
-        if (casa === casaSeleccionada) {
-          div.classList.add('selected');
-        } else if (Object.values(casasSeleccionadas).includes(casa)) {
-          div.classList.add('disabled');
-        }
-      });
-    });
-
-    socket.on('error', (mensaje) => {
-      alert(mensaje);
-      window.location.href = 'index.html';
-    });
-    
-    function actualizarLista(jugadores, casas) {
-        const lista = document.getElementById('lista-jugadores');
-        lista.innerHTML = '';
-        jugadores.forEach(nombreJugador => {
-          const li = document.createElement('li');
-          li.dataset.nombre = nombreJugador;
-      
-          const casa = casas[nombreJugador];
-          const emoji = emojiDeCasa(casa);
-          li.textContent = casa ? `${nombreJugador} – ${emoji} ${casa}` : `${nombreJugador} – sin casa`;
-      
-          lista.appendChild(li);
-        });
-      }
-      
-      function emojiDeCasa(casa) {
-        const emojis = {
-          Stark: "🐺",
-          Lannister: "🦁",
-          Targaryen: "🐉",
-          Baratheon: "🦌",
-          Greyjoy: "🐙",
-          Martell: "🌞",
-          Tyrell: "🌹",
-          Arryn: "🦅",
-          Tully: "🐟"
-        };
-        return emojis[casa] || "";
-      }
-  </script>
+  <script src="../javascript/lobbyscript.js"></script>
 </body>
 </html>

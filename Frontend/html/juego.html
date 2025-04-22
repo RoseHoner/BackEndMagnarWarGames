@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Juego</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <link rel="stylesheet" href="../css/stylejuego.css">
+</head>
+<body>
+    <img id="logo-casa" class="esquina-izquierda" src="" alt="Logo de casa" style="width: 280px; height: 280px;">
+
+
+  <!-- Oro visible después de confirmar -->
+  <div id="oro-jugador" class="esquina-derecha" style="display: none;">
+    <img src="../imgs/Interfaz/oro.png" alt="Oro" style="width: 170px; vertical-align: middle; margin-right: 5px;">
+    <span id="cantidad-oro">0</span>
+  </div>
+
+   <!-- Tropas arriba en el centro -->
+   <div id="tropas-jugador" class="top-center" style="display: none;">
+    <img src="../imgs/Interfaz/tropas.png" alt="Tropas" style="width: 170px; vertical-align: middle; margin-right: 5px;">
+    <span id="cantidad-tropas">0</span>
+  </div>
+
+    <!-- Turno actual -->
+    <div id="turno-jugador" class="turno-texto">Turno 1</div>
+
+    <!-- Acción actual -->
+    <div id="accion-jugador" class="accion-texto">Acción 1</div>
+
+    <!-- Botón para avanzar -->
+    <button id="boton-accion" onclick="siguienteAccion()" style="display: none; position: absolute; top: 530px; left: 50%; transform: translateX(-50%); padding: 8px 16px; font-size: 40px;">
+        ➕ Siguiente acción
+    </button>
+    <div id="estado-turno" style="position: absolute; top: 170px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #aaa;"></div>
+      
+  
+    <div id="fase-neutral" style="display: none; position: absolute; top: 200px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 20px; color: white; border-radius: 10px;">
+        <h3>🟡 Fase Neutral</h3>
+        <p>Selecciona tus territorios (o confirma para continuar).</p>
+        <button onclick="confirmarFaseNeutral()">✔️ Confirmar Fase Neutral</button>
+      </div>
+
+
+   <!-- Ventana emergente para elegir oro -->
+    <div id="ventana-oro" class="ventana-oro">
+        <h2>¿Cuánto oro quieres tener?</h2>
+        <input type="number" id="oro-inicial" placeholder="Ej: 50" />
+        <br>
+        <button onclick="confirmarOro()">OK</button>
+    </div>
+
+    <!-- Pregunta tropas -->
+    <div id="ventana-tropas" class="ventana-oro" style="display: none;">
+     <h2>¿Cuántas tropas tienes?</h2>
+        <input type="number" id="tropas-inicial" placeholder="Ej: 100" />
+        <br>
+        <button onclick="confirmarTropas()">OK</button>
+    </div>
+
+  <script src="../javascript/scriptjuego.js"></script>
+</body>
+</html>
