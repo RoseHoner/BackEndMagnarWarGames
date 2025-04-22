@@ -1,4 +1,4 @@
-const socket = io('http://localhost:3000');
+const socket = io('http://192.168.1.133:3000');
 
 function crearPartida() {
   const nombre = document.getElementById('nombre').value;
