@@ -2,62 +2,113 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Juego</title>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <link rel="stylesheet" href="../css/stylejuego.css">
+  <link rel="stylesheet" href="../css/stylejuego.css"> <!-- Verifica ruta -->
 </head>
 <body>
-    <img id="logo-casa" class="esquina-izquierda" src="" alt="Logo de casa" style="width: 280px; height: 280px;">
+    <!-- BARRA SUPERIOR -->
+    <div id="top-bar">
+        <div id="logo-casa-container"> <!-- Listener añadido por JS -->
+             <img id="logo-casa" src="" alt="Logo de casa">
+        </div>
+        <div id="tropas-jugador" style="display: none;">
+            <img src="../imgs/Interfaz/tropas.png" alt="Tropas">
+            <span id="cantidad-tropas">0</span>
+        </div>
+        <div id="oro-jugador" style="display: none;">
+            <img src="../imgs/Interfaz/oro.png" alt="Oro">
+            <span id="cantidad-oro">0</span>
+        </div>
+    </div>
 
-
-  <!-- Oro visible después de confirmar -->
-  <div id="oro-jugador" class="esquina-derecha" style="display: none;">
-    <img src="../imgs/Interfaz/oro.png" alt="Oro" style="width: 170px; vertical-align: middle; margin-right: 5px;">
-    <span id="cantidad-oro">0</span>
-  </div>
-
-   <!-- Tropas arriba en el centro -->
-   <div id="tropas-jugador" class="top-center" style="display: none;">
-    <img src="../imgs/Interfaz/tropas.png" alt="Tropas" style="width: 170px; vertical-align: middle; margin-right: 5px;">
-    <span id="cantidad-tropas">0</span>
-  </div>
-
-    <!-- Turno actual -->
+    <!-- Info Turno/Acción -->
     <div id="turno-jugador" class="turno-texto">Turno 1</div>
-
-    <!-- Acción actual -->
     <div id="accion-jugador" class="accion-texto">Acción 1</div>
+    <div id="estado-turno"></div> <!-- Mensajes: Esperando... -->
 
-    <!-- Botón para avanzar -->
-    <button id="boton-accion" onclick="siguienteAccion()" style="display: none; position: absolute; top: 530px; left: 50%; transform: translateX(-50%); padding: 8px 16px; font-size: 40px;">
+    <!-- CONTENEDOR BOTONES ACCIÓN -->
+    <div id="acciones-container">
+        <button id="btn-batalla" class="btn-accion-juego">⚔️ Batalla</button>
+        <button id="btn-reclutar" class="btn-accion-juego">➕ Reclutar</button>
+        <button id="btn-construir" class="btn-accion-juego">🔨 Construir</button>
+        <button id="btn-mover" class="btn-accion-juego">➡️ Mover</button>
+        <button id="btn-reorganizar" class="btn-accion-juego">🔄 Reorganizar</button>
+    </div>
+
+    <!-- Botón Principal "Siguiente Acción" -->
+    <button id="boton-accion" style="display: none;">
         ➕ Siguiente acción
     </button>
-    <div id="estado-turno" style="position: absolute; top: 170px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #aaa;"></div>
-      
-  
-    <div id="fase-neutral" style="display: none; position: absolute; top: 200px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 20px; color: white; border-radius: 10px;">
-        <h3>🟡 Fase Neutral</h3>
-        <p>Selecciona tus territorios (o confirma para continuar).</p>
-        <button onclick="confirmarFaseNeutral()">✔️ Confirmar Fase Neutral</button>
-      </div>
 
-
-   <!-- Ventana emergente para elegir oro -->
-    <div id="ventana-oro" class="ventana-oro">
+    <!-- Modal Inicial Oro -->
+    <div id="ventana-oro" class="ventana-oro" style="display: none;">
         <h2>¿Cuánto oro quieres tener?</h2>
         <input type="number" id="oro-inicial" placeholder="Ej: 50" />
         <br>
-        <button onclick="confirmarOro()">OK</button>
+        <button id="btn-confirmar-oro">OK</button> <!-- ID Verificado -->
     </div>
 
-    <!-- Pregunta tropas -->
+    <!-- Modal Inicial Tropas -->
     <div id="ventana-tropas" class="ventana-oro" style="display: none;">
      <h2>¿Cuántas tropas tienes?</h2>
         <input type="number" id="tropas-inicial" placeholder="Ej: 100" />
         <br>
-        <button onclick="confirmarTropas()">OK</button>
+        <button id="btn-confirmar-tropas">OK</button> <!-- ID Verificado -->
     </div>
 
-  <script src="../javascript/scriptjuego.js"></script>
+    <!-- Modal Batalla -->
+    <div id="modal-batalla" class="modal-juego" style="display: none;">
+        <button id="btn-cerrar-modal-batalla" class="modal-cerrar">X</button> <!-- ID Verificado -->
+        <h2>Resultado de Batalla</h2>
+        <div class="campo-formulario">
+            <label for="select-territorio-atacado">¿Qué territorio atacaste?</label>
+            <select id="select-territorio-atacado"><option value="">-- Selecciona territorio --</option></select>
+        </div>
+        <div class="campo-formulario">
+            <fieldset><legend>¿Has ganado?</legend>
+                <label><input type="radio" name="resultado-batalla" value="victoria" checked> Sí</label>
+                <label><input type="radio" name="resultado-batalla" value="derrota"> No</label>
+            </fieldset>
+        </div>
+        <div class="campo-formulario campo-perdidas">
+            <label for="input-perdidas-atacante">Tropas Atacante Perdidas:</label>
+            <div class="control-numero">
+                <button id="btn-restar-perdidas-atacante">-</button> <!-- ID Verificado -->
+                <input type="number" id="input-perdidas-atacante" value="0" min="0">
+                <button id="btn-sumar-perdidas-atacante">+</button> <!-- ID Verificado -->
+            </div>
+        </div>
+        <div class="campo-formulario campo-perdidas">
+            <label for="input-perdidas-defensor">Tropas Defensor Perdidas:</label>
+            <div class="control-numero">
+                <button id="btn-restar-perdidas-defensor">-</button> <!-- ID Verificado -->
+                <input type="number" id="input-perdidas-defensor" value="0" min="0">
+                <button id="btn-sumar-perdidas-defensor">+</button> <!-- ID Verificado -->
+            </div>
+        </div>
+        <div class="botones-modal">
+             <button id="btn-confirmar-batalla" class="btn-confirmar">✔️ Confirmar</button> <!-- ID Verificado -->
+             <button id="btn-cancelar-batalla" class="btn-cancelar">✖️ Cancelar</button> <!-- ID Verificado -->
+        </div>
+    </div>
+    <!-- Fin Modal Batalla -->
+
+    <!-- Modal Mis Territorios -->
+    <div id="modal-mis-territorios" class="modal-juego" style="display: none;">
+        <button id="btn-cerrar-modal-territorios" class="modal-cerrar">X</button> <!-- ID Verificado -->
+        <h2>Mis Territorios (<span id="contador-territorios">0</span>)</h2>
+        <p>Oro total generado por turno: <span id="oro-generado-territorios">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
+        <div class="lista-scrollable">
+            <ul id="lista-mis-territorios"><li>Cargando...</li></ul>
+        </div>
+         <div class="botones-modal">
+             <button id="btn-ok-modal-territorios" class="btn-confirmar">OK</button> <!-- ID Verificado -->
+        </div>
+    </div>
+    <!-- Fin Modal Mis Territorios -->
+
+  <script src="../javascript/scriptjuego.js"></script> <!-- Verifica ruta -->
 </body>
 </html>

@@ -1,48 +1,275 @@
+/* --- Estilos Generales del Body --- */
 body {
-    color: white;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    background-image: url('../imgs/mapa/mapafinal.jpeg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    height: 100vh;
-    font-family: Arial, sans-serif;
-  }
-  #form-nombre input {
-    padding: 8px;
-    margin-top: 10px;
-  }
-  ul {
-    list-style: none;
-    padding: 0;
-  }
-  li {
-    margin: 10px 0;
-    font-weight: bold;
-  }
-  .casa {
-    display: inline-block;
-    margin: 10px;
-    border: 2px solid transparent;
+  color: white;
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  /* 1. Color de fondo de respaldo */
+  background-color: #37474F; /* Otro tono de gris azulado */
+  /* 2. Imagen de fondo y sus propiedades clave para adaptabilidad */
+  background-image: url('../imgs/mapa/mapafinal.jpeg');
+  background-size: cover;             /* Cubrir el área */
+  background-position: center center; /* Centrar la imagen */
+  background-repeat: no-repeat;       /* No repetir */
+  /* background-attachment: fixed; */ /* LÍNEA QUITADA/COMENTADA */
+  /* 3. Asegurar altura mínima */
+  min-height: 100vh;
+  /* 4. Resto de estilos */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* --- Contenedor Principal del Lobby --- */
+#lobby {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px 30px;
+  border-radius: 15px;
+  margin-top: 20px;
+  max-width: 900px;
+  width: 90%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Formulario de Nombre (si se muestra) --- */
+#form-nombre {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 30px;
     border-radius: 10px;
-    padding: 10px;
+    margin-top: 50px;
+    display: inline-block;
+}
+#form-nombre h2 {
+    margin-top: 0;
+    color: #eee;
+}
+#form-nombre input[type="text"] {
+  padding: 10px 15px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #555;
+  border-radius: 5px;
+  background-color: #333;
+  color: white;
+  font-size: 16px;
+}
+#form-nombre button {
+    padding: 10px 25px;
+    font-size: 16px;
     cursor: pointer;
-  }
-  .casa img {
-    width: 80px;
-    height: 80px;
-  }
-  .casa.selected {
-    border-color: rgb(179, 240, 174);
-    background-color: #045704;
-  }
-  .casa.disabled {
-    opacity: 0.4;
-    pointer-events: none;
-  }
-  input[readonly] {
-    background-color: #eee;
-    border: 1px solid #ccc;
-  }
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+#form-nombre button:hover {
+    background-color: #45a049;
+}
+
+/* --- Títulos y Textos del Lobby --- */
+h1, h2, h3 {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+h1 {
+    margin-bottom: 15px;
+}
+h2#partida-nombre {
+    color: #ddd;
+    font-size: 1.2em;
+    margin-bottom: 25px;
+}
+
+/* --- Link de Invitación --- */
+#lobby p {
+    margin-bottom: 20px;
+}
+#link-invitacion {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ccc;
+  color: #333;
+  padding: 8px 10px;
+  width: 70%;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+button[onclick="copiarLink()"] {
+    padding: 8px 12px;
+    cursor: pointer;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* --- Lista de Jugadores --- */
+#lista-jugadores {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  padding: 10px;
+}
+#lista-jugadores li {
+  margin: 8px 0;
+  padding: 6px 12px; /* Ajustado padding */
+  font-weight: normal;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  font-size: 0.95em;
+  display: flex; /* Ayuda a alinear logo y texto */
+  align-items: center; /* Centra verticalmente */
+}
+
+/* Estilo para el pequeño logo de la casa en la lista de jugadores */
+.jugador-casa-logo {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle; /* Mantenido por si flex falla */
+  margin-right: 6px;
+  margin-left: 3px;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+/* --- Sección Selección de Casa --- */
+#seleccion-casa h3 {
+    margin-bottom: 20px;
+}
+
+/* --- Contenedor de Casas (Grid) --- */
+#casas-container {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 25px 20px;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 30px auto;
+  padding: 10px;
+}
+
+/* --- Estilo de cada Casa (Grid Item) --- */
+.casa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  border: 3px solid transparent;
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  background-color: rgba(10, 10, 10, 0.7);
+  color: #eee;
+  min-width: 110px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.casa img {
+  width: 75px;
+  height: 75px;
+  margin-bottom: 8px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));
+}
+
+/* --- Estados de las Casas --- */
+.casa:not(.disabled):not(.selected):hover {
+    transform: translateY(-4px) scale(1.03);
+    border-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(30, 30, 30, 0.8);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
+}
+
+.casa.selected {
+  border-color: #66FF66;
+  background-color: rgba(10, 100, 10, 0.8);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(102, 255, 102, 0.6);
+  color: white;
+  font-weight: bold;
+}
+
+.casa.disabled {
+  opacity: 0.5;
+  background-color: rgba(50, 50, 50, 0.6);
+  cursor: not-allowed;
+  transform: scale(0.95);
+  box-shadow: none;
+  filter: grayscale(50%);
+}
+.casa.disabled:hover {
+    transform: scale(0.95);
+}
+
+/* --- Botón Empezar Partida --- */
+#boton-jugar {
+  padding: 12px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background-color: #e63946;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 20px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+#boton-jugar:hover {
+  background-color: #d62828;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+}
+#boton-jugar:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Input Readonly --- */
+input[readonly] {
+  background-color: #eee;
+  border: 1px solid #ccc;
+  cursor: default;
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+    #lobby {
+        width: 95%;
+        padding: 15px;
+    }
+    #casas-container {
+        grid-template-columns: repeat(2, auto);
+        gap: 15px;
+    }
+    .casa {
+        min-width: 90px;
+        padding: 8px;
+    }
+    .casa img {
+        width: 60px;
+        height: 60px;
+    }
+    #link-invitacion {
+        width: 60%;
+    }
+}
+
+@media (max-width: 400px) {
+    #casas-container {
+        grid-template-columns: repeat(1, auto);
+    }
+}

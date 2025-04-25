@@ -1,101 +1,212 @@
+/* --- Estilos Generales --- */
 body {
-    color: white;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    background-image: url('../imgs/mapa/mapafinal.jpeg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    height: 100vh;
-    font-family: Arial, sans-serif;
-  }
-  
-  .esquina-izquierda {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-  }
-  
-  .esquina-derecha {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 54px;
-    background-color: rgba(0, 0, 0, 0.6);
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: 1px solid gold;
-  }
+  color: white; margin: 0; padding: 0;
+  background-color: #1B2631; background-image: url('../imgs/mapa/mapafinal.jpeg');
+  background-size: cover; background-position: center center; background-repeat: no-repeat;
+  min-height: 100vh; font-family: Arial, sans-serif; overflow-x: hidden;
+}
 
-  .top-center {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 54px;
-    background-color: rgba(0, 0, 0, 0.6);
-    padding: 12px 15px;
-    border-radius: 8px;
-    border: 1px solid white;
-  }
-  
-  
-  .ventana-oro {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #222;
-    padding: 30px;
-    border: 2px solid #444;
-    border-radius: 12px;
-    text-align: center;
-    z-index: 999;
-  }
-  
-  .ventana-oro input {
-    padding: 8px;
-    font-size: 40px;
-    width: 300px;
-    margin-top: 10px;
-  }
+/* --- Barra Superior (Flexbox) --- */
+#top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 30px; width: 100%; box-sizing: border-box;
+  position: relative; z-index: 10; gap: 25px;
+}
 
-  .ventana-oro button{
-    font-size: 60px;
-    padding: 20px;
-  }
+/* --- Contenedor del Logo de Casa --- */
+#logo-casa-container {
+  flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease;
+}
+#logo-casa-container:hover { transform: scale(1.05); }
+#logo-casa {
+  display: block; width: 160px; height: 160px;
+  max-width: 20vw; max-height: 20vw; min-width: 90px; min-height: 90px;
+  object-fit: contain;
+}
 
-  .turno-texto {
-    position: absolute;
-    top: 300px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 70px;
-    font-weight: bold;
-    color: white;
-    text-shadow: 1px 1px 3px black;
-  }
-  
-  .accion-texto {
-    position: absolute;
-    top: 370px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 45px;
-    font-style: italic;
-    color: #ccc;
-    text-shadow: 1px 1px 2px black;
-  }
+/* --- Indicadores Tropas/Oro --- */
+#tropas-jugador, #oro-jugador {
+  display: flex; align-items: center; gap: 15px;
+  font-size: clamp(2.2rem, 7vw, 4.5rem); background-color: rgba(0, 0, 0, 0.75);
+  padding: 15px 25px; border-radius: 12px; border: 1px solid white;
+  flex-shrink: 1; flex-grow: 0; justify-content: center;
+  min-width: 180px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+#oro-jugador { border-color: gold; flex-shrink: 0; }
+#tropas-jugador img, #oro-jugador img { width: clamp(50px, 9vw, 80px); height: auto; }
+#tropas-jugador img { filter: drop-shadow(0 0 5px white); }
+#oro-jugador img { filter: drop-shadow(0 0 5px gold); }
+#cantidad-tropas, #cantidad-oro { white-space: nowrap; line-height: 1; font-weight: bold; }
 
-  #tropas-jugador img {
-    width: 68px;
-    filter: drop-shadow(0 0 3px white);
-  }
+/* --- Textos Turno/Acción --- */
+.turno-texto, .accion-texto {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  font-weight: bold; color: white; text-shadow: 2px 2px 6px black;
+  width: 90%; text-align: center; z-index: 5;
+}
+.turno-texto { top: 250px; font-size: clamp(3rem, 10vw, 5.5rem); }
+.accion-texto { top: 340px; font-size: clamp(2rem, 7vw, 3.5rem); font-style: italic; color: #ddd; text-shadow: 1px 1px 4px black; }
 
-  #oro-jugador img {
-    width: 68px;
-    filter: drop-shadow(0 0 3px gold);
-  }
+/* --- Estado Turno (Esperando...) --- */
+#estado-turno {
+  position: absolute; top: 215px; left: 50%; transform: translateX(-50%);
+  font-size: clamp(0.8rem, 2.2vw, 1rem); color: #ccc; background-color: rgba(0,0,0,0.7);
+  padding: 5px 12px; border-radius: 6px; z-index: 6; text-align: center; white-space: nowrap;
+}
 
-  
+/* --- Botones Acción Juego --- */
+#acciones-container {
+  position: absolute; top: 410px; left: 50%; transform: translateX(-50%);
+  width: fit-content; max-width: 90%; display: flex; flex-wrap: wrap;
+  justify-content: center; gap: 15px; z-index: 10;
+}
+.btn-accion-juego {
+  padding: 10px 18px; font-size: clamp(0.9rem, 2.5vw, 1.2rem); color: #e0e0e0;
+  background-color: rgba(40, 40, 40, 0.85); border: 1px solid #777; border-radius: 6px;
+  cursor: pointer; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
+  transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); white-space: nowrap;
+}
+.btn-accion-juego:hover {
+  background-color: rgba(60, 60, 60, 0.9); border-color: #999; color: white;
+  transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+.btn-accion-juego:active { background-color: rgba(20, 20, 20, 0.9); transform: translateY(0px); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+
+/* --- Botón Siguiente Acción (Principal) --- */
+#boton-accion {
+  position: absolute; top: 700px; left: 50%; transform: translateX(-50%);
+  padding: 15px 30px; font-size: clamp(1.4rem, 5vw, 2.4rem); background-color: rgba(245, 245, 245, 0.97);
+  color: #111; border: 1px solid #666; border-radius: 10px; cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4); z-index: 15; font-weight: bold;
+}
+#boton-accion:hover { background-color: white; transform: translate(-50%, -3px); box-shadow: 0 6px 12px rgba(0,0,0,0.4); }
+#boton-accion:active { transform: translate(-50%, 0px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+
+/* --- Modales Generales --- */
+/* Aplica a #modal-batalla, #modal-mis-territorios, #fase-neutral */
+.modal-juego {
+  display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 90%; max-width: 550px; background-color: rgba(25, 35, 45, 0.97);
+  border: 1px solid #6a7a8a; border-radius: 15px; padding: 25px 35px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6); z-index: 1000; color: #e8e8e8; box-sizing: border-box;
+}
+.modal-juego h2, #fase-neutral h3 { /* Título del modal */
+  text-align: center; margin-top: 0; margin-bottom: 25px; color: white;
+  font-size: 1.6rem; border-bottom: 1px solid #556677; padding-bottom: 10px;
+}
+.modal-cerrar { /* Botón 'X' */
+  position: absolute; top: 10px; right: 15px; background: none; border: none;
+  color: #aaa; font-size: 1.8rem; font-weight: bold; cursor: pointer; line-height: 1; padding: 5px;
+}
+.modal-cerrar:hover { color: white; }
+.campo-formulario { margin-bottom: 20px; }
+.campo-formulario label, .campo-formulario legend { display: block; margin-bottom: 8px; font-weight: bold; color: #b0c4de; }
+.campo-formulario select, .campo-formulario input[type="number"] {
+  width: 100%; padding: 10px 12px; border: 1px solid #6a7a8a; border-radius: 6px;
+  background-color: #334455; color: white; font-size: 1rem; box-sizing: border-box;
+}
+.campo-formulario select option { background-color: #2a3a4a; color: #e0e0e0; padding: 8px 12px; }
+.campo-formulario select option:hover { background-color: #4a5a6a; color: white; }
+.campo-formulario input[type="number"] { -moz-appearance: textfield; text-align: center; }
+.campo-formulario input[type=number]::-webkit-inner-spin-button, .campo-formulario input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.campo-formulario fieldset { border: 1px solid #445566; border-radius: 6px; padding: 10px 15px; }
+.campo-formulario fieldset legend { padding: 0 10px; margin-left: 5px; font-size: 0.95em; }
+.campo-formulario fieldset label { display: inline-block; margin-right: 20px; font-weight: normal; color: #e8e8e8; }
+.campo-formulario fieldset input[type="radio"] { margin-right: 5px; vertical-align: middle; }
+.campo-perdidas label { margin-bottom: 10px; }
+.control-numero { display: flex; align-items: center; gap: 8px; justify-content: center; /* Centrar botones +/- */ }
+.control-numero input[type="number"] { width: 80px; font-size: 1.1rem; font-weight: bold; flex-grow: 0; }
+.control-numero button { width: 35px; height: 35px; font-size: 1.4rem; font-weight: bold; line-height: 1; padding: 0; border-radius: 50%; border: 1px solid #556677; background-color: #3a4a5a; color: #e0e0e0; cursor: pointer; transition: background-color 0.2s ease; }
+.control-numero button:hover { background-color: #4a5a6a; }
+.control-numero button:active { background-color: #2a3a4a; }
+.botones-modal { display: flex; justify-content: space-around; margin-top: 30px; padding-top: 20px; border-top: 1px solid #556677; }
+.botones-modal button { padding: 10px 25px; font-size: 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; border: none; }
+.btn-confirmar { background-color: #28a745; color: white; }
+.btn-confirmar:hover { background-color: #218838; }
+.btn-cancelar { background-color: #dc3545; color: white; }
+.btn-cancelar:hover { background-color: #c82333; }
+
+/* --- Estilos específicos Fase Neutral --- */
+#fase-neutral { max-width: 480px; }
+#fase-neutral button { background-color: #FFC107; color: black; }
+#fase-neutral button:hover{ background-color: #e0a800; }
+
+/* --- ****** ESTILOS CORREGIDOS: Ventanas Iniciales Oro/Tropas ****** --- */
+/* Usar la clase genérica .ventana-oro para ambas */
+.ventana-oro {
+  display: none; /* Oculto por defecto */
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 90%; max-width: 480px; /* Ancho máximo */
+  background-color: rgba(30, 30, 40, 0.95); /* Fondo oscuro azulado */
+  border: 1px solid #778899; /* Borde gris azulado */
+  border-radius: 12px;
+  padding: 30px; /* Más padding */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  z-index: 1001; /* Encima de otros modales si es necesario */
+  color: #e8e8e8;
+  box-sizing: border-box;
+  text-align: center; /* Centrar contenido */
+}
+.ventana-oro h2 {
+   font-size: clamp(1.4rem, 5vw, 2rem); /* Tamaño ajustado */
+   margin-top: 0; margin-bottom: 25px;
+   color: white;
+   border-bottom: 1px solid #556677; padding-bottom: 10px;
+}
+.ventana-oro input[type="number"] {
+  display: block; /* Para que ocupe su línea */
+  width: 70%;    /* Ancho del input */
+  margin: 20px auto; /* Centrado y con margen */
+  padding: 15px 20px; /* Más padding interno */
+  font-size: clamp(2.2rem, 8vw, 3.5rem); /* Fuente grande */
+  box-sizing: border-box; border: 1px solid #8899aa; border-radius: 8px;
+  background-color: #405060; /* Fondo input */
+  color: white; text-align: center;
+  -moz-appearance: textfield;
+}
+.ventana-oro input[type=number]::-webkit-inner-spin-button,
+.ventana-oro input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.ventana-oro button { /* Botón OK */
+  display: inline-block; /* Para que no ocupe todo el ancho */
+  padding: 15px 45px; /* Padding generoso */
+  font-size: clamp(1.5rem, 6vw, 2.5rem); /* Fuente grande */
+  border: none; border-radius: 8px; background-color: #28a745; /* Verde */
+  color: white; cursor: pointer; transition: background-color 0.3s ease; font-weight: bold;
+  margin-top: 10px; /* Espacio sobre el botón */
+}
+.ventana-oro button:hover { background-color: #218838; }
+/* --- ****** FIN ESTILOS CORREGIDOS ****** --- */
+
+/* --- Estilos Modal Mis Territorios --- */
+#modal-mis-territorios { max-width: 600px; }
+#modal-mis-territorios h2 { margin-bottom: 15px; }
+#modal-mis-territorios p { text-align: center; margin-bottom: 20px; font-size: 1.1rem; color: #c0d0e0; }
+.icono-inline { width: 20px; height: 20px; vertical-align: -4px; margin-left: 5px; }
+.lista-scrollable { max-height: 40vh; overflow-y: auto; border: 1px solid #445566; border-radius: 6px; background-color: rgba(0, 0, 0, 0.2); margin-bottom: 20px; }
+#lista-mis-territorios { list-style: none; padding: 0; margin: 0; }
+#lista-mis-territorios li { padding: 10px 15px; border-bottom: 1px solid #334455; font-size: 1rem; color: #d0e0f0; }
+#lista-mis-territorios li:last-child { border-bottom: none; }
+
+/* --- Media Queries --- */
+@media (max-width: 1200px) { /* ... (sin cambios) ... */ }
+@media (max-width: 992px) { /* ... (sin cambios) ... */ }
+@media (max-width: 768px) {
+  /* ... (otros ajustes) ... */
+  .modal-juego, .ventana-oro { padding: 20px; max-width: 95%; } /* Aplicar a ventana-oro también */
+  .modal-juego h2, .ventana-oro h2 { font-size: 1.4rem; margin-bottom: 20px; }
+  .control-numero input[type="number"] { width: 60px; font-size: 1rem;}
+  .control-numero button { width: 30px; height: 30px; font-size: 1.2rem; }
+  .botones-modal { flex-direction: column; gap: 10px; }
+  .ventana-oro input[type="number"] { width: 80%; padding: 12px 15px;} /* Ajustar input oro/tropas */
+  .ventana-oro button { padding: 12px 35px; } /* Ajustar botón OK */
+  .lista-scrollable { max-height: 35vh; }
+  #lista-mis-territorios li { padding: 8px 12px; font-size: 0.9rem; }
+}
+@media (max-width: 480px) {
+  /* ... (otros ajustes) ... */
+  .campo-formulario fieldset label { display: block; margin-bottom: 8px; }
+  .ventana-oro input[type="number"] { width: 90%;}
+  .lista-scrollable { max-height: 30vh; }
+}
