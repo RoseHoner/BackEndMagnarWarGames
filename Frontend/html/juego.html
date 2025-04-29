@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magnar WarGames - Juego</title> <!-- Título más descriptivo -->
+  <title>Magnar WarGames - Juego</title>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <link rel="stylesheet" href="../css/stylejuego.css">
 </head>
@@ -33,20 +33,17 @@
         <button id="btn-batalla" class="btn-accion-juego">⚔️ Batalla</button>
         <button id="btn-reclutar" class="btn-accion-juego">➕ Reclutar</button>
         <button id="btn-construir" class="btn-accion-juego">🔨 Construir</button>
-        <button id="btn-mover" class="btn-accion-juego">➡️ Mover</button>
+        <button id="btn-mover" class="btn-accion-juego">➡️ Mover/Atacar</button> <!-- Texto actualizado -->
         <button id="btn-reorganizar" class="btn-accion-juego">🔄 Reorganizar</button>
         <!-- Podríamos añadir botones para habilidades específicas aquí -->
     </div>
 
-    <!-- Botón Principal "Siguiente Acción" (Sin cambios) -->
+    <!-- Botón Principal "Siguiente Acción" -->
     <button id="boton-accion" style="display: none;">
         ✅ Terminar Acción
     </button>
 
-    <!-- ****** ELIMINADOS MODALES INICIALES ORO/TROPAS ****** -->
-    <!-- El servidor asignará los valores iniciales -->
-
-    <!-- Modal Batalla (Sin cambios estructurales, IDs verificados) -->
+    <!-- Modal Batalla (Sin cambios estructurales) -->
     <div id="modal-batalla" class="modal-juego" style="display: none;">
         <button id="btn-cerrar-modal-batalla" class="modal-cerrar">X</button>
         <h2>Resultado de Batalla</h2>
@@ -83,9 +80,9 @@
     </div>
     <!-- Fin Modal Batalla -->
 
-    <!-- ****** NUEVO: Modal Reclutar ****** -->
+    <!-- Modal Reclutar (Sin cambios estructurales) -->
     <div id="modal-reclutar" class="modal-juego" style="display: none;">
-        <button class="modal-cerrar" onclick="cerrarModal('modal-reclutar')">X</button> <!-- Genérico -->
+        <button class="modal-cerrar" onclick="cerrarModal('modal-reclutar')">X</button>
         <h2>Reclutar Unidades</h2>
         <div class="campo-formulario">
             <label for="select-territorio-reclutar">Reclutar en:</label>
@@ -100,7 +97,6 @@
                 <option value="torreAsedio">Torre de Asedio</option>
                 <option value="catapulta">Catapulta</option>
                 <option value="escorpion">Escorpión</option>
-                <!-- Opciones específicas de facción se añadirán dinámicamente -->
             </select>
         </div>
         <div class="campo-formulario">
@@ -124,7 +120,7 @@
     </div>
     <!-- Fin Modal Reclutar -->
 
-     <!-- ****** NUEVO: Modal Construir ****** -->
+     <!-- Modal Construir (Sin cambios estructurales) -->
     <div id="modal-construir" class="modal-juego" style="display: none;">
         <button class="modal-cerrar" onclick="cerrarModal('modal-construir')">X</button>
         <h2>Construir Edificio</h2>
@@ -138,7 +134,146 @@
                 <option value="">-- Selecciona --</option>
                 <optgroup label="Producción">
                     <option value="Granja">Granja</option>
-                    <option value="Cantera">Cantera</option>
+                    <option value="icamente en el tablero, entonces los botones "Mover" y "Reorganizar" en la app solo necesitan servir como un registro de que esa acción se ha consumido en el turno del jugador.
+
+Aquí están las modificaciones para simplificarlo de esa manera:
+
+**1. Modificar `juego.html`**
+
+*   **Elimina COMPLETAMENTE** el modal `#modal-mover` que añadimos en el paso anterior. Ya no es necesario.
+*   Los botones `#btn-mover` y `#btn-reorganizar` en `#acciones-container` se mantienen, pero su función cambiará en el JavaScript.
+
+**2. Modificar `scriptjuego.js`**
+
+*   **Elimina** las funciones que añadimos para el modal de movimiento:
+    *   `poblarTerritoriosOrigenMover`
+    *   `poblarTropasDisponiblesMover`
+    *   `poblarTerritoriosDestinoMover`
+    *   `confirmarMover` (si la creamos)
+*   **Modifica** la sección de inicialización de listeners `DOMContentLoaded` para cambiar lo que hacen los botones `#btn-mover` y `#btn-reorganizar`.
+*   **Crea** una función helper para manejar el fin de acción.
+
+```javascript
+// --- EN scriptjuego.js ---
+
+// ... (código anterior: conexión, parámetros, gameState, constantes, funciones UI, etc.) ...
+
+// --- Lógica Juego y Modales Específicos ---
+
+// *** FUNCIÓN NUEVA: Helper para terminar acción por botones específicos ***
+function terminarAccionEspecifica(tipoAccion) {
+    const botonAccionEl = document.getElementById('boton-accion');
+    const estadoTurnoEl = document.getElementById('estado-turno');
+    if (!partida || !nombre) return console.error("Faltan datos para terminar acción.");
+    if (gameState?.fase === 'Neutral') return; // No hacer nada si ya está procesando
+
+    console.log(`[${nombre}] Acción '${tipoAccion}' realizada en el tablero. Emitiendo 'accion-terminada'...`);
+    socket.emit('accion-terminada', { partida, nombre });
+
+    // Deshabilitar botón principal y mostrar espera INMEDIATAMENTE
+    // (Aunque se usó un botón específico, deshabilitamos el principal para indicar que la acción del turno se gastó)
+    if (botonAccionEl) {
+        botonAccionEl.disabled = true;
+        botonAccionEl.textContent = "⌛ Esperando...";
+    }
+    if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
+
+    // Opcional: Deshabilitar TODOS los botones de acción hasta el siguiente turno/acción
+    deshabilitarBotonesAccion(true);
+}
+
+// *** FUNCIÓN NUEVA: Helper para habilitar/deshabilitar botones de acción ***
+function deshabilitarBotonesAccion(deshabilitar) {
+     const container = document.getElementById('acciones-container');
+     if(container) {
+         const botones = container.querySelectorAll('.btn-accion-juego');
+         botones.forEach(btn => btn.disabled = deshabilitar);
+     }
+     // Habilitar/Deshabilitar también el botón principal
+     const botonPrincipal = document.getElementById('boton-accion');
+     if(botonPrincipal) {
+        botonPrincipal.disabled = deshabilitar || gameState?.fase === 'Neutral'; // Asegurar deshabilitado en Neutral
+     }
+}
+
+
+// La función siguienteAccion (para el botón principal) se mantiene igual:
+function siguienteAccion() {
+    const botonAccionEl = document.getElementById('boton-accion');
+    const estadoTurnoEl = document.getElementById('estado-turno');
+    if (!partida || !nombre) return console.error("Faltan datos para terminar acción.");
+    if (gameState?.fase === 'Neutral') return;
+
+    console.log(`[${nombre}] Botón 'Terminar Acción' presionado. Emitiendo 'accion-terminada'...`);
+    socket.emit('accion-terminada', { partida, nombre });
+
+    if (botonAccionEl) {
+        botonAccionEl.disabled = true;
+        botonAccionEl.textContent = "⌛ Esperando...";
+    }
+    if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
+    deshabilitarBotonesAccion(true); // Deshabilitar otros botones también
+}
+
+
+// ... (código anterior para Modal Batalla, Reclutar, Construir, Mis Territorios) ...
+
+
+// --- Listeners de Socket.IO ---
+
+// ... (listeners anteriores: connect, disconnect, error, error-accion) ...
+
+socket.on('avanzar-accion', (nuevoEstado) => {
+    console.log(`[${nombre}] Recibido 'avanzar-accion'`, nuevoEstado);
+    if (gameState && nuevoEstado) {
+        gameState.turno = nuevoEstado.turno;
+        gameState.accion = nuevoEstado.accion;
+        gameState.fase = nuevoEstado.fase;
+        gameState.jugadoresAccionTerminada = [];
+    }
+    actualizarTurnoAccionUI();
+    // Reactivar TODOS los botones para la nueva acción (si no es fase neutral)
+    deshabilitarBotonesAccion(gameState?.fase === 'Neutral');
+    if(gameState?.fase !== 'Neutral'){
+        const botonAccionEl = document.getElementById('boton-accion');
+         if(botonAccionEl) botonAccionEl.textContent = "✅ Terminar Acción"; // Resetear texto
+    }
+
+    console.log(`[${nombre}] Avanzado localmente a T${gameState?.turno}, A${gameState?.accion}, F:${gameState?.fase}`);
+});
+
+// ... (listeners anteriores: estado-espera-jugadores, actualizar-estado-juego) ...
+
+
+// --- Inicialización DOMContentLoaded ---
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (código inicial igual que antes: validación datos, UI inicial, etc.) ...
+
+    console.log("[Init] Añadiendo listeners...");
+    let listenersOk = true;
+    try {
+        const setupListener = (id, event, handler) => {
+            const element = document.getElementById(id);
+            if (element) { element.addEventListener(event, handler); }
+            else { console.warn(`WARN: Elemento #${id} no encontrado.`); listenersOk = false; }
+        };
+
+        // Botones barra superior y principal
+        setupListener('logo-casa-container', 'click', abrirModalMisTerritorios);
+        setupListener('boton-accion', 'click', siguienteAccion); // El botón principal sigue funcionando igual
+
+        // Botones de Acción
+        setupListener('btn-batalla', 'click', () => { poblarTerritoriosAtacables(); abrirModal('modal-batalla'); });
+        setupListener('btn-reclutar', 'click', () => { poblarTerritoriosReclutar(); poblarUnidadesReclutar(); abrirModal('modal-reclutar'); });
+        setupListener('btn-construir', 'click', () => { poblarTerritoriosConstruir(); poblarEdificiosConstruir(); abrirModal('modal-construir'); });
+        // *** Listener MODIFICADO para Mover ***
+        setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover'));
+        // *** Listener MODIFICADO para Reorganizar ***
+        setupListener('btn-reorganizar', 'click', () => terminarAccionEspecifica('Reorganizar'));
+
+        // ... (listeners para los modales Batalla, Reclutar, Construir, Mis Territorios igual que antes) ...
+
+        if (!listenersOk) console.error("¡¡ ALGUNCantera">Cantera</option>
                     <option value="Mina">Mina</option>
                     <option value="Aserradero">Aserradero</option>
                 </optgroup>
@@ -147,7 +282,6 @@
                     <option value="Puerto">Puerto</option>
                     <option value="Taller de maquinaria de asedio">Taller de Asedio</option>
                  </optgroup>
-                 <!-- Edificios de facción se añadirán dinámicamente -->
             </select>
         </div>
          <div id="costo-construccion" style="text-align: center; margin-top: 15px; font-weight: bold;">
@@ -163,6 +297,7 @@
     </div>
     <!-- Fin Modal Construir -->
 
+    <!-- ****** ELIMINADO Modal Mover/Atacar ****** -->
 
     <!-- Modal Mis Territorios (Sin cambios estructurales) -->
     <div id="modal-mis-territorios" class="modal-juego" style="display: none;">
@@ -178,13 +313,12 @@
     </div>
     <!-- Fin Modal Mis Territorios -->
 
-    <!-- ****** NUEVO: Contenedor para Info Adicional (Rumores, etc.) ****** -->
+    <!-- Info Adicional (Sin cambios) -->
     <div id="info-adicional" style="position: fixed; bottom: 10px; left: 10px; background-color: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; max-width: 250px; z-index: 5;">
         <h4>Rumores Desbloqueados:</h4>
         <ul id="lista-rumores" style="list-style: none; padding: 0; margin: 0; font-size: 0.9em;">
             <li>(Ninguno)</li>
         </ul>
-        <!-- Aquí se podría añadir más info: estado invierno, préstamos, etc. -->
     </div>
 
   <script src="../javascript/scriptjuego.js"></script>
