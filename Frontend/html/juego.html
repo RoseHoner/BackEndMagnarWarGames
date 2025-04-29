@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Juego</title>
+  <title>Magnar WarGames - Juego</title> <!-- Título más descriptivo -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <link rel="stylesheet" href="../css/stylejuego.css"> <!-- Verifica ruta -->
+  <link rel="stylesheet" href="../css/stylejuego.css">
 </head>
 <body>
-    <!-- BARRA SUPERIOR -->
+    <!-- BARRA SUPERIOR (Sin cambios) -->
     <div id="top-bar">
-        <div id="logo-casa-container"> <!-- Listener añadido por JS -->
+        <div id="logo-casa-container">
              <img id="logo-casa" src="" alt="Logo de casa">
         </div>
         <div id="tropas-jugador" style="display: none;">
@@ -23,92 +23,170 @@
         </div>
     </div>
 
-    <!-- Info Turno/Acción -->
+    <!-- Info Turno/Acción (Sin cambios) -->
     <div id="turno-jugador" class="turno-texto">Turno 1</div>
     <div id="accion-jugador" class="accion-texto">Acción 1</div>
-    <div id="estado-turno"></div> <!-- Mensajes: Esperando... -->
+    <div id="estado-turno"></div>
 
-    <!-- CONTENEDOR BOTONES ACCIÓN -->
+    <!-- CONTENEDOR BOTONES ACCIÓN (Sin cambios estructurales) -->
     <div id="acciones-container">
         <button id="btn-batalla" class="btn-accion-juego">⚔️ Batalla</button>
         <button id="btn-reclutar" class="btn-accion-juego">➕ Reclutar</button>
         <button id="btn-construir" class="btn-accion-juego">🔨 Construir</button>
         <button id="btn-mover" class="btn-accion-juego">➡️ Mover</button>
         <button id="btn-reorganizar" class="btn-accion-juego">🔄 Reorganizar</button>
+        <!-- Podríamos añadir botones para habilidades específicas aquí -->
     </div>
 
-    <!-- Botón Principal "Siguiente Acción" -->
+    <!-- Botón Principal "Siguiente Acción" (Sin cambios) -->
     <button id="boton-accion" style="display: none;">
-        ➕ Siguiente acción
+        ✅ Terminar Acción
     </button>
 
-    <!-- Modal Inicial Oro -->
-    <div id="ventana-oro" class="ventana-oro" style="display: none;">
-        <h2>¿Cuánto oro quieres tener?</h2>
-        <input type="number" id="oro-inicial" placeholder="Ej: 50" />
-        <br>
-        <button id="btn-confirmar-oro">OK</button> <!-- ID Verificado -->
-    </div>
+    <!-- ****** ELIMINADOS MODALES INICIALES ORO/TROPAS ****** -->
+    <!-- El servidor asignará los valores iniciales -->
 
-    <!-- Modal Inicial Tropas -->
-    <div id="ventana-tropas" class="ventana-oro" style="display: none;">
-     <h2>¿Cuántas tropas tienes?</h2>
-        <input type="number" id="tropas-inicial" placeholder="Ej: 100" />
-        <br>
-        <button id="btn-confirmar-tropas">OK</button> <!-- ID Verificado -->
-    </div>
-
-    <!-- Modal Batalla -->
+    <!-- Modal Batalla (Sin cambios estructurales, IDs verificados) -->
     <div id="modal-batalla" class="modal-juego" style="display: none;">
-        <button id="btn-cerrar-modal-batalla" class="modal-cerrar">X</button> <!-- ID Verificado -->
+        <button id="btn-cerrar-modal-batalla" class="modal-cerrar">X</button>
         <h2>Resultado de Batalla</h2>
         <div class="campo-formulario">
-            <label for="select-territorio-atacado">¿Qué territorio atacaste?</label>
-            <select id="select-territorio-atacado"><option value="">-- Selecciona territorio --</option></select>
+            <label for="select-territorio-atacado">Territorio Atacado:</label>
+            <select id="select-territorio-atacado"><option value="">-- Selecciona --</option></select>
         </div>
         <div class="campo-formulario">
-            <fieldset><legend>¿Has ganado?</legend>
-                <label><input type="radio" name="resultado-batalla" value="victoria" checked> Sí</label>
-                <label><input type="radio" name="resultado-batalla" value="derrota"> No</label>
+            <fieldset><legend>Resultado:</legend>
+                <label><input type="radio" name="resultado-batalla" value="victoria" checked> Victoria</label>
+                <label><input type="radio" name="resultado-batalla" value="derrota"> Derrota</label>
             </fieldset>
         </div>
         <div class="campo-formulario campo-perdidas">
-            <label for="input-perdidas-atacante">Tropas Atacante Perdidas:</label>
+            <label for="input-perdidas-atacante">Mis Pérdidas:</label>
             <div class="control-numero">
-                <button id="btn-restar-perdidas-atacante">-</button> <!-- ID Verificado -->
+                <button id="btn-restar-perdidas-atacante">-</button>
                 <input type="number" id="input-perdidas-atacante" value="0" min="0">
-                <button id="btn-sumar-perdidas-atacante">+</button> <!-- ID Verificado -->
+                <button id="btn-sumar-perdidas-atacante">+</button>
             </div>
         </div>
         <div class="campo-formulario campo-perdidas">
-            <label for="input-perdidas-defensor">Tropas Defensor Perdidas:</label>
+            <label for="input-perdidas-defensor">Pérdidas Defensor:</label>
             <div class="control-numero">
-                <button id="btn-restar-perdidas-defensor">-</button> <!-- ID Verificado -->
+                <button id="btn-restar-perdidas-defensor">-</button>
                 <input type="number" id="input-perdidas-defensor" value="0" min="0">
-                <button id="btn-sumar-perdidas-defensor">+</button> <!-- ID Verificado -->
+                <button id="btn-sumar-perdidas-defensor">+</button>
             </div>
         </div>
         <div class="botones-modal">
-             <button id="btn-confirmar-batalla" class="btn-confirmar">✔️ Confirmar</button> <!-- ID Verificado -->
-             <button id="btn-cancelar-batalla" class="btn-cancelar">✖️ Cancelar</button> <!-- ID Verificado -->
+             <button id="btn-confirmar-batalla" class="btn-confirmar">✔️ Confirmar</button>
+             <button id="btn-cancelar-batalla" class="btn-cancelar">✖️ Cancelar</button>
         </div>
     </div>
     <!-- Fin Modal Batalla -->
 
-    <!-- Modal Mis Territorios -->
+    <!-- ****** NUEVO: Modal Reclutar ****** -->
+    <div id="modal-reclutar" class="modal-juego" style="display: none;">
+        <button class="modal-cerrar" onclick="cerrarModal('modal-reclutar')">X</button> <!-- Genérico -->
+        <h2>Reclutar Unidades</h2>
+        <div class="campo-formulario">
+            <label for="select-territorio-reclutar">Reclutar en:</label>
+            <select id="select-territorio-reclutar"><option value="">-- Selecciona territorio --</option></select>
+        </div>
+        <div class="campo-formulario">
+            <label for="select-unidad-reclutar">Tipo de Unidad:</label>
+            <select id="select-unidad-reclutar">
+                <option value="regulares">Tropa Regular</option>
+                <option value="mercenario">Mercenario</option>
+                <option value="barco">Barco</option>
+                <option value="torreAsedio">Torre de Asedio</option>
+                <option value="catapulta">Catapulta</option>
+                <option value="escorpion">Escorpión</option>
+                <!-- Opciones específicas de facción se añadirán dinámicamente -->
+            </select>
+        </div>
+        <div class="campo-formulario">
+            <label for="input-cantidad-reclutar">Cantidad:</label>
+            <div class="control-numero">
+                <button onclick="ajustarCantidadReclutar(-1)">-</button>
+                <input type="number" id="input-cantidad-reclutar" value="1" min="1">
+                <button onclick="ajustarCantidadReclutar(1)">+</button>
+            </div>
+        </div>
+        <div id="costo-reclutamiento" style="text-align: center; margin-top: 15px; font-weight: bold;">
+            Costo: <span id="costo-reclutar-valor">--</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">
+        </div>
+        <div id="limite-reclutamiento-info" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: #ccc;">
+             Límite turno: <span id="limite-reclutar-actual">0</span> / <span id="limite-reclutar-maximo">0</span>
+        </div>
+        <div class="botones-modal">
+             <button id="btn-confirmar-reclutar" class="btn-confirmar">✔️ Reclutar</button>
+             <button class="btn-cancelar" onclick="cerrarModal('modal-reclutar')">✖️ Cancelar</button>
+        </div>
+    </div>
+    <!-- Fin Modal Reclutar -->
+
+     <!-- ****** NUEVO: Modal Construir ****** -->
+    <div id="modal-construir" class="modal-juego" style="display: none;">
+        <button class="modal-cerrar" onclick="cerrarModal('modal-construir')">X</button>
+        <h2>Construir Edificio</h2>
+        <div class="campo-formulario">
+            <label for="select-territorio-construir">Construir en:</label>
+            <select id="select-territorio-construir"><option value="">-- Selecciona territorio --</option></select>
+        </div>
+        <div class="campo-formulario">
+            <label for="select-edificio-construir">Tipo de Edificio:</label>
+            <select id="select-edificio-construir">
+                <option value="">-- Selecciona --</option>
+                <optgroup label="Producción">
+                    <option value="Granja">Granja</option>
+                    <option value="Cantera">Cantera</option>
+                    <option value="Mina">Mina</option>
+                    <option value="Aserradero">Aserradero</option>
+                </optgroup>
+                 <optgroup label="Militar">
+                    <option value="Castillo">Castillo</option>
+                    <option value="Puerto">Puerto</option>
+                    <option value="Taller de maquinaria de asedio">Taller de Asedio</option>
+                 </optgroup>
+                 <!-- Edificios de facción se añadirán dinámicamente -->
+            </select>
+        </div>
+         <div id="costo-construccion" style="text-align: center; margin-top: 15px; font-weight: bold;">
+            Costo: <span id="costo-construir-valor">--</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">
+        </div>
+         <div id="limite-construccion-info" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: #ccc;">
+             (<span id="limite-construir-actual">0</span> / <span id="limite-construir-maximo">1</span> edificios este turno)
+        </div>
+        <div class="botones-modal">
+             <button id="btn-confirmar-construir" class="btn-confirmar">✔️ Construir</button>
+             <button class="btn-cancelar" onclick="cerrarModal('modal-construir')">✖️ Cancelar</button>
+        </div>
+    </div>
+    <!-- Fin Modal Construir -->
+
+
+    <!-- Modal Mis Territorios (Sin cambios estructurales) -->
     <div id="modal-mis-territorios" class="modal-juego" style="display: none;">
-        <button id="btn-cerrar-modal-territorios" class="modal-cerrar">X</button> <!-- ID Verificado -->
+        <button id="btn-cerrar-modal-territorios" class="modal-cerrar">X</button>
         <h2>Mis Territorios (<span id="contador-territorios">0</span>)</h2>
-        <p>Oro total generado por turno: <span id="oro-generado-territorios">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
+        <p>Ingresos por turno: <span id="oro-generado-territorios">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
         <div class="lista-scrollable">
             <ul id="lista-mis-territorios"><li>Cargando...</li></ul>
         </div>
          <div class="botones-modal">
-             <button id="btn-ok-modal-territorios" class="btn-confirmar">OK</button> <!-- ID Verificado -->
+             <button id="btn-ok-modal-territorios" class="btn-confirmar">OK</button>
         </div>
     </div>
     <!-- Fin Modal Mis Territorios -->
 
-  <script src="../javascript/scriptjuego.js"></script> <!-- Verifica ruta -->
+    <!-- ****** NUEVO: Contenedor para Info Adicional (Rumores, etc.) ****** -->
+    <div id="info-adicional" style="position: fixed; bottom: 10px; left: 10px; background-color: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; max-width: 250px; z-index: 5;">
+        <h4>Rumores Desbloqueados:</h4>
+        <ul id="lista-rumores" style="list-style: none; padding: 0; margin: 0; font-size: 0.9em;">
+            <li>(Ninguno)</li>
+        </ul>
+        <!-- Aquí se podría añadir más info: estado invierno, préstamos, etc. -->
+    </div>
+
+  <script src="../javascript/scriptjuego.js"></script>
 </body>
 </html>

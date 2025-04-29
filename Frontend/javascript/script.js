@@ -1,7 +1,7 @@
 // --- En tu archivo script.js (para index.html) ---
 
 // Asegúrate de que la IP/Puerto sea la correcta y accesible
-const socket = io('http://192.168.1.133:3000');
+const socket = io('http://192.168.1.133:3000'); // O tu IP/URL del servidor
 
 socket.on('connect', () => {
     console.log('[Index] Conectado al servidor:', socket.id);
