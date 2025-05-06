@@ -4,7 +4,7 @@
 
 // --- Conexión Socket.IO ---
 // Asegúrate de que esta IP/Puerto sea la correcta y accesible desde tus clientes
-const socket = io('http://192.168.1.133:3000');
+const socket = io('http://192.168.0.152:3000');
 
 // --- Parámetros URL ---
 const params = new URLSearchParams(window.location.search);
