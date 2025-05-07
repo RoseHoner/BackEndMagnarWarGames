@@ -6,6 +6,21 @@ body {
   min-height: 100vh; font-family: Arial, sans-serif; overflow-x: hidden;
 }
 
+#modal-inicial {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1b1b1b;
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+
 /* --- Barra Superior (Flexbox) --- */
 #top-bar {
   display: flex; justify-content: space-between; align-items: center;
@@ -179,6 +194,35 @@ body {
 .ventana-oro button:hover { background-color: #218838; }
 /* --- ****** FIN ESTILOS CORREGIDOS ****** --- */
 
+.recluta-box {
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  width: 150px;
+  box-shadow: 0 0 10px #000;
+}
+
+.recluta-box img {
+  margin: 10px 0;
+}
+
+.control-numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.control-numero button {
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
+}
+
+
 /* --- Estilos Modal Mis Territorios --- */
 #modal-mis-territorios { max-width: 600px; }
 #modal-mis-territorios h2 { margin-bottom: 15px; }
@@ -210,3 +254,4 @@ body {
   .ventana-oro input[type="number"] { width: 90%;}
   .lista-scrollable { max-height: 30vh; }
 }
+

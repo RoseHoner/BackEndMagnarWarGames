@@ -4,9 +4,11 @@
 
 // --- Conexión Socket.IO ---
 // Asegúrate de que esta IP/Puerto sea la correcta y accesible desde tus clientes
-const socket = io('http://192.168.0.152:3000');
+// Inicializa conexión con el servidor usando Socket.IO
+const socket = io('http://localhost:3000');
 
 // --- Parámetros URL ---
+// Extrae parámetros de la URL como partida, nombre y casa
 const params = new URLSearchParams(window.location.search);
 const partida = params.get('partida');
 const nombre = params.get('nombre');
@@ -14,9 +16,11 @@ const casa = params.get('casa'); // Casa asignada a este jugador
 
 // --- Estado Local del Juego (Reflejo del Servidor) ---
 // Este objeto se llenará con los datos enviados por el servidor
+// gameState guarda el estado actual del juego enviado por el servidor
 let gameState = null;
 
 // --- Constantes UI (Para cálculos en el cliente y poblar selects) ---
+// Costos base de cada unidad o edificio usados en la interfaz del cliente
 const COSTOS_BASE_UI = {
     regulares: 4,
     barco: 20,
@@ -54,6 +58,7 @@ const MAQUINAS_ASEDIO_UI_VALUES = ['torreAsedio', 'catapulta', 'escorpion'];
 
 // --- Funciones de Actualización de UI ---
 
+// Actualiza la interfaz con la información del jugador (oro y tropas)
 function actualizarInfoJugador() {
     if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) {
         console.warn("ActualizarInfoJugador: gameState o datos del jugador no disponibles.");
@@ -69,15 +74,15 @@ function actualizarInfoJugador() {
 
     if (cantidadOroEl) cantidadOroEl.textContent = jugador.oro ?? 0;
     if (oroJugadorDiv) oroJugadorDiv.style.display = 'flex';
-    if (cantidadTropasEl) cantidadTropasEl.textContent = jugador.tropasTotales ?? 0;
+    if (cantidadTropasEl) cantidadTropasEl.textContent = jugador.tropas ?? 0;
     if (tropasJugadorDiv) tropasJugadorDiv.style.display = 'flex';
 }
 
+// Muestra en pantalla el turno actual y el estado de la acción
 function actualizarTurnoAccionUI() {
     if (!gameState) return;
     const turnoEl = document.getElementById('turno-jugador');
     const accionEl = document.getElementById('accion-jugador');
-    const botonAccionEl = document.getElementById('boton-accion');
     const estadoTurnoEl = document.getElementById('estado-turno');
 
     if (turnoEl) turnoEl.textContent = `Turno ${gameState.turno}`;
@@ -85,15 +90,7 @@ function actualizarTurnoAccionUI() {
         const nombresAccion = ["Acción 1", "Acción 2", "Acción 3", "Fase Neutral"];
         accionEl.textContent = nombresAccion[gameState.accion - 1] || `Acción ${gameState.accion}`;
     }
-    if (botonAccionEl) {
-        const enEspera = gameState.jugadoresAccionTerminada?.includes(nombre);
-        const textoBoton = gameState.fase === 'Neutral' ? "⌛ Procesando..." :
-                          enEspera ? "⌛ Esperando..." : "✅ Terminar Acción";
-        botonAccionEl.textContent = textoBoton;
-        botonAccionEl.disabled = gameState.fase === 'Neutral' || enEspera;
-        // Mostrar/Ocultar botón acción principal
-        botonAccionEl.style.display = (gameState.fase === 'Accion' || enEspera) ? 'inline-block' : 'none';
-    }
+    
      // Actualizar estado de espera general
      if (estadoTurnoEl) {
         const listos = gameState.jugadoresAccionTerminada?.length || 0;
@@ -136,6 +133,37 @@ function actualizarInfoAdicional() {
     // if(inviernoStatusEl) inviernoStatusEl.textContent = gameState.estadoGlobal?.invierno ? "Sí" : "No";
 }
 
+function actualizarEdificiosJugador() {
+    const lista = document.getElementById('lista-edificios-jugador');
+    if (!lista || !gameState || !gameState.territorios || !casa) return;
+
+    const edificiosContador = {};
+
+    Object.values(gameState.territorios).forEach(t => {
+        if (t.propietario === casa && Array.isArray(t.edificios)) {
+            t.edificios.forEach(ed => {
+                edificiosContador[ed] = (edificiosContador[ed] || 0) + 1;
+            });
+        }
+    });
+
+    lista.innerHTML = ''; // Limpiar
+
+    if (Object.keys(edificiosContador).length === 0) {
+        lista.innerHTML = '<li style="color: #ccc; font-size: 0.9rem;">(Ninguno)</li>';
+        return;
+    }
+
+    Object.entries(edificiosContador).forEach(([edificio, cantidad]) => {
+        const li = document.createElement('li');
+        li.style.marginBottom = '8px';
+        const imgSrc = `../imgs/edificios/${edificio.toLowerCase().replace(/ /g, '-')}.png`;
+        li.innerHTML = `<img src="${imgSrc}" alt="${edificio}" style="width: 24px; vertical-align: middle; margin-right: 6px;">${edificio} <span style="color: gold;">x${cantidad}</span>`;
+        lista.appendChild(li);
+    });
+}
+
+
 function setLogoPorCasa(casaNombre) {
     const logoImgEl = document.getElementById('logo-casa');
     if (!logoImgEl) return console.error("[SetLogo] Elemento 'logo-casa' NO ENCONTRADO!");
@@ -173,12 +201,7 @@ function terminarAccionEspecifica(tipoAccion) {
     socket.emit('accion-terminada', { partida, nombre });
     deshabilitarBotonesAccion(true); // Deshabilitar todos mientras espera
     // Actualizar UI para mostrar espera
-    const botonAccionEl = document.getElementById('boton-accion');
     const estadoTurnoEl = document.getElementById('estado-turno');
-     if (botonAccionEl) {
-        botonAccionEl.disabled = true;
-        botonAccionEl.textContent = "⌛ Esperando...";
-    }
     if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
 }
 
@@ -202,12 +225,8 @@ function siguienteAccion() { // Para el botón principal 'Terminar Acción'
     socket.emit('accion-terminada', { partida, nombre });
     deshabilitarBotonesAccion(true); // Deshabilitar todos mientras espera
     // Actualizar UI para mostrar espera
-     const botonAccionEl = document.getElementById('boton-accion');
+    const botonPrincipal = document.getElementById('boton-accion');
      const estadoTurnoEl = document.getElementById('estado-turno');
-     if (botonAccionEl) {
-        botonAccionEl.disabled = true;
-        botonAccionEl.textContent = "⌛ Esperando...";
-    }
     if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
 }
 
@@ -347,6 +366,7 @@ function actualizarCostoReclutar() {
         return;
     }
 
+// Costos base de cada unidad o edificio usados en la interfaz del cliente
     let costoUnitario = COSTOS_BASE_UI[tipoUnidadValue] ?? 0; // Obtener costo base
     let esMaquinaOBarco = tipoUnidadValue === 'barco' || MAQUINAS_ASEDIO_UI_VALUES.includes(tipoUnidadValue);
 
@@ -354,6 +374,7 @@ function actualizarCostoReclutar() {
     let descuento = 0;
     if (territorio.edificios.includes('Granja') && tipoUnidadValue === 'regulares') descuento = 1;
     else if (territorio.edificios.includes('Aserradero') && esMaquinaOBarco) descuento = 5;
+// Costos base de cada unidad o edificio usados en la interfaz del cliente
     // Aplicar otros descuentos/costos específicos (ej. coste caballero Arryn ya está en COSTOS_BASE_UI)
 
     const costoFinalUnitario = Math.max(0, costoUnitario - descuento);
@@ -485,8 +506,10 @@ function actualizarCostoConstruir() {
      }
 
      // Buscar costo base usando el 'value'
+// Costos base de cada unidad o edificio usados en la interfaz del cliente
      let costoBase = COSTOS_BASE_UI[tipoEdificio.toLowerCase().replace(/ /g,'')] ?? 0;
      if(costoBase === 0) { // Probar con el texto si el value no coincide
+// Costos base de cada unidad o edificio usados en la interfaz del cliente
          costoBase = COSTOS_BASE_UI[tipoEdificio] ?? 0;
      }
 
@@ -509,125 +532,61 @@ function confirmarConstruir() {
         alert("Por favor, selecciona territorio y edificio.");
         return;
     }
-    console.log(`[Construir] Emitiendo: ${tipoEdificio} en ${territorio}`);
-    socket.emit('solicitud-construccion', { partida, nombre, territorio, tipoEdificio });
+
+    const tipoFormateado = tipoEdificio.charAt(0).toUpperCase() + tipoEdificio.slice(1).toLowerCase();
+
+    console.log(`[Construir] Emitiendo: ${tipoFormateado} en ${territorio}`);
+    socket.emit('solicitud-construccion', { partida, nombre, territorio, tipoEdificio: tipoFormateado });
     cerrarModal('modal-construir');
 }
 
+
 // --- Lógica Modal Mis Territorios ---
 function abrirModalMisTerritorios() {
-     if (!gameState || !gameState.territorios || !gameState.jugadores[nombre]) {
-        // Intentar abrir el modal incluso sin datos para mostrar "Cargando..."
-        const modalEl = document.getElementById('modal-mis-territorios');
-        const listaUl = document.getElementById('lista-mis-territorios');
-        if(modalEl && listaUl) {
-             listaUl.innerHTML = '<li>Cargando datos del servidor...</li>';
-             abrirModal('modal-mis-territorios');
-        }
+    if (!gameState || !gameState.territorios || !gameState.jugadores?.[nombre]) {
+        console.warn("Estado o jugador no disponible.");
+        abrirModal('modal-mis-territorios');
         return;
-     }
-     const modalEl = document.getElementById('modal-mis-territorios');
-     const listaUl = document.getElementById('lista-mis-territorios');
-     const contadorSpan = document.getElementById('contador-territorios');
-     const oroSpan = document.getElementById('oro-generado-territorios');
-     if (!modalEl || !listaUl || !contadorSpan || !oroSpan) return console.error("Elementos modal 'Mis Territorios' no encontrados.");
+    }
 
-     listaUl.innerHTML = ''; let contador = 0; let oroTotalTurno = 0;
-     const misTerritoriosFiltrados = Object.values(gameState.territorios).filter(t => t.propietario === casa);
+    const modalEl = document.getElementById('modal-mis-territorios');
+    const listaUl = document.getElementById('lista-mis-territorios');
+    const contadorSpan = document.getElementById('contador-territorios');
+    const oroSpan = document.getElementById('oro-generado-territorios');
 
-     if (misTerritoriosFiltrados.length > 0) {
-         // Función helper para iconos (simplifica el código)
-         const getIconoEdificio = (ed) => {
-             const iconos = { Mina: '⛏️', Aserradero: '🪵', Granja: '🌾', Cantera: '🪨', Puerto: '⚓', Castillo: '🏰', 'Taller de maquinaria de asedio': '🛠️', 'Academia de Caballería': '🏫', 'Armería': '⚔️', 'Arquería': '🏹', 'Septo': '🙏', 'Atalaya': '🔭', 'Puerto Fluvial': '⚓'};
-             return iconos[ed] || `(${ed.slice(0,3)})`; // Icono o abreviatura
-         };
-         const getIconoTropa = (tr) => {
-              const iconos = { regulares: '🛡️', caballeros: '🐎', barco: '⛵', torreAsedio: '🗼', catapulta: '💣', escorpion: '🦂', sacerdoteLuz: '🔥', barbaros: '🪓', caballerosAguila: '🦅', caballerosRosa: '🌹', caballerosVenado: '🦌', martilladores: '🔨', guardiaAlba: '☀️', guardiaReal: '👑', murcielagosGigantes: '🦇', huargos: '🐺', unicornios: '🦄', militantes: '✊'};
-              return iconos[tr] || `(${tr.slice(0,3)})`;
-         };
+    if (!modalEl || !listaUl || !contadorSpan || !oroSpan) return;
 
-         misTerritoriosFiltrados.sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(t => {
-             const li = document.createElement('li');
-             // Calcular ingresos de este territorio
-             let ingresoTerritorio = t.oroBase;
-             let edificiosTexto = '';
-             (t.edificios || []).forEach(edificio => {
-                 edificiosTexto += ` <span title="${edificio}">${getIconoEdificio(edificio)}</span>`;
-                 if (edificio === 'Mina') ingresoTerritorio += (casa === 'Lannister' ? 20 : 10);
-                 else if (edificio === 'Aserradero') ingresoTerritorio += 5;
-                 else if (edificio === 'Granja') ingresoTerritorio += (casa === 'Tully' ? 10 : 5);
-                 else if (edificio === 'Cantera') ingresoTerritorio += 5;
-                 else if (edificio === 'Puerto') ingresoTerritorio += 10;
-                  // Añadir ingresos de edificios de facción si los hay
-                 else if (edificio === 'Puesto Aduanero' && casa === 'Tully') ingresoTerritorio += 20;
-             });
+    listaUl.innerHTML = ''; let contador = 0; let oroTotalTurno = 0;
 
-             // Calcular tropas en este territorio
-             let tropasTexto = '';
-             if (t.tropas && Object.keys(t.tropas).length > 0) {
-                 for(const tipoTropa in t.tropas) {
-                     if(t.tropas[tipoTropa] > 0) {
-                         tropasTexto += ` <span title="${tipoTropa}">${getIconoTropa(tipoTropa)} ${t.tropas[tipoTropa]}</span>`;
-                     }
-                 }
-             } else {
-                 tropasTexto = ' (Vacío)';
-             }
+    const territorios = Object.values(gameState.territorios);
+    const misTerritorios = territorios.filter(t => t && t.propietario === casa);
 
-             li.innerHTML = `<b>${t.nombre}</b> (+${ingresoTerritorio}💰)${edificiosTexto}<br><small style="margin-left: 10px;">Tropas:${tropasTexto}</small>`;
-             listaUl.appendChild(li);
-             contador++;
-             oroTotalTurno += ingresoTerritorio;
-         });
+    if (misTerritorios.length === 0) {
+        listaUl.innerHTML = '<li>No tienes territorios todavía.</li>';
+    } else {
+        misTerritorios.forEach((t, i) => {
+            const ingreso = t.oroBase || 0;
+            const nombreTerritorio = Object.keys(gameState.territorios).find(key => gameState.territorios[key] === t) || `Territorio ${i + 1}`;
+            const li = document.createElement('li');
+            li.innerHTML = `<b>${nombreTerritorio}</b> (+${ingreso}💰)`;
+            listaUl.appendChild(li);
+            oroTotalTurno += ingreso;
+            contador++;
+          });
+    }
 
-         // Añadir ingreso por comercio (si tiene puerto)
-         let ingresoComercioTotal = 0;
-         const tienePuerto = misTerritoriosFiltrados.some(t => t.edificios?.includes('Puerto'));
-         if (tienePuerto) {
-             let numEdificiosProduccion = 0;
-             Object.values(gameState.territorios).forEach(tPropio => { // Contar en TODOS los territorios propios
-                  if(tPropio.propietario === casa) {
-                      numEdificiosProduccion += (tPropio.edificios || []).filter(e => EDIFICIOS_PRODUCCION.includes(e)).length;
-                  }
-             });
-             ingresoComercioTotal = numEdificiosProduccion * 10;
-             oroTotalTurno += ingresoComercioTotal;
-             if (ingresoComercioTotal > 0) {
-                 const liComercio = document.createElement('li');
-                 liComercio.style.cssText = 'font-style: italic; border-top: 1px dashed #556677; padding-top: 8px; margin-top: 5px;';
-                 liComercio.innerHTML = `Ingreso Comercio Total: +${ingresoComercioTotal}💰 (por ${numEdificiosProduccion} edif. prod.)`;
-                 listaUl.appendChild(liComercio);
-             }
-         }
-          // Añadir ingreso extra de rumor Martell (Secta Pentos) si aplica
-         if (casa === 'Martell' && gameState.jugadores[nombre]?.rumoresDesbloqueados.includes('Secta Pentos')) {
-              let recursosComerciados = 0; // Necesitaría una forma de trackear esto...
-              // Simplificación: Sumamos +10 por edificio de producción como bonus
-              let bonusMartell = 0;
-               Object.values(gameState.territorios).forEach(tPropio => {
-                  if(tPropio.propietario === casa) {
-                      bonusMartell += (tPropio.edificios || []).filter(e => EDIFICIOS_PRODUCCION.includes(e)).length * 10;
-                  }
-               });
-               oroTotalTurno += bonusMartell;
-               const liMartell = document.createElement('li');
-               liMartell.style.cssText = 'font-style: italic; color: #FFD700;'; // Dorado
-               liMartell.innerHTML = `Bonus Secta Pentos: +${bonusMartell}💰`;
-               listaUl.appendChild(liMartell);
-         }
-
-
-     } else {
-         listaUl.innerHTML = '<li>Aún no posees territorios.</li>';
-     }
-     contadorSpan.textContent = contador;
-     oroSpan.textContent = oroTotalTurno; // Muestra el total calculado para el turno
-     abrirModal('modal-mis-territorios');
+    contadorSpan.textContent = contador;
+    oroSpan.textContent = oroTotalTurno;
+    abrirModal('modal-mis-territorios');
 }
 
+
+
 // =============================================
+// Cuando se cargue completamente el HTML, empieza la inicialización
 // PARTE 3: DOMContentLoaded - INICIALIZACIÓN Y LISTENERS
 // =============================================
+// Cuando se cargue completamente el HTML, empieza la inicialización
 document.addEventListener('DOMContentLoaded', () => {
     console.log("==========================================");
     console.log("DOM Cargado. Iniciando scriptjuego.js...");
@@ -653,7 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
      // 3. Ocultar elementos hasta recibir estado
      document.getElementById('oro-jugador').style.display = 'none';
      document.getElementById('tropas-jugador').style.display = 'none';
-     document.getElementById('boton-accion').style.display = 'none';
      deshabilitarBotonesAccion(true); // Deshabilitar botones de acción al inicio
 
     // 4. Añadir TODOS los Event Listeners
@@ -674,12 +632,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Botones barra superior y principal
         setupListener('logo-casa-container', 'click', abrirModalMisTerritorios);
-        setupListener('boton-accion', 'click', siguienteAccion);
 
         // Botones de Acción específica
         setupListener('btn-batalla', 'click', () => { poblarTerritoriosAtacables(); abrirModal('modal-batalla'); });
         setupListener('btn-reclutar', 'click', () => { poblarTerritoriosReclutar(); poblarUnidadesReclutar(); abrirModal('modal-reclutar'); });
-        setupListener('btn-construir', 'click', () => { poblarTerritoriosConstruir(); poblarEdificiosConstruir(); abrirModal('modal-construir'); });
+        setupListener('btn-construir', 'click', () => {
+            if (!gameState || !gameState.territorios || !gameState.jugadores) {
+                alert("⚠️ Esperando sincronización con el servidor. Intenta en unos segundos.");
+                return;
+              }
+          
+            poblarTerritoriosConstruir();
+            poblarEdificiosConstruir();
+            abrirModal('modal-construir');
+          });
         setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover/Atacar')); // Acción simplificada
         setupListener('btn-reorganizar', 'click', () => terminarAccionEspecifica('Reorganizar')); // Acción simplificada
 
@@ -709,6 +675,33 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Listeners para Modal Mis Territorios ---
         setupListener('btn-cerrar-modal-territorios', 'click', () => cerrarModal('modal-mis-territorios'));
         setupListener('btn-ok-modal-territorios', 'click', () => cerrarModal('modal-mis-territorios'));
+        // --- Listeners para Modal Fase Neutral ---
+setupListener('btn-neutral-si', 'click', () => {
+    document.getElementById('neutral-input-container').style.display = 'block';
+  });
+  
+  setupListener('btn-neutral-no', 'click', () => {
+    cerrarModal('modal-fase-neutral');
+    socket.emit('accion-terminada', { partida, nombre });
+  });
+  
+  setupListener('btn-confirmar-perdidas-neutral', 'click', () => {
+    const input = document.getElementById('input-tropas-perdidas-neutral');
+    const perdidas = parseInt(input.value) || 0;
+    if (perdidas < 0) return alert("El número no puede ser negativo.");
+    
+    gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - perdidas);
+    socket.emit('actualizar-iniciales', {
+      partida,
+      nombre,
+      tropas: gameState.jugadores[nombre].tropas,
+      oro: gameState.jugadores[nombre].oro
+    });
+  
+    cerrarModal('modal-fase-neutral');
+    socket.emit('accion-terminada', { partida, nombre });
+  });
+  
 
 
         if (!listenersOk) console.error("¡¡ ALGUNOS LISTENERS NO SE PUDIERON AÑADIR !! Revisa warnings.");
@@ -720,18 +713,45 @@ document.addEventListener('DOMContentLoaded', () => {
         return; // Detener ejecución si falla aquí
     }
 
+    // Mostrar modal inicial al entrar
+abrirModal('modal-inicial');
+
+// Evento para confirmar recursos iniciales
+document.getElementById('btn-confirmar-iniciales').addEventListener('click', () => {
+    const oro = parseInt(document.getElementById('input-oro-inicial').value) || 0;
+    const tropas = parseInt(document.getElementById('input-tropas-iniciales').value) || 0;
+  
+    if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) {
+      alert("⚠️ Aún no se ha recibido el estado del juego del servidor. Espera unos segundos y vuelve a intentar.");
+      return;
+    }
+  
+    gameState.jugadores[nombre].oro = oro;
+    gameState.jugadores[nombre].tropas = tropas;
+    socket.emit('actualizar-iniciales', { partida, nombre, oro, tropas });
+  
+    actualizarInfoJugador();
+    cerrarModal('modal-inicial');
+  });
+  
+
+
+// Se ejecuta cuando el cliente se conecta al servidor
     // 5. Esperar conexión y solicitar estado inicial (manejado por socket.on('connect'))
     console.log("Esperando conexión al servidor para unirse a la sala y recibir estado...");
 
     console.log("==========================================");
     console.log("Inicialización del cliente de juego COMPLETADA.");
+// Cuando se cargue completamente el HTML, empieza la inicialización
 }); // Fin DOMContentLoaded
 
 // =============================================
 // PARTE 4: LISTENERS DE SOCKET.IO
 // =============================================
+// Cuando se cargue completamente el HTML, empieza la inicialización
 // (Estos se definen fuera de DOMContentLoaded para estar siempre activos)
 
+// Se ejecuta cuando el cliente se conecta al servidor
 socket.on('connect', () => {
     console.log(`[Juego ${nombre}] Conectado al servidor con ID: ${socket.id}`);
     // Solicitar unirse a la sala específica del juego
@@ -745,6 +765,7 @@ socket.on('connect', () => {
     }
 });
 
+// Se ejecuta cuando el cliente se desconecta del servidor
 socket.on('disconnect', (reason) => {
     console.warn(`[Juego ${nombre}] Desconectado: ${reason}`);
     alert("¡Desconectado del servidor! Intenta recargar la página.");
@@ -783,6 +804,9 @@ socket.on('avanzar-accion', (nuevoEstado) => {
     }
     // Actualizar UI y reactivar botones (si no es Fase Neutral)
     actualizarTurnoAccionUI();
+    if (gameState?.fase === 'Neutral') {
+        abrirModal('modal-fase-neutral');
+    }
     deshabilitarBotonesAccion(gameState?.fase === 'Neutral');
     console.log(`[${nombre}] Avanzado localmente a T${gameState?.turno}, A${gameState?.accion}, F:${gameState?.fase}`);
 });
@@ -798,6 +822,7 @@ socket.on('estado-espera-jugadores', (mensaje) => {
 });
 
 // Listener PRINCIPAL para recibir y aplicar el estado del juego
+// Recibe y actualiza el estado del juego completo desde el servidor
 socket.on('actualizar-estado-juego', (estadoRecibido) => {
     console.log("[Cliente] Recibido 'actualizar-estado-juego'");
     // console.log(estadoRecibido); // Descomentar para depurar el estado recibido
@@ -826,6 +851,7 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
         actualizarInfoJugador();
         actualizarTurnoAccionUI();
         actualizarInfoAdicional();
+        actualizarEdificiosJugador();
         // Habilitar/Deshabilitar botones según la fase actual y si el jugador ya terminó
         deshabilitarBotonesAccion(gameState.fase === 'Neutral' || gameState.jugadoresAccionTerminada?.includes(nombre));
 
@@ -843,4 +869,68 @@ socket.on('jugador-desconectado', (nombreDesconectado) => {
     // La UI de espera se actualizará automáticamente si afecta al avance del turno
 });
 
+// ====== NUEVO RECLUTAMIENTO VISUAL ======
+const preciosReclutas = {
+    soldado: 4,
+    mercenario: 5,
+    elite: 7
+  };
+  
+  const cantidadesReclutas = {
+    soldado: 0,
+    mercenario: 0,
+    elite: 0
+  };
+  
+  // Actualiza la UI y costo total al cambiar cantidades
+  function ajustarCantidad(tipo, cambio) {
+    cantidadesReclutas[tipo] = Math.max(0, cantidadesReclutas[tipo] + cambio);
+    document.getElementById(`cantidad-${tipo}`).textContent = cantidadesReclutas[tipo];
+    actualizarCostoTotalRecluta();
+  }
+  
+  // Calcula y muestra el costo total
+  function actualizarCostoTotalRecluta() {
+    let total = 0;
+    for (const tipo in cantidadesReclutas) {
+      total += cantidadesReclutas[tipo] * preciosReclutas[tipo];
+    }
+    document.getElementById('costo-total-recluta').textContent = total;
+  }
+  
+  // Confirmar reclutamiento visual
+  function confirmarReclutamiento() {
+    const jugador = gameState?.jugadores?.[nombre];
+    if (!jugador) return;
+  
+    const totalOro = Object.entries(cantidadesReclutas).reduce(
+      (suma, [tipo, cantidad]) => suma + cantidad * preciosReclutas[tipo],
+      0
+    );
+  
+    const totalTropas = Object.values(cantidadesReclutas).reduce((a, b) => a + b, 0);
+  
+    const mensajeEl = document.getElementById('mensaje-reclutamiento');
+  
+    if (totalOro > jugador.oro) {
+      mensajeEl.textContent = '⚠️ Oro insuficiente';
+      return;
+    }
+  
+    // Actualizar valores localmente
+    jugador.oro -= totalOro;
+    jugador.tropas += totalTropas;
+  
+    // Reset visual
+    for (const tipo in cantidadesReclutas) {
+      cantidadesReclutas[tipo] = 0;
+      document.getElementById(`cantidad-${tipo}`).textContent = '0';
+    }
+    actualizarInfoJugador();
+    cerrarModal('modal-reclutar');
+  
+    // Emitir fin de acción
+    socket.emit('accion-terminada', { partida, nombre });
+  }
+  
 // --- FIN DEL SCRIPT ---

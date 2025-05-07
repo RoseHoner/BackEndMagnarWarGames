@@ -1,74 +1,82 @@
 // --- En tu archivo script.js (para index.html) ---
 
-// Asegúrate de que la IP/Puerto sea la correcta y accesible
-const socket = io('http://192.168.0.152:3000'); // O tu IP/URL del servidor
+// Conexión al backend con Socket.IO
+// Asegúrate de que sea la IP correcta donde corre tu servidor
+const socket = io('http://localhost:3000'); // Cambia localhost por tu IP si accedes desde otro dispositivo
 
+// Cuando se establece la conexión con el servidor
 socket.on('connect', () => {
-    console.log('[Index] Conectado al servidor:', socket.id);
+    console.log('[Index] Conectado al servidor:', socket.id); // Mostramos el ID de socket único
 });
 
+// Cuando ocurre un error en el servidor (emitido con socket.emit('error'))
 socket.on('error', (mensaje) => {
-    console.error('[Index] Error del servidor:', mensaje);
-    alert(`Error del servidor: ${mensaje}`); // Muestra errores específicos del servidor
+    console.error('[Index] Error del servidor:', mensaje); // Lo mostramos por consola
+    alert(`Error del servidor: ${mensaje}`); // Y lo mostramos al usuario
 });
 
+// Cuando se pierde la conexión con el servidor
 socket.on('disconnect', (reason) => {
-     console.warn('[Index] Desconectado del servidor:', reason);
-     // Podrías mostrar un mensaje al usuario
+    console.warn('[Index] Desconectado del servidor:', reason);
+    // Aquí podrías mostrar un mensaje o bloquear acciones
 });
 
-
+// Función que se ejecuta cuando haces clic en el botón "Crear Partida"
 function crearPartida() {
-  const nombreInput = document.getElementById('nombre');
-  const partidaInput = document.getElementById('partida');
-  const claveInput = document.getElementById('clave');
+  const nombreInput = document.getElementById('nombre');     // Campo nombre del jugador
+  const partidaInput = document.getElementById('partida');   // Campo nombre de la partida
+  const claveInput = document.getElementById('clave');       // Campo clave (puede estar vacío)
 
-  // Validar que los elementos existen
+  // Comprobamos que los campos existen en el HTML
   if (!nombreInput || !partidaInput || !claveInput) {
       console.error("Error: No se encontraron los elementos del formulario (nombre, partida, clave).");
       alert("Error interno: Faltan elementos en la página.");
       return;
   }
 
-  const nombre = nombreInput.value.trim();
-  const partida = partidaInput.value.trim();
-  const clave = claveInput.value; // La clave puede estar vacía, no usamos trim
+  const nombre = nombreInput.value.trim();     // Quitamos espacios
+  const partida = partidaInput.value.trim();   // Quitamos espacios
+  const clave = claveInput.value;              // No usamos trim porque puede estar vacía
 
-  // Validación básica de campos requeridos
+  // Validamos que el jugador ha escrito nombre y nombre de partida
   if (!nombre || !partida) {
      alert("Por favor, ingresa tu nombre y un nombre para la partida.");
      return;
   }
 
+  // Mostramos por consola que vamos a crear partida
   console.log(`[Index] Intentando crear partida: Usuario=${nombre}, Partida=${partida}, Clave=${clave ? '***' : '(ninguna)'}`);
 
-  // Guardar nombre en localStorage para usarlo en el lobby
+  // Guardamos el nombre del jugador en el navegador para usarlo luego
   localStorage.setItem('nombreJugador', nombre);
 
-  // Emitir evento al servidor
+  // Enviamos al servidor que queremos crear una partida
   socket.emit('crear-partida', { nombre, partida, clave });
 
-  // Redirigir al lobby DESPUÉS de emitir. El servidor debe crear la sala rápidamente.
-  // Pasamos todos los datos necesarios para que el lobby se una automáticamente.
+  // Redirigimos al lobby con los datos como parámetros en la URL
+  // El parámetro 'host=true' indica que este jugador es el creador
   const params = new URLSearchParams({ nombre, partida, clave, host: 'true' });
   window.location.href = `lobby.html?${params.toString()}`;
 }
 
+// Función que se ejecuta cuando haces clic en el botón "Unirse a Partida"
 function unirsePartida() {
-    const nombreInput = document.getElementById('nombre');
-    const partidaInput = document.getElementById('partida');
-    const claveInput = document.getElementById('clave');
+    const nombreInput = document.getElementById('nombre');     // Campo nombre
+    const partidaInput = document.getElementById('partida');   // Campo nombre partida
+    const claveInput = document.getElementById('clave');       // Campo clave
 
+    // Verificamos que existen los campos
     if (!nombreInput || !partidaInput || !claveInput) {
         console.error("Error: No se encontraron los elementos del formulario (nombre, partida, clave).");
         alert("Error interno: Faltan elementos en la página.");
         return;
     }
 
-    const nombre = nombreInput.value.trim();
-    const partida = partidaInput.value.trim();
-    const clave = claveInput.value;
+    const nombre = nombreInput.value.trim();     // El nombre del jugador
+    const partida = partidaInput.value.trim();   // El nombre de la partida
+    const clave = claveInput.value;              // La clave puede ser vacía
 
+    // Validación básica
     if (!nombre || !partida) {
         alert("Por favor, ingresa tu nombre y el nombre de la partida a la que quieres unirte.");
         return;
@@ -76,10 +84,10 @@ function unirsePartida() {
 
     console.log(`[Index] Intentando unirse a partida: Usuario=${nombre}, Partida=${partida}, Clave=${clave ? '***' : '(ninguna)'}`);
 
-    // Guardar nombre en localStorage
+    // Guardamos el nombre del jugador para usarlo luego
     localStorage.setItem('nombreJugador', nombre);
 
-    // Redirigir al lobby. El lobby se encargará de emitir 'unirse-partida' al servidor.
-    const params = new URLSearchParams({ nombre, partida, clave }); // No ponemos host=true
+    // Redirigimos al lobby, sin 'host=true' porque no es el creador
+    const params = new URLSearchParams({ nombre, partida, clave });
     window.location.href = `lobby.html?${params.toString()}`;
 }

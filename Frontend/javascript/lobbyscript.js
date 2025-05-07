@@ -1,4 +1,4 @@
-const socket = io('http://192.168.0.152:3000'); // O tu IP/URL del servidor
+const socket = io('http://localhost:3000'); // O tu IP/URL del servidor
 
 // --- Variables Globales del Script ---
 let casasActuales = {};       // Estado { jugador: casa } recibido del servidor

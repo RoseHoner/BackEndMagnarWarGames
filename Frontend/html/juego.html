@@ -38,11 +38,6 @@
         <!-- Podríamos añadir botones para habilidades específicas aquí -->
     </div>
 
-    <!-- Botón Principal "Siguiente Acción" -->
-    <button id="boton-accion" style="display: none;">
-        ✅ Terminar Acción
-    </button>
-
     <!-- Modal Batalla (Sin cambios estructurales) -->
     <div id="modal-batalla" class="modal-juego" style="display: none;">
         <button id="btn-cerrar-modal-batalla" class="modal-cerrar">X</button>
@@ -80,44 +75,57 @@
     </div>
     <!-- Fin Modal Batalla -->
 
-    <!-- Modal Reclutar (Sin cambios estructurales) -->
-    <div id="modal-reclutar" class="modal-juego" style="display: none;">
-        <button class="modal-cerrar" onclick="cerrarModal('modal-reclutar')">X</button>
-        <h2>Reclutar Unidades</h2>
-        <div class="campo-formulario">
-            <label for="select-territorio-reclutar">Reclutar en:</label>
-            <select id="select-territorio-reclutar"><option value="">-- Selecciona territorio --</option></select>
+    <!-- Modal Reclutar (NUEVO) -->
+<div id="modal-reclutar" class="modal-juego" style="display: none;">
+    <button class="modal-cerrar" onclick="cerrarModal('modal-reclutar')">X</button>
+    <h2>Reclutar Tropas</h2>
+    <div id="contenedor-reclutas" style="display: flex; justify-content: space-around; gap: 10px; flex-wrap: wrap;">
+      
+      <!-- Soldado -->
+      <div class="recluta-box" data-tipo="soldado" data-costo="4">
+        <h3>Soldado</h3>
+        <img src="../imgs/reclutas/soldado.png" alt="Soldado" style="width: 80px;">
+        <div class="control-numero">
+          <button onclick="ajustarCantidad('soldado', -1)">-</button>
+          <span id="cantidad-soldado">0</span>
+          <button onclick="ajustarCantidad('soldado', 1)">+</button>
         </div>
-        <div class="campo-formulario">
-            <label for="select-unidad-reclutar">Tipo de Unidad:</label>
-            <select id="select-unidad-reclutar">
-                <option value="regulares">Tropa Regular</option>
-                <option value="mercenario">Mercenario</option>
-                <option value="barco">Barco</option>
-                <option value="torreAsedio">Torre de Asedio</option>
-                <option value="catapulta">Catapulta</option>
-                <option value="escorpion">Escorpión</option>
-            </select>
+        <p>Coste: 4 oro</p>
+      </div>
+  
+      <!-- Mercenario -->
+      <div class="recluta-box" data-tipo="mercenario" data-costo="5">
+        <h3>Mercenario</h3>
+        <img src="../imgs/reclutas/mercenario.png" alt="Mercenario" style="width: 80px;">
+        <div class="control-numero">
+          <button onclick="ajustarCantidad('mercenario', -1)">-</button>
+          <span id="cantidad-mercenario">0</span>
+          <button onclick="ajustarCantidad('mercenario', 1)">+</button>
         </div>
-        <div class="campo-formulario">
-            <label for="input-cantidad-reclutar">Cantidad:</label>
-            <div class="control-numero">
-                <button onclick="ajustarCantidadReclutar(-1)">-</button>
-                <input type="number" id="input-cantidad-reclutar" value="1" min="1">
-                <button onclick="ajustarCantidadReclutar(1)">+</button>
-            </div>
+        <p>Coste: 5 oro</p>
+      </div>
+  
+      <!-- Mercenario de élite -->
+      <div class="recluta-box" data-tipo="elite" data-costo="7">
+        <h3>Mercenario de élite</h3>
+        <img src="../imgs/reclutas/elite.png" alt="Mercenario élite" style="width: 80px;">
+        <div class="control-numero">
+          <button onclick="ajustarCantidad('elite', -1)">-</button>
+          <span id="cantidad-elite">0</span>
+          <button onclick="ajustarCantidad('elite', 1)">+</button>
         </div>
-        <div id="costo-reclutamiento" style="text-align: center; margin-top: 15px; font-weight: bold;">
-            Costo: <span id="costo-reclutar-valor">--</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">
-        </div>
-        <div id="limite-reclutamiento-info" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: #ccc;">
-             Límite turno: <span id="limite-reclutar-actual">0</span> / <span id="limite-reclutar-maximo">0</span>
-        </div>
-        <div class="botones-modal">
-             <button id="btn-confirmar-reclutar" class="btn-confirmar">✔️ Reclutar</button>
-             <button class="btn-cancelar" onclick="cerrarModal('modal-reclutar')">✖️ Cancelar</button>
-        </div>
+        <p>Coste: 7 oro</p>
+      </div>
+  
     </div>
+  
+    <div style="margin-top: 20px; text-align: center;">
+      <p>Total de oro requerido: <span id="costo-total-recluta">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
+      <button class="btn-confirmar" onclick="confirmarReclutamiento()">✔️ Reclutar</button>
+      <button class="btn-cancelar" onclick="cerrarModal('modal-reclutar')">✖️ Cancelar</button>
+      <p id="mensaje-reclutamiento" style="color: red; margin-top: 10px;"></p>
+    </div>
+  </div>
     <!-- Fin Modal Reclutar -->
 
      <!-- Modal Construir (Sin cambios estructurales) -->
@@ -134,146 +142,7 @@
                 <option value="">-- Selecciona --</option>
                 <optgroup label="Producción">
                     <option value="Granja">Granja</option>
-                    <option value="icamente en el tablero, entonces los botones "Mover" y "Reorganizar" en la app solo necesitan servir como un registro de que esa acción se ha consumido en el turno del jugador.
-
-Aquí están las modificaciones para simplificarlo de esa manera:
-
-**1. Modificar `juego.html`**
-
-*   **Elimina COMPLETAMENTE** el modal `#modal-mover` que añadimos en el paso anterior. Ya no es necesario.
-*   Los botones `#btn-mover` y `#btn-reorganizar` en `#acciones-container` se mantienen, pero su función cambiará en el JavaScript.
-
-**2. Modificar `scriptjuego.js`**
-
-*   **Elimina** las funciones que añadimos para el modal de movimiento:
-    *   `poblarTerritoriosOrigenMover`
-    *   `poblarTropasDisponiblesMover`
-    *   `poblarTerritoriosDestinoMover`
-    *   `confirmarMover` (si la creamos)
-*   **Modifica** la sección de inicialización de listeners `DOMContentLoaded` para cambiar lo que hacen los botones `#btn-mover` y `#btn-reorganizar`.
-*   **Crea** una función helper para manejar el fin de acción.
-
-```javascript
-// --- EN scriptjuego.js ---
-
-// ... (código anterior: conexión, parámetros, gameState, constantes, funciones UI, etc.) ...
-
-// --- Lógica Juego y Modales Específicos ---
-
-// *** FUNCIÓN NUEVA: Helper para terminar acción por botones específicos ***
-function terminarAccionEspecifica(tipoAccion) {
-    const botonAccionEl = document.getElementById('boton-accion');
-    const estadoTurnoEl = document.getElementById('estado-turno');
-    if (!partida || !nombre) return console.error("Faltan datos para terminar acción.");
-    if (gameState?.fase === 'Neutral') return; // No hacer nada si ya está procesando
-
-    console.log(`[${nombre}] Acción '${tipoAccion}' realizada en el tablero. Emitiendo 'accion-terminada'...`);
-    socket.emit('accion-terminada', { partida, nombre });
-
-    // Deshabilitar botón principal y mostrar espera INMEDIATAMENTE
-    // (Aunque se usó un botón específico, deshabilitamos el principal para indicar que la acción del turno se gastó)
-    if (botonAccionEl) {
-        botonAccionEl.disabled = true;
-        botonAccionEl.textContent = "⌛ Esperando...";
-    }
-    if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
-
-    // Opcional: Deshabilitar TODOS los botones de acción hasta el siguiente turno/acción
-    deshabilitarBotonesAccion(true);
-}
-
-// *** FUNCIÓN NUEVA: Helper para habilitar/deshabilitar botones de acción ***
-function deshabilitarBotonesAccion(deshabilitar) {
-     const container = document.getElementById('acciones-container');
-     if(container) {
-         const botones = container.querySelectorAll('.btn-accion-juego');
-         botones.forEach(btn => btn.disabled = deshabilitar);
-     }
-     // Habilitar/Deshabilitar también el botón principal
-     const botonPrincipal = document.getElementById('boton-accion');
-     if(botonPrincipal) {
-        botonPrincipal.disabled = deshabilitar || gameState?.fase === 'Neutral'; // Asegurar deshabilitado en Neutral
-     }
-}
-
-
-// La función siguienteAccion (para el botón principal) se mantiene igual:
-function siguienteAccion() {
-    const botonAccionEl = document.getElementById('boton-accion');
-    const estadoTurnoEl = document.getElementById('estado-turno');
-    if (!partida || !nombre) return console.error("Faltan datos para terminar acción.");
-    if (gameState?.fase === 'Neutral') return;
-
-    console.log(`[${nombre}] Botón 'Terminar Acción' presionado. Emitiendo 'accion-terminada'...`);
-    socket.emit('accion-terminada', { partida, nombre });
-
-    if (botonAccionEl) {
-        botonAccionEl.disabled = true;
-        botonAccionEl.textContent = "⌛ Esperando...";
-    }
-    if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
-    deshabilitarBotonesAccion(true); // Deshabilitar otros botones también
-}
-
-
-// ... (código anterior para Modal Batalla, Reclutar, Construir, Mis Territorios) ...
-
-
-// --- Listeners de Socket.IO ---
-
-// ... (listeners anteriores: connect, disconnect, error, error-accion) ...
-
-socket.on('avanzar-accion', (nuevoEstado) => {
-    console.log(`[${nombre}] Recibido 'avanzar-accion'`, nuevoEstado);
-    if (gameState && nuevoEstado) {
-        gameState.turno = nuevoEstado.turno;
-        gameState.accion = nuevoEstado.accion;
-        gameState.fase = nuevoEstado.fase;
-        gameState.jugadoresAccionTerminada = [];
-    }
-    actualizarTurnoAccionUI();
-    // Reactivar TODOS los botones para la nueva acción (si no es fase neutral)
-    deshabilitarBotonesAccion(gameState?.fase === 'Neutral');
-    if(gameState?.fase !== 'Neutral'){
-        const botonAccionEl = document.getElementById('boton-accion');
-         if(botonAccionEl) botonAccionEl.textContent = "✅ Terminar Acción"; // Resetear texto
-    }
-
-    console.log(`[${nombre}] Avanzado localmente a T${gameState?.turno}, A${gameState?.accion}, F:${gameState?.fase}`);
-});
-
-// ... (listeners anteriores: estado-espera-jugadores, actualizar-estado-juego) ...
-
-
-// --- Inicialización DOMContentLoaded ---
-document.addEventListener('DOMContentLoaded', () => {
-    // ... (código inicial igual que antes: validación datos, UI inicial, etc.) ...
-
-    console.log("[Init] Añadiendo listeners...");
-    let listenersOk = true;
-    try {
-        const setupListener = (id, event, handler) => {
-            const element = document.getElementById(id);
-            if (element) { element.addEventListener(event, handler); }
-            else { console.warn(`WARN: Elemento #${id} no encontrado.`); listenersOk = false; }
-        };
-
-        // Botones barra superior y principal
-        setupListener('logo-casa-container', 'click', abrirModalMisTerritorios);
-        setupListener('boton-accion', 'click', siguienteAccion); // El botón principal sigue funcionando igual
-
-        // Botones de Acción
-        setupListener('btn-batalla', 'click', () => { poblarTerritoriosAtacables(); abrirModal('modal-batalla'); });
-        setupListener('btn-reclutar', 'click', () => { poblarTerritoriosReclutar(); poblarUnidadesReclutar(); abrirModal('modal-reclutar'); });
-        setupListener('btn-construir', 'click', () => { poblarTerritoriosConstruir(); poblarEdificiosConstruir(); abrirModal('modal-construir'); });
-        // *** Listener MODIFICADO para Mover ***
-        setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover'));
-        // *** Listener MODIFICADO para Reorganizar ***
-        setupListener('btn-reorganizar', 'click', () => terminarAccionEspecifica('Reorganizar'));
-
-        // ... (listeners para los modales Batalla, Reclutar, Construir, Mis Territorios igual que antes) ...
-
-        if (!listenersOk) console.error("¡¡ ALGUNCantera">Cantera</option>
+                    <option value="Cantera">Cantera</option>
                     <option value="Mina">Mina</option>
                     <option value="Aserradero">Aserradero</option>
                 </optgroup>
@@ -321,6 +190,49 @@ document.addEventListener('DOMContentLoaded', () => {
         </ul>
     </div>
 
-  <script src="../javascript/scriptjuego.js"></script>
+    <!-- Modal para elegir recursos iniciales -->
+<div id="modal-inicial" class="modal-juego" style="display: block; z-index: 9999; backdrop-filter: blur(2px);">
+    <h2>⚙️ Configura tus recursos iniciales</h2>
+  
+    <div class="campo-formulario">
+      <label for="input-oro-inicial">💰 Oro inicial:</label>
+      <input type="number" id="input-oro-inicial" min="0" value="50" style="width: 100%;">
+    </div>
+  
+    <div class="campo-formulario">
+      <label for="input-tropas-iniciales">🛡️ Tropas iniciales:</label>
+      <input type="number" id="input-tropas-iniciales" min="0" value="30" style="width: 100%;">
+    </div>
+  
+    <div class="botones-modal" style="margin-top: 20px;">
+      <button id="btn-confirmar-iniciales" class="btn-confirmar" style="width: 100%;">
+        ✔️ Confirmar
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Fase Neutral -->
+<div id="modal-fase-neutral" class="modal-juego" style="display: none;">
+    <h2>⚔️ ¿Has perdido tropas en la fase neutral?</h2>
+  
+    <div style="margin-top: 15px;">
+      <button id="btn-neutral-si" class="btn-confirmar" style="width: 45%; margin-right: 5%;">Sí</button>
+      <button id="btn-neutral-no" class="btn-cancelar" style="width: 45%;">No</button>
+    </div>
+  
+    <div id="neutral-input-container" style="display: none; margin-top: 20px;">
+      <label for="input-tropas-perdidas-neutral">¿Cuántas tropas perdiste?</label>
+      <input type="number" id="input-tropas-perdidas-neutral" min="0" value="0" style="width: 100%; margin-top: 10px;">
+      <button id="btn-confirmar-perdidas-neutral" class="btn-confirmar" style="margin-top: 15px; width: 100%;">✔️ Confirmar</button>
+    </div>
+  </div>
+  
+  <!-- ZONA DE EDIFICIOS -->
+<div id="zona-edificios" style="position: fixed; top: 250px; right: 10px; background-color: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; width: 180px; z-index: 10;">
+    <h3 style="margin: 0 0 10px; font-size: 1.2rem; color: white; text-align: center;">🏰 Edificios</h3>
+    <ul id="lista-edificios-jugador" style="list-style: none; padding: 0; margin: 0;"></ul>
+  </div>
+  
+  <script defer src="../javascript/scriptjuego.js"></script>
 </body>
 </html>
