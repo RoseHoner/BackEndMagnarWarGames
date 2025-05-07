@@ -1,6 +1,10 @@
 // =============================================
 // PARTE 1: INICIALIZACIÓN Y GLOBALES
 // =============================================
+let tropasPerdidas = 0;
+let territoriosPerdidos = [];
+let nuevoPropietarioPorTerritorio = {};
+
 
 // --- Conexión Socket.IO ---
 // Asegúrate de que esta IP/Puerto sea la correcta y accesible desde tus clientes
@@ -24,7 +28,7 @@ let gameState = null;
 const COSTOS_BASE_UI = {
     regulares: 4,
     barco: 20,
-    torreAsedio: 20, // Corresponde al value="torreAsedio" en HTML
+    torre: 20,
     catapulta: 20,
     escorpion: 20,
     sacerdote: 20, // Costo genérico, puede variar por facción
@@ -56,7 +60,51 @@ const MAQUINAS_ASEDIO_UI_VALUES = ['torreAsedio', 'catapulta', 'escorpion'];
 // PARTE 2: DEFINICIÓN DE FUNCIONES
 // =============================================
 
+function getListaCasasPosibles() {
+    return [
+      "Stark", "Lannister", "Baratheon", "Targaryen", "Tully",
+      "Martell", "Tyrell", "Greyjoy", "Arryn", "Bolton", "Frey"
+    ];
+  }
+  
+
 // --- Funciones de Actualización de UI ---
+function actualizarUnidadesMilitares() {
+    const lista = document.getElementById('lista-unidades-jugador');
+    if (!lista || !gameState || !gameState.jugadores?.[nombre]) return;
+
+    const jugador = gameState.jugadores[nombre];
+    lista.innerHTML = ''; // Limpiamos la lista
+
+    const unidades = [
+        { tipo: 'barcos', nombre: 'Barco', icono: 'barco.png' },
+        { tipo: 'catapulta', nombre: 'Catapulta', icono: 'catapulta.png' },
+        { tipo: 'torre', nombre: 'Torre de Asedio', icono: 'torre.png' },
+        { tipo: 'escorpion', nombre: 'Escorpión', icono: 'escorpion.png' }
+    ];
+
+    unidades.forEach(u => {
+        const cantidad = jugador[u.tipo] || 0;
+        if (cantidad > 0) {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <img src="../imgs/reclutas/${u.icono}" alt="${u.nombre}" style="width: 24px; vertical-align: middle; margin-right: 6px;">
+                <span style="color: white;">${u.nombre} x${cantidad}</span>
+            `;
+            lista.appendChild(li);
+        }
+    });
+
+    // Si no tiene ninguna, mostrar mensaje
+    if (lista.children.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = '(Sin unidades especiales)';
+        li.style.color = '#ccc';
+        li.style.fontSize = '0.85rem';
+        lista.appendChild(li);
+    }
+}
+
 
 // Actualiza la interfaz con la información del jugador (oro y tropas)
 function actualizarInfoJugador() {
@@ -137,31 +185,26 @@ function actualizarEdificiosJugador() {
     const lista = document.getElementById('lista-edificios-jugador');
     if (!lista || !gameState || !gameState.territorios || !casa) return;
 
-    const edificiosContador = {};
+    lista.innerHTML = '';
 
-    Object.values(gameState.territorios).forEach(t => {
-        if (t.propietario === casa && Array.isArray(t.edificios)) {
-            t.edificios.forEach(ed => {
-                edificiosContador[ed] = (edificiosContador[ed] || 0) + 1;
-            });
-        }
-    });
+    const territoriosCasa = Object.values(gameState.territorios)
+        .filter(t => t.propietario === casa && Array.isArray(t.edificios) && t.edificios.length > 0);
 
-    lista.innerHTML = ''; // Limpiar
-
-    if (Object.keys(edificiosContador).length === 0) {
-        lista.innerHTML = '<li style="color: #ccc; font-size: 0.9rem;">(Ninguno)</li>';
+    if (territoriosCasa.length === 0) {
+        lista.innerHTML = '<li style="color: #ccc; font-size: 0.9rem;">(Ningún edificio)</li>';
         return;
     }
 
-    Object.entries(edificiosContador).forEach(([edificio, cantidad]) => {
+    territoriosCasa.forEach(t => {
         const li = document.createElement('li');
-        li.style.marginBottom = '8px';
-        const imgSrc = `../imgs/edificios/${edificio.toLowerCase().replace(/ /g, '-')}.png`;
-        li.innerHTML = `<img src="${imgSrc}" alt="${edificio}" style="width: 24px; vertical-align: middle; margin-right: 6px;">${edificio} <span style="color: gold;">x${cantidad}</span>`;
+        li.style.marginBottom = '10px';
+        li.innerHTML = `<strong style="color: #66f;">${t.nombre}</strong><ul style="margin: 5px 0 10px 15px;">` +
+            t.edificios.map(ed => `<li style="font-size: 0.9rem;">🏗️ ${ed}</li>`).join('') +
+            `</ul>`;
         lista.appendChild(li);
     });
 }
+
 
 
 function setLogoPorCasa(casaNombre) {
@@ -577,6 +620,11 @@ function abrirModalMisTerritorios() {
 
     contadorSpan.textContent = contador;
     oroSpan.textContent = oroTotalTurno;
+    // Contar barcos del jugador (suponemos que están en jugador.barcos)
+    const tituloModal = modalEl.querySelector('h2');
+if (tituloModal) {
+    tituloModal.innerHTML = `Mis Territorios (<span id="contador-territorios">${contador}</span>)`;
+}
     abrirModal('modal-mis-territorios');
 }
 
@@ -635,7 +683,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Botones de Acción específica
         setupListener('btn-batalla', 'click', () => { poblarTerritoriosAtacables(); abrirModal('modal-batalla'); });
-        setupListener('btn-reclutar', 'click', () => { poblarTerritoriosReclutar(); poblarUnidadesReclutar(); abrirModal('modal-reclutar'); });
+        setupListener('btn-reclutar', 'click', () => {
+            poblarTerritoriosReclutar();
+            agregarReclutaBarcoSiAplica(); // 👈 esta línea
+            abrirModal('modal-reclutar');
+        });
+        
         setupListener('btn-construir', 'click', () => {
             if (!gameState || !gameState.territorios || !gameState.jugadores) {
                 alert("⚠️ Esperando sincronización con el servidor. Intenta en unos segundos.");
@@ -675,32 +728,107 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Listeners para Modal Mis Territorios ---
         setupListener('btn-cerrar-modal-territorios', 'click', () => cerrarModal('modal-mis-territorios'));
         setupListener('btn-ok-modal-territorios', 'click', () => cerrarModal('modal-mis-territorios'));
-        // --- Listeners para Modal Fase Neutral ---
-setupListener('btn-neutral-si', 'click', () => {
-    document.getElementById('neutral-input-container').style.display = 'block';
-  });
-  
-  setupListener('btn-neutral-no', 'click', () => {
-    cerrarModal('modal-fase-neutral');
-    socket.emit('accion-terminada', { partida, nombre });
-  });
-  
-  setupListener('btn-confirmar-perdidas-neutral', 'click', () => {
-    const input = document.getElementById('input-tropas-perdidas-neutral');
-    const perdidas = parseInt(input.value) || 0;
-    if (perdidas < 0) return alert("El número no puede ser negativo.");
-    
-    gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - perdidas);
-    socket.emit('actualizar-iniciales', {
-      partida,
-      nombre,
-      tropas: gameState.jugadores[nombre].tropas,
-      oro: gameState.jugadores[nombre].oro
-    });
-  
-    cerrarModal('modal-fase-neutral');
-    socket.emit('accion-terminada', { partida, nombre });
-  });
+        
+        setupListener('btn-confirmar-perdidas-neutral', 'click', () => {
+          tropasPerdidas = parseInt(document.getElementById('input-tropas-perdidas-neutral').value) || 0;
+          if (tropasPerdidas < 0) return alert("El número no puede ser negativo.");
+          document.getElementById('fase-neutral-paso1').style.display = 'none';
+          document.getElementById('fase-neutral-paso2').style.display = 'block';
+        });
+        
+        // Paso 2 - NO perdió territorios
+        document.getElementById('btn-no-perdi-territorios').addEventListener('click', () => {
+          gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
+          socket.emit('actualizar-perdidas-neutral', {
+            partida,
+            nombre,
+            perdidas: tropasPerdidas,
+            territoriosPerdidos: [],
+            nuevoPropietarioPorTerritorio: {}
+          });
+          cerrarModal('modal-fase-neutral');
+        });
+        
+        // Paso 2 - SÍ perdió territorios
+        document.getElementById('btn-si-perdi-territorios').addEventListener('click', () => {
+            const contenedor = document.getElementById('lista-territorios-perdidos');
+            contenedor.innerHTML = '';
+            Object.values(gameState.territorios)
+              .filter(t => t.propietario === casa)
+              .forEach(t => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                  <label>
+                    <input type="checkbox" value="${t.nombre}"> ${t.nombre}
+                  </label>`;
+                contenedor.appendChild(div);
+              });
+          
+            document.getElementById('fase-neutral-paso2').style.display = 'none';
+            document.getElementById('fase-neutral-paso3').style.display = 'block';
+          });
+          
+
+        document.getElementById('btn-finalizar-fase-neutral').addEventListener('click', () => {
+            nuevoPropietarioPorTerritorio = {};
+          
+            territoriosPerdidos.forEach(nombre => {
+              const select = document.getElementById(`nuevo-prop-${nombre}`);
+              const nuevo = select?.value;
+              if (nuevo) {
+                nuevoPropietarioPorTerritorio[nombre] = nuevo;
+              }
+            });
+          
+            gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
+          
+            socket.emit('actualizar-perdidas-neutral', {
+              partida,
+              nombre,
+              perdidas: tropasPerdidas,
+              territoriosPerdidos,
+              nuevoPropietarioPorTerritorio
+            });
+          
+            cerrarModal('modal-fase-neutral');
+          });
+          
+
+        document.getElementById('btn-confirmar-territorios-perdidos').addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('#lista-territorios-perdidos input[type="checkbox"]:checked');
+            territoriosPerdidos = Array.from(checkboxes).map(cb => cb.value);
+
+            if (territoriosPerdidos.length === 0) {
+              return alert("Selecciona al menos un territorio que hayas perdido.");
+            }
+          
+            // Paso 4: Crear campos para cada territorio
+            const contenedor = document.getElementById('contenedor-cambios-propietario');
+            contenedor.innerHTML = '';
+            territoriosPerdidos.forEach(nombreTerritorio => {
+              const div = document.createElement('div');
+              div.style.marginBottom = "12px";
+              div.style.display = "flex";
+              div.style.alignItems = "center";
+              div.style.gap = "10px";
+
+              div.innerHTML = `
+                <label for="nuevo-prop-${nombreTerritorio}">${nombreTerritorio} →</label>
+                <select id="nuevo-prop-${nombreTerritorio}">
+                ${getListaCasasPosibles()
+                    .filter(nombreCasa => nombreCasa !== casa)
+                    .map(nombreCasa => `<option value="${nombreCasa}">${nombreCasa}</option>`)
+                    .join('')}
+                                  
+                </select>
+              `;
+              contenedor.appendChild(div);
+            });
+          
+            document.getElementById('fase-neutral-paso3').style.display = 'none';
+            document.getElementById('fase-neutral-paso4').style.display = 'block';
+          });
+        
   
 
 
@@ -712,6 +840,77 @@ setupListener('btn-neutral-si', 'click', () => {
         alert("Error inicializando controles de la página.");
         return; // Detener ejecución si falla aquí
     }
+
+    // === Generar opción barco SOLO si tiene puerto ===
+function agregarReclutaBarcoSiAplica() {
+    const contenedor = document.getElementById('contenedor-reclutas');
+    if (!contenedor || !gameState || !gameState.territorios) return;
+
+    // Eliminar si ya existía
+    const existente = contenedor.querySelector('.recluta-box[data-tipo="barco"]');
+    if (existente) existente.remove();
+
+    const tienePuerto = Object.values(gameState.territorios).some(
+        t => t.propietario === casa && t.edificios.includes("Puerto")
+    );
+
+    if (!tienePuerto) return;
+
+    // Crear visualmente
+    const div = document.createElement('div');
+    div.className = 'recluta-box';
+    div.dataset.tipo = 'barco';
+    div.dataset.costo = '20';
+    div.innerHTML = `
+      <h3>Barco</h3>
+      <img src="../imgs/reclutas/barco.png" alt="Barco" style="width: 80px;">
+      <div class="control-numero">
+        <button onclick="ajustarCantidad('barco', -1)">-</button>
+        <span id="cantidad-barco">0</span>
+        <button onclick="ajustarCantidad('barco', 1)">+</button>
+      </div>
+      <p>Coste: 20 oro</p>
+    `;
+    contenedor.appendChild(div);
+
+    // ======== UNIDADES DE ASEDIO (si hay taller) ========
+const tieneTaller = Object.values(gameState.territorios).some(
+    t => t.propietario === casa && t.edificios.includes("Taller de maquinaria de asedio")
+  );
+  // Eliminar unidades de asedio anteriores si existen
+['catapulta', 'torre', 'escorpion'].forEach(tipo => {
+    const existente = contenedor.querySelector(`.recluta-box[data-tipo="${tipo}"]`);
+    if (existente) existente.remove();
+  });
+  
+
+  if (tieneTaller) {
+    const unidadesAsedio = [
+      { tipo: 'catapulta', nombre: 'Catapulta', costo: 20, imagen: 'catapulta.png' },
+      { tipo: 'torre', nombre: 'Torre de Asedio', costo: 20, imagen: 'torre.png' },
+      { tipo: 'escorpion', nombre: 'Escorpión', costo: 20, imagen: 'escorpion.png' },
+    ];
+  
+    unidadesAsedio.forEach(({ tipo, nombre, costo, imagen }) => {
+      const div = document.createElement('div');
+      div.className = 'recluta-box';
+      div.dataset.tipo = tipo;
+      div.dataset.costo = costo;
+      div.innerHTML = `
+        <h3>${nombre}</h3>
+        <img src="../imgs/reclutas/${imagen}" alt="${nombre}" style="width: 80px;">
+        <div class="control-numero">
+          <button onclick="ajustarCantidad('${tipo}', -1)">-</button>
+          <span id="cantidad-${tipo}">0</span>
+          <button onclick="ajustarCantidad('${tipo}', 1)">+</button>
+        </div>
+        <p>Coste: ${costo} oro</p>
+      `;
+      contenedor.appendChild(div);
+    });
+  }
+}
+
 
     // Mostrar modal inicial al entrar
 abrirModal('modal-inicial');
@@ -734,6 +933,24 @@ document.getElementById('btn-confirmar-iniciales').addEventListener('click', () 
     cerrarModal('modal-inicial');
   });
   
+  // BLOQUEAR OPCIÓN DE BARCO SI NO TIENE PUERTO
+const barcoBox = document.querySelector('.recluta-box[data-tipo="barco"]');
+if (barcoBox) {
+  const tienePuerto = Object.values(gameState.territorios).some(
+    t => t.propietario === casa && t.edificios.includes("Puerto")
+  );
+
+  if (!tienePuerto) {
+    barcoBox.style.opacity = 0.4;
+    barcoBox.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    const aviso = document.createElement('p');
+    aviso.style.color = 'red';
+    aviso.style.fontSize = '0.85em';
+    aviso.textContent = "⚠️ Necesitas un Puerto para reclutar barcos";
+    barcoBox.appendChild(aviso);
+  }
+}
+
 
 
 // Se ejecuta cuando el cliente se conecta al servidor
@@ -805,8 +1022,20 @@ socket.on('avanzar-accion', (nuevoEstado) => {
     // Actualizar UI y reactivar botones (si no es Fase Neutral)
     actualizarTurnoAccionUI();
     if (gameState?.fase === 'Neutral') {
+        tropasPerdidas = 0;
+        territoriosPerdidos = [];
+        nuevoPropietarioPorTerritorio = {};
+    
+        // Reiniciar pasos del modal
+        document.getElementById('fase-neutral-paso1').style.display = 'block';
+        document.getElementById('fase-neutral-paso2').style.display = 'none';
+        document.getElementById('fase-neutral-paso3').style.display = 'none';
+        document.getElementById('fase-neutral-paso4').style.display = 'none';
+    
         abrirModal('modal-fase-neutral');
     }
+    
+    
     deshabilitarBotonesAccion(gameState?.fase === 'Neutral');
     console.log(`[${nombre}] Avanzado localmente a T${gameState?.turno}, A${gameState?.accion}, F:${gameState?.fase}`);
 });
@@ -838,6 +1067,8 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
     gameState = estadoRecibido;
     console.log("   -> GameState local actualizado completamente.");
 
+    
+
     // Validar que el gameState recibido es usable
     if (!gameState.jugadores || !gameState.territorios || !gameState.jugadores[nombre]) {
         console.error("El estado recibido no contiene la información mínima necesaria (jugadores, territorios, datos propios).");
@@ -852,6 +1083,8 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
         actualizarTurnoAccionUI();
         actualizarInfoAdicional();
         actualizarEdificiosJugador();
+        actualizarUnidadesMilitares();
+
         // Habilitar/Deshabilitar botones según la fase actual y si el jugador ya terminó
         deshabilitarBotonesAccion(gameState.fase === 'Neutral' || gameState.jugadoresAccionTerminada?.includes(nombre));
 
@@ -873,13 +1106,22 @@ socket.on('jugador-desconectado', (nombreDesconectado) => {
 const preciosReclutas = {
     soldado: 4,
     mercenario: 5,
-    elite: 7
-  };
+    elite: 7,
+    barco: 20,
+    catapulta: 20,
+    torre: 20,
+    escorpion: 20
+};
+
   
   const cantidadesReclutas = {
     soldado: 0,
     mercenario: 0,
-    elite: 0
+    elite: 0,
+    barco: 0,
+    catapulta: 0,
+    torre: 0,
+    escorpion: 0,
   };
   
   // Actualiza la UI y costo total al cambiar cantidades
@@ -903,34 +1145,66 @@ const preciosReclutas = {
     const jugador = gameState?.jugadores?.[nombre];
     if (!jugador) return;
   
-    const totalOro = Object.entries(cantidadesReclutas).reduce(
+    const tienePuerto = Object.values(gameState.territorios).some(
+      t => t.propietario === casa && t.edificios.includes("Puerto")
+    );
+  
+    // Copiamos solo las unidades válidas según si hay puerto
+    const unidadesValidas = {};
+    for (const tipo in cantidadesReclutas) {
+      if (tipo === 'barco' && !tienePuerto) continue; // Saltar si barco y no hay puerto
+      unidadesValidas[tipo] = cantidadesReclutas[tipo];
+    }
+  
+    const totalOro = Object.entries(unidadesValidas).reduce(
       (suma, [tipo, cantidad]) => suma + cantidad * preciosReclutas[tipo],
       0
     );
   
-    const totalTropas = Object.values(cantidadesReclutas).reduce((a, b) => a + b, 0);
-  
     const mensajeEl = document.getElementById('mensaje-reclutamiento');
-  
     if (totalOro > jugador.oro) {
       mensajeEl.textContent = '⚠️ Oro insuficiente';
       return;
     }
   
-    // Actualizar valores localmente
-    jugador.oro -= totalOro;
-    jugador.tropas += totalTropas;
+    // Emitimos reclutamiento por tipo de unidad
+    for (const tipo in unidadesValidas) {
+      const cantidad = unidadesValidas[tipo];
+      if (cantidad > 0) {
+        socket.emit('solicitud-reclutamiento', {
+          partida,
+          nombre,
+          territorio: obtenerTerritorioConPuerto() || obtenerPrimerTerritorio(),
+          tipoUnidad: tipo,
+          cantidad: cantidad
+        });
+      }
+    }
   
     // Reset visual
     for (const tipo in cantidadesReclutas) {
       cantidadesReclutas[tipo] = 0;
-      document.getElementById(`cantidad-${tipo}`).textContent = '0';
+      const span = document.getElementById(`cantidad-${tipo}`);
+      if (span) span.textContent = '0';
     }
+  
     actualizarInfoJugador();
     cerrarModal('modal-reclutar');
-  
-    // Emitir fin de acción
-    socket.emit('accion-terminada', { partida, nombre });
   }
+  
+  function obtenerTerritorioConPuerto() {
+    const t = Object.values(gameState.territorios).find(
+      t => t.propietario === casa && t.edificios.includes("Puerto")
+    );
+    return t?.nombre;
+  }
+  
+  function obtenerPrimerTerritorio() {
+    const t = Object.values(gameState.territorios).find(
+      t => t.propietario === casa
+    );
+    return t?.nombre;
+  }
+  
   
 // --- FIN DEL SCRIPT ---

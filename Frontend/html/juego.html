@@ -116,6 +116,7 @@
         </div>
         <p>Coste: 7 oro</p>
       </div>
+
   
     </div>
   
@@ -211,22 +212,46 @@
     </div>
   </div>
 
-  <!-- Modal Fase Neutral -->
+  <!-- Paso 1: Tropas perdidas -->
+<!-- Modal Fase Neutral -->
 <div id="modal-fase-neutral" class="modal-juego" style="display: none;">
-    <h2>⚔️ ¿Has perdido tropas en la fase neutral?</h2>
-  
-    <div style="margin-top: 15px;">
-      <button id="btn-neutral-si" class="btn-confirmar" style="width: 45%; margin-right: 5%;">Sí</button>
-      <button id="btn-neutral-no" class="btn-cancelar" style="width: 45%;">No</button>
-    </div>
-  
-    <div id="neutral-input-container" style="display: none; margin-top: 20px;">
-      <label for="input-tropas-perdidas-neutral">¿Cuántas tropas perdiste?</label>
-      <input type="number" id="input-tropas-perdidas-neutral" min="0" value="0" style="width: 100%; margin-top: 10px;">
-      <button id="btn-confirmar-perdidas-neutral" class="btn-confirmar" style="margin-top: 15px; width: 100%;">✔️ Confirmar</button>
-    </div>
+  <!-- Paso 1: Tropas perdidas -->
+  <div id="fase-neutral-paso1">
+    <h2>¿Cuántas tropas perdiste?</h2>
+    <input type="number" id="input-tropas-perdidas-neutral" min="0" value="0" />
+    <button id="btn-confirmar-perdidas-neutral">✔️ Confirmar</button>
   </div>
-  
+
+  <!-- Paso 2: ¿Perdiste territorios? -->
+  <div id="fase-neutral-paso2" style="display:none;">
+    <h2>¿Perdiste territorios?</h2>
+    <button id="btn-si-perdi-territorios">Sí</button>
+    <button id="btn-no-perdi-territorios">No</button>
+  </div>
+
+  <!-- Paso 3: Elegir territorios perdidos -->
+  <div id="fase-neutral-paso3" style="display:none;">
+    <h3>Selecciona los territorios que perdiste</h3>
+    <div id="lista-territorios-perdidos" class="lista-scrollable"></div>
+
+    <button id="btn-confirmar-territorios-perdidos">✔️ Confirmar territorios</button>
+  </div>
+
+  <!-- Paso 4: Nuevo propietario por cada territorio -->
+  <div id="fase-neutral-paso4" style="display:none;">
+    <div id="contenedor-cambios-propietario"></div>
+    <button id="btn-finalizar-fase-neutral">Finalizar</button>
+  </div>
+</div>
+
+
+  <!-- ZONA DE UNIDADES MILITARES -->
+<div id="zona-unidades-militares" style="position: fixed; top: 250px; left: 10px; background-color: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; width: 180px; z-index: 10;">
+  <h3 style="margin: 0 0 10px; font-size: 1.2rem; color: white; text-align: center;">⚔️ Unidades Militares</h3>
+  <ul id="lista-unidades-jugador" style="list-style: none; padding: 0; margin: 0;"></ul>
+</div>
+
+
   <!-- ZONA DE EDIFICIOS -->
 <div id="zona-edificios" style="position: fixed; top: 250px; right: 10px; background-color: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; width: 180px; z-index: 10;">
     <h3 style="margin: 0 0 10px; font-size: 1.2rem; color: white; text-align: center;">🏰 Edificios</h3>

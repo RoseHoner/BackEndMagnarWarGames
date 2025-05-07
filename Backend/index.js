@@ -19,73 +19,73 @@ const rooms = {};
 
 // Configuración inicial del juego
 const TERRITORIOS_BASE = [
-    { nombre: "Isla del Oso", oro: 5, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Costa pedregosa", oro: 4, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Los túmulos", oro: 7, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Invernalia", oro: 11, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Fuerte terror", oro: 8, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Bastión Kar", oro: 6, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Skagos", oro: 4, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Atalaya de la viuda", oro: 5, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Puerto blanco", oro: 7, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Cabo Kraken", oro: 4, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Bosque de lobos", oro: 6, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "El cuello", oro: 6, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Tribu de las montañas", oro: 4, propietarioInicial: "Stark", casa: "Stark" },
-    { nombre: "Los Gemelos", oro: 9, propietarioInicial: "Tully", casa: "Tully" },
-    { nombre: "El Tridente", oro: 8, propietarioInicial: "Tully", casa: "Tully" },
-    { nombre: "Aguasdulces", oro: 12, propietarioInicial: "Tully", casa: "Tully" },
-    { nombre: "Harrenhal", oro: 10, propietarioInicial: "Tully", casa: "Tully" },
-    { nombre: "Septo de Piedra", oro: 5, propietarioInicial: "Tully", casa: "Tully" },
-    { nombre: "Varamar", oro: 5, propietarioInicial: "Tully", casa: "Tully" },
-    { nombre: "Poza de Doncella", oro: 8, propietarioInicial: "Tully", casa: "Tully" },
-    { nombre: "Montañas de la Luna", oro: 6, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "Los Dedos", oro: 7, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "Arco Largo", oro: 6, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "Nido de Águilas", oro: 13, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "Puerta de la Sangre", oro: 4, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "Puerto Gaviota", oro: 10, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "Tres Hermanas", oro: 6, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "Fuerterrojo", oro: 7, propietarioInicial: "Arryn", casa: "Arryn" },
-    { nombre: "El risco", oro: 6, propietarioInicial: "Lannister", casa: "Lannister" },
-    { nombre: "Roca Casterly", oro: 16, propietarioInicial: "Lannister", casa: "Lannister" },
-    { nombre: "Colmillo dorado", oro: 8, propietarioInicial: "Lannister", casa: "Lannister" },
-    { nombre: "Refugio de plata", oro: 10, propietarioInicial: "Lannister", casa: "Lannister" },
-    { nombre: "Crakehall", oro: 8, propietarioInicial: "Lannister", casa: "Lannister" },
-    { nombre: "Isla Bella", oro: 6, propietarioInicial: "Lannister", casa: "Lannister" },
-    { nombre: "Lannisport", oro: 15, propietarioInicial: "Lannister", casa: "Lannister" },
-    { nombre: "El Rejo", oro: 10, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Aguas Negras", oro: 6, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Río Mander", oro: 9, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Sotodeoro", oro: 9, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "La Sidra", oro: 6, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Colina Cuerno", oro: 7, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Altojardín", oro: 15, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Antigua", oro: 11, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Islas Escudo", oro: 4, propietarioInicial: "Tyrell", casa: "Tyrell" },
-    { nombre: "Punta Zarpa Rota", oro: 5, propietarioInicial: "Targaryen", casa: "Targaryen" },
-    { nombre: "Valle Oscuro", oro: 10, propietarioInicial: "Targaryen", casa: "Targaryen" },
-    { nombre: "Desembarco del Rey", oro: 23, propietarioInicial: "Targaryen", casa: "Targaryen" },
-    { nombre: "Rocadragón", oro: 7, propietarioInicial: "Targaryen", casa: "Targaryen" },
-    { nombre: "Bosque Real", oro: 6, propietarioInicial: "Targaryen", casa: "Targaryen" },
-    { nombre: "Marca Deriva", oro: 9, propietarioInicial: "Targaryen", casa: "Targaryen" },
-    { nombre: "Bastión de Tormentas", oro: 14, propietarioInicial: "Baratheon", casa: "Baratheon" },
-    { nombre: "Tarth", oro: 8, propietarioInicial: "Baratheon", casa: "Baratheon" },
-    { nombre: "Marcas de Dorne", oro: 8, propietarioInicial: "Baratheon", casa: "Baratheon" },
-    { nombre: "Bosque Bruma", oro: 7, propietarioInicial: "Baratheon", casa: "Baratheon" },
-    { nombre: "Islaverde", oro: 5, propietarioInicial: "Baratheon", casa: "Baratheon" },
-    { nombre: "Bosque Alto", oro: 6, propietarioInicial: "Baratheon", casa: "Baratheon" },
-    { nombre: "Refugio Estival", oro: 7, propietarioInicial: "Baratheon", casa: "Baratheon" },
-    { nombre: "Sepulcro del Rey", oro: 10, propietarioInicial: "Martell", casa: "Martell" },
-    { nombre: "Asperon", oro: 9, propietarioInicial: "Martell", casa: "Martell" },
-    { nombre: "Río Sangreverde", oro: 8, propietarioInicial: "Martell", casa: "Martell" },
-    { nombre: "Lanza del Sol", oro: 15, propietarioInicial: "Martell", casa: "Martell" },
-    { nombre: "Los Peldaños", oro: 6, propietarioInicial: "Martell", casa: "Martell" },
-    { nombre: "Campo Estrella", oro: 7, propietarioInicial: "Martell", casa: "Martell" },
-    { nombre: "Pyke", oro: 14, propietarioInicial: "Greyjoy", casa: "Greyjoy" },
-    { nombre: "Harlaw", oro: 10, propietarioInicial: "Greyjoy", casa: "Greyjoy" },
-    { nombre: "Monte Orca", oro: 7, propietarioInicial: "Greyjoy", casa: "Greyjoy" },
-    { nombre: "Gran Wyk", oro: 9, propietarioInicial: "Greyjoy", casa: "Greyjoy" }
+    { nombre: "Isla del Oso", oro: 5, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Costa pedregosa", oro: 4, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Los túmulos", oro: 7, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Invernalia", oro: 11, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Fuerte terror", oro: 8, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Bastión Kar", oro: 6, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Skagos", oro: 4, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Atalaya de la viuda", oro: 5, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Puerto blanco", oro: 7, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Cabo Kraken", oro: 4, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Bosque de lobos", oro: 6, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "El cuello", oro: 6, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Tribu de las montañas", oro: 4, propietarioInicial: "Stark", casa: "Stark", edificios: [] },
+    { nombre: "Los Gemelos", oro: 9, propietarioInicial: "Tully", casa: "Tully", edificios: [] },
+    { nombre: "El Tridente", oro: 8, propietarioInicial: "Tully", casa: "Tully", edificios: [] },
+    { nombre: "Aguasdulces", oro: 12, propietarioInicial: "Tully", casa: "Tully", edificios: [] },
+    { nombre: "Harrenhal", oro: 10, propietarioInicial: "Tully", casa: "Tully", edificios: [] },
+    { nombre: "Septo de Piedra", oro: 5, propietarioInicial: "Tully", casa: "Tully", edificios: [] },
+    { nombre: "Varamar", oro: 5, propietarioInicial: "Tully", casa: "Tully", edificios: [] },
+    { nombre: "Poza de Doncella", oro: 8, propietarioInicial: "Tully", casa: "Tully", edificios: [] },
+    { nombre: "Montañas de la Luna", oro: 6, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "Los Dedos", oro: 7, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "Arco Largo", oro: 6, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "Nido de Águilas", oro: 13, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "Puerta de la Sangre", oro: 4, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "Puerto Gaviota", oro: 10, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "Tres Hermanas", oro: 6, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "Fuerterrojo", oro: 7, propietarioInicial: "Arryn", casa: "Arryn", edificios: [] },
+    { nombre: "El risco", oro: 6, propietarioInicial: "Lannister", casa: "Lannister", edificios: [] },
+    { nombre: "Roca Casterly", oro: 16, propietarioInicial: "Lannister", casa: "Lannister", edificios: [] },
+    { nombre: "Colmillo dorado", oro: 8, propietarioInicial: "Lannister", casa: "Lannister", edificios: [] },
+    { nombre: "Refugio de plata", oro: 10, propietarioInicial: "Lannister", casa: "Lannister", edificios: [] },
+    { nombre: "Crakehall", oro: 8, propietarioInicial: "Lannister", casa: "Lannister", edificios: [] },
+    { nombre: "Isla Bella", oro: 6, propietarioInicial: "Lannister", casa: "Lannister", edificios: [] },
+    { nombre: "Lannisport", oro: 15, propietarioInicial: "Lannister", casa: "Lannister", edificios: [] },
+    { nombre: "El Rejo", oro: 10, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Aguas Negras", oro: 6, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Río Mander", oro: 9, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Sotodeoro", oro: 9, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "La Sidra", oro: 6, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Colina Cuerno", oro: 7, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Altojardín", oro: 15, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Antigua", oro: 11, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Islas Escudo", oro: 4, propietarioInicial: "Tyrell", casa: "Tyrell", edificios: [] },
+    { nombre: "Punta Zarpa Rota", oro: 5, propietarioInicial: "Targaryen", casa: "Targaryen", edificios: [] },
+    { nombre: "Valle Oscuro", oro: 10, propietarioInicial: "Targaryen", casa: "Targaryen", edificios: [] },
+    { nombre: "Desembarco del Rey", oro: 23, propietarioInicial: "Targaryen", casa: "Targaryen", edificios: [] },
+    { nombre: "Rocadragón", oro: 7, propietarioInicial: "Targaryen", casa: "Targaryen", edificios: [] },
+    { nombre: "Bosque Real", oro: 6, propietarioInicial: "Targaryen", casa: "Targaryen", edificios: [] },
+    { nombre: "Marca Deriva", oro: 9, propietarioInicial: "Targaryen", casa: "Targaryen", edificios: [] },
+    { nombre: "Bastión de Tormentas", oro: 14, propietarioInicial: "Baratheon", casa: "Baratheon", edificios: [] },
+    { nombre: "Tarth", oro: 8, propietarioInicial: "Baratheon", casa: "Baratheon", edificios: [] },
+    { nombre: "Marcas de Dorne", oro: 8, propietarioInicial: "Baratheon", casa: "Baratheon", edificios: [] },
+    { nombre: "Bosque Bruma", oro: 7, propietarioInicial: "Baratheon", casa: "Baratheon", edificios: [] },
+    { nombre: "Islaverde", oro: 5, propietarioInicial: "Baratheon", casa: "Baratheon", edificios: [] },
+    { nombre: "Bosque Alto", oro: 6, propietarioInicial: "Baratheon", casa: "Baratheon", edificios: [] },
+    { nombre: "Refugio Estival", oro: 7, propietarioInicial: "Baratheon", casa: "Baratheon", edificios: [] },
+    { nombre: "Sepulcro del Rey", oro: 10, propietarioInicial: "Martell", casa: "Martell", edificios: [] },
+    { nombre: "Asperon", oro: 9, propietarioInicial: "Martell", casa: "Martell", edificios: [] },
+    { nombre: "Río Sangreverde", oro: 8, propietarioInicial: "Martell", casa: "Martell", edificios: [] },
+    { nombre: "Lanza del Sol", oro: 15, propietarioInicial: "Martell", casa: "Martell", edificios: [] },
+    { nombre: "Los Peldaños", oro: 6, propietarioInicial: "Martell", casa: "Martell", edificios: [] },
+    { nombre: "Campo Estrella", oro: 7, propietarioInicial: "Martell", casa: "Martell", edificios: [] },
+    { nombre: "Pyke", oro: 14, propietarioInicial: "Greyjoy", casa: "Greyjoy", edificios: [] },
+    { nombre: "Harlaw", oro: 10, propietarioInicial: "Greyjoy", casa: "Greyjoy", edificios: [] },
+    { nombre: "Monte Orca", oro: 7, propietarioInicial: "Greyjoy", casa: "Greyjoy", edificios: [] },
+    { nombre: "Gran Wyk", oro: 9, propietarioInicial: "Greyjoy", casa: "Greyjoy", edificios: [] }
   ];
   
 const ORO_INICIAL_POR_DEFECTO = 50;
@@ -115,7 +115,11 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
     estadoJugadores[nombre] = {
       casa: casasAsignadas[nombre] || 'Desconocida',
       tropas: TROPAS_INICIALES_POR_DEFECTO,
-      oro: ORO_INICIAL_POR_DEFECTO
+      oro: ORO_INICIAL_POR_DEFECTO,
+      barcos: 0,
+      catapulta: 0,
+      torre: 0,
+      escorpion: 0
     };
   });
   return estadoJugadores;
@@ -124,6 +128,92 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
 // Cuando un cliente se conecta por socket
 io.on('connection', (socket) => {
   console.log(`🔌 Connect: ${socket.id}`);
+
+
+  socket.on('actualizar-perdidas-neutral', ({ partida, nombre, perdidas, territoriosPerdidos, nuevoPropietarioPorTerritorio }) => {
+
+    const room = rooms[partida];
+    if (!room) return;
+  
+    const jugador = room.estadoJugadores[nombre];
+    if (!jugador) return;
+  
+    jugador.tropas = Math.max(0, jugador.tropas - perdidas);
+  
+    if (territoriosPerdidos && typeof nuevoPropietarioPorTerritorio === "object") {
+      territoriosPerdidos.forEach(nombreTerritorio => {
+        const territorio = room.estadoTerritorios[nombreTerritorio];
+        const nuevo = nuevoPropietarioPorTerritorio[nombreTerritorio];
+        if (territorio && territorio.propietario === jugador.casa && nuevo) {
+          territorio.propietario = nuevo;
+        }
+      });
+    }
+    
+  
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  
+    // El jugador termina automáticamente su fase
+    if (!room.jugadoresAccionTerminada.includes(nombre)) {
+      room.jugadoresAccionTerminada.push(nombre);
+    }
+  
+    const listos = room.jugadoresAccionTerminada.length;
+    const total = room.players.length;
+  
+    io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+  
+    if (listos === total) {
+      room.jugadoresAccionTerminada = [];
+      room.accionActual += 1;
+  
+      if (room.accionActual > 4) {
+        room.accionActual = 1;
+        room.turnoActual += 1;
+  
+        const jugadores = room.estadoJugadores;
+        const territorios = room.estadoTerritorios;
+  
+        for (const jugadorNombre in jugadores) {
+          const j = jugadores[jugadorNombre];
+          const casa = j.casa;
+          let ingreso = 0;
+          for (const nombreTerritorio in territorios) {
+            const t = territorios[nombreTerritorio];
+            if (t.propietario === casa) {
+              ingreso += t.oroBase || 0;
+            }
+          }
+          const barcos = j.barcos || 0;
+          const catapultas = j.catapulta || 0;
+          const torres = j.torre || 0;
+          const escorpiones = j.escorpion || 0;
+          const mantenimiento = j.tropas + barcos * 2 + catapultas + torres + escorpiones;
+          j.oro += ingreso;
+          j.oro = Math.max(0, j.oro - mantenimiento);
+        }
+      }
+  
+      io.to(partida).emit('actualizar-estado-juego', {
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+  
+      io.to(partida).emit('avanzar-accion', {
+        turno: room.turnoActual,
+        accion: room.accionActual,
+        fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+      });
+    }
+  });
+  
 
   socket.on('actualizar-iniciales', ({ partida, nombre, oro, tropas }) => {
     const room = rooms[partida];
@@ -355,6 +445,14 @@ io.on('connection', (socket) => {
         accion: room.accionActual
       });
   
+      // Emitir estado actualizado ANTES de avanzar acción
+      io.to(partida).emit('actualizar-estado-juego', {
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+
       io.to(partida).emit('avanzar-accion', {
         turno: room.turnoActual,
         accion: room.accionActual,
@@ -362,6 +460,113 @@ io.on('connection', (socket) => {
       });
     }
   });
+
+  // =============================
+// RECLUTAMIENTO DE UNIDADES
+// =============================
+socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  const territorioObj = room.estadoTerritorios[territorio];
+
+  if (!jugador || !territorioObj || territorioObj.propietario !== jugador.casa) return;
+
+  const COSTOS = {
+    soldado: 4,
+    mercenario: 5,
+    elite: 7,
+    barco: 20,
+    catapulta: 20,
+    escorpion: 20,
+    torre: 20
+  };
+  
+
+  const costoUnitario = COSTOS[tipoUnidad] ?? 999;
+  const costoTotal = costoUnitario * cantidad;
+
+  if (jugador.oro < costoTotal) {
+    io.to(room.playerSockets[nombre]).emit('error-accion', 'Oro insuficiente para reclutar.');
+    return;
+  }
+
+  jugador.oro -= costoTotal;
+
+  if (tipoUnidad === 'barco') {
+    jugador.barcos = (jugador.barcos || 0) + cantidad;
+  } else if (["catapulta", "torre", "escorpion"].includes(tipoUnidad)) {
+    jugador[tipoUnidad] = (jugador[tipoUnidad] || 0) + cantidad;
+  } else {
+    jugador.tropas = (jugador.tropas || 0) + cantidad;
+  }
+  
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  // Marcar acción como completada
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  const listos = room.jugadoresAccionTerminada.length;
+  const total = room.players.length;
+
+  io.to(partida).emit(
+    'estado-espera-jugadores',
+    listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`
+  );
+
+  if (listos === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+
+      const jugadores = room.estadoJugadores;
+      const territorios = room.estadoTerritorios;
+
+      for (const jugadorNombre in jugadores) {
+        const j = jugadores[jugadorNombre];
+        const casa = j.casa;
+        let ingreso = 0;
+        for (const nombreTerritorio in territorios) {
+          const t = territorios[nombreTerritorio];
+          if (t.propietario === casa) {
+            ingreso += t.oroBase || 0;
+          }
+        }
+        const barcos = j.barcos || 0;
+        const costoBarcos = barcos * 2;
+        const costoTropas = j.tropas || 0;
+        j.oro += ingreso;
+        j.oro = Math.max(0, j.oro - costoTropas - costoBarcos);
+      }
+    }
+
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
   
 
   // Cuando un jugador termina su acción
@@ -406,8 +611,15 @@ io.on('connection', (socket) => {
             // 2. Sumar el ingreso
             jugador.oro += ingreso;
             // 3. Restar mantenimiento por tropas (1 oro por cada tropa)
+            const catapultas = jugador.catapulta || 0;
+            const torres = jugador.torre || 0;
+            const escorpiones = jugador.escorpion || 0;
+            const costoMaquinas = catapultas * 1 + torres * 1 + escorpiones * 1; // o el coste de mantenimiento que quieras
+
             const costoTropas = jugador.tropas || 0;
-            jugador.oro = Math.max(0, jugador.oro - costoTropas);
+            const barcos = jugador.barcos || 0;
+            const costoBarcos = barcos * 2;
+            jugador.oro = Math.max(0, jugador.oro - costoTropas - costoBarcos - costoMaquinas);
         }
       
           io.to(partida).emit('actualizar-estado-juego', {
