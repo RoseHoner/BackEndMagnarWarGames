@@ -167,13 +167,34 @@
     </div>
     <!-- Fin Modal Construir -->
 
+    <!-- Modal Elección Máquina de Asedio -->
+<div id="modal-elegir-asedio" class="modal-juego" style="display: none;">
+  <h2>Elige una máquina de asedio</h2>
+  <div style="display: flex; gap: 20px; justify-content: center;">
+    <div onclick="elegirAsedioGratis('catapulta')" style="cursor: pointer; text-align: center;">
+      <img src="../imgs/reclutas/catapulta.png" style="width: 80px;">
+      <p>Catapulta</p>
+    </div>
+    <div onclick="elegirAsedioGratis('torre')" style="cursor: pointer; text-align: center;">
+      <img src="../imgs/reclutas/torre.png" style="width: 80px;">
+      <p>Torre</p>
+    </div>
+    <div onclick="elegirAsedioGratis('escorpion')" style="cursor: pointer; text-align: center;">
+      <img src="../imgs/reclutas/escorpion.png" style="width: 80px;">
+      <p>Escorpión</p>
+    </div>
+  </div>
+</div>
+
+
     <!-- ****** ELIMINADO Modal Mover/Atacar ****** -->
 
     <!-- Modal Mis Territorios (Sin cambios estructurales) -->
     <div id="modal-mis-territorios" class="modal-juego" style="display: none;">
         <button id="btn-cerrar-modal-territorios" class="modal-cerrar">X</button>
         <h2>Mis Territorios (<span id="contador-territorios">0</span>)</h2>
-        <p>Ingresos por turno: <span id="oro-generado-territorios">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
+        <p>Oro estimado al final del turno: <span id="oro-estimado-final-turno">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
+        <p>Ingresos por territorios: <span id="oro-generado-territorios">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
         <div class="lista-scrollable">
             <ul id="lista-mis-territorios"><li>Cargando...</li></ul>
         </div>

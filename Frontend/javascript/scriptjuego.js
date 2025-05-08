@@ -60,6 +60,14 @@ const MAQUINAS_ASEDIO_UI_VALUES = ['torreAsedio', 'catapulta', 'escorpion'];
 // PARTE 2: DEFINICIÓN DE FUNCIONES
 // =============================================
 
+function elegirAsedioGratis(tipo) {
+    if (!["catapulta", "torre", "escorpion"].includes(tipo)) return;
+    console.log(`[Asedio Gratis] Elegido: ${tipo}`);
+    socket.emit('recompensa-asedio', { partida, nombre, tipo });
+    cerrarModal('modal-elegir-asedio');
+  }
+  
+
 function getListaCasasPosibles() {
     return [
       "Stark", "Lannister", "Baratheon", "Targaryen", "Tully",
@@ -550,14 +558,20 @@ function actualizarCostoConstruir() {
 
      // Buscar costo base usando el 'value'
 // Costos base de cada unidad o edificio usados en la interfaz del cliente
-     let costoBase = COSTOS_BASE_UI[tipoEdificio.toLowerCase().replace(/ /g,'')] ?? 0;
+    let costoBase = COSTOS_BASE_UI[tipoEdificio.toLowerCase()] ?? COSTOS_BASE_UI[tipoEdificio] ?? 0;
+
      if(costoBase === 0) { // Probar con el texto si el value no coincide
 // Costos base de cada unidad o edificio usados en la interfaz del cliente
          costoBase = COSTOS_BASE_UI[tipoEdificio] ?? 0;
      }
 
      // Calcular descuento Cantera
-     let descuento = territorio.edificios.includes('Cantera') ? 5 : 0;
+     let descuento = 0;
+for (const t of Object.values(gameState.territorios)) {
+  if (t.propietario === casa && Array.isArray(t.edificios)) {
+    descuento += t.edificios.filter(e => e === "Cantera").length * 5;
+  }
+}
      const costoTotal = Math.max(0, costoBase - descuento);
       if(costoValorEl) costoValorEl.textContent = costoTotal;
 
@@ -581,6 +595,9 @@ function confirmarConstruir() {
     console.log(`[Construir] Emitiendo: ${tipoFormateado} en ${territorio}`);
     socket.emit('solicitud-construccion', { partida, nombre, territorio, tipoEdificio: tipoFormateado });
     cerrarModal('modal-construir');
+    if (tipoFormateado === "Taller de maquinaria de asedio") {
+        abrirModal('modal-elegir-asedio');
+      }
 }
 
 
@@ -621,6 +638,65 @@ function abrirModalMisTerritorios() {
     contadorSpan.textContent = contador;
     oroSpan.textContent = oroTotalTurno;
     // Contar barcos del jugador (suponemos que están en jugador.barcos)
+    const jugador = gameState.jugadores[nombre];
+
+    // Calculamos minas
+    let oroPorMinas = 0;
+    misTerritorios.forEach(t => {
+        const minas = t.edificios?.filter(ed => ed === "Mina").length || 0;
+        oroPorMinas += minas * 10;
+    });
+
+    // Calculamos aserraderos
+    let oroPorAserraderos = 0;
+    misTerritorios.forEach(t => {
+        const aserraderos = t.edificios?.filter(ed => ed === "Aserradero").length || 0;
+        oroPorAserraderos += aserraderos * 5;
+    });
+
+    // Calculamos canteras
+let oroPorCanteras = 0;
+misTerritorios.forEach(t => {
+    const canteras = t.edificios?.filter(ed => ed === "Cantera").length || 0;
+    oroPorCanteras += canteras * 5;
+});
+
+// Calculamos granjas
+let oroPorGranjas = 0;
+misTerritorios.forEach(t => {
+    const granjas = t.edificios?.filter(ed => ed === "Granja").length || 0;
+    oroPorGranjas += granjas * 5;
+});
+
+// BONUS por puertos
+let oroPorPuertos = 0;
+const totalProduccion = misTerritorios.reduce((acc, t) => {
+  const prod = t.edificios?.filter(e => ["Mina", "Cantera", "Granja", "Aserradero"].includes(e)).length || 0;
+  return acc + prod;
+}, 0);
+misTerritorios.forEach(t => {
+  if (t.edificios?.includes("Puerto")) {
+    oroPorPuertos += totalProduccion * 10;
+  }
+});
+
+
+
+
+
+    // Calculamos mantenimiento
+    const mantenimientoTropas = jugador.tropas || 0;
+    const mantenimientoBarcos = (jugador.barcos || 0) * 2;
+    const mantenimientoMaquinas =
+        (jugador.catapulta || 0) +
+        (jugador.torre || 0) +
+        (jugador.escorpion || 0);
+
+    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas;
+
+    const oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
+    document.getElementById('oro-estimado-final-turno').textContent = oroEstimado;
+
     const tituloModal = modalEl.querySelector('h2');
 if (tituloModal) {
     tituloModal.innerHTML = `Mis Territorios (<span id="contador-territorios">${contador}</span>)`;
@@ -685,9 +761,11 @@ document.addEventListener('DOMContentLoaded', () => {
         setupListener('btn-batalla', 'click', () => { poblarTerritoriosAtacables(); abrirModal('modal-batalla'); });
         setupListener('btn-reclutar', 'click', () => {
             poblarTerritoriosReclutar();
-            agregarReclutaBarcoSiAplica(); // 👈 esta línea
+            agregarReclutaBarcoSiAplica();
+            agregarReclutaAsedioSiAplica(); // 👈 se asegura de añadir máquinas de asedio si hay taller
             abrirModal('modal-reclutar');
         });
+        
         
         setupListener('btn-construir', 'click', () => {
             if (!gameState || !gameState.territorios || !gameState.jugadores) {
@@ -910,6 +988,48 @@ const tieneTaller = Object.values(gameState.territorios).some(
     });
   }
 }
+
+function agregarReclutaAsedioSiAplica() {
+    const contenedor = document.getElementById('contenedor-reclutas');
+    if (!contenedor || !gameState || !gameState.territorios) return;
+
+    const tieneTaller = Object.values(gameState.territorios).some(
+        t => t.propietario === casa && t.edificios.includes("Taller de maquinaria de asedio")
+    );
+
+    // Eliminar unidades de asedio anteriores si existen
+    ['catapulta', 'torre', 'escorpion'].forEach(tipo => {
+        const existente = contenedor.querySelector(`.recluta-box[data-tipo="${tipo}"]`);
+        if (existente) existente.remove();
+    });
+
+    if (!tieneTaller) return;
+
+    const unidadesAsedio = [
+        { tipo: 'catapulta', nombre: 'Catapulta', costo: 20, imagen: 'catapulta.png' },
+        { tipo: 'torre', nombre: 'Torre de Asedio', costo: 20, imagen: 'torre.png' },
+        { tipo: 'escorpion', nombre: 'Escorpión', costo: 20, imagen: 'escorpion.png' }
+    ];
+
+    unidadesAsedio.forEach(({ tipo, nombre, costo, imagen }) => {
+        const div = document.createElement('div');
+        div.className = 'recluta-box';
+        div.dataset.tipo = tipo;
+        div.dataset.costo = costo;
+        div.innerHTML = `
+            <h3>${nombre}</h3>
+            <img src="../imgs/reclutas/${imagen}" alt="${nombre}" style="width: 80px;">
+            <div class="control-numero">
+              <button onclick="ajustarCantidad('${tipo}', -1)">-</button>
+              <span id="cantidad-${tipo}">0</span>
+              <button onclick="ajustarCantidad('${tipo}', 1)">+</button>
+            </div>
+            <p>Coste: ${costo} oro</p>
+        `;
+        contenedor.appendChild(div);
+    });
+}
+
 
 
     // Mostrar modal inicial al entrar
@@ -1134,11 +1254,54 @@ const preciosReclutas = {
   // Calcula y muestra el costo total
   function actualizarCostoTotalRecluta() {
     let total = 0;
-    for (const tipo in cantidadesReclutas) {
-      total += cantidadesReclutas[tipo] * preciosReclutas[tipo];
+    let descuento = 0;
+
+    let descuentoGranja = 0;
+for (const t of Object.values(gameState.territorios)) {
+  if (t.propietario === casa && Array.isArray(t.edificios)) {
+    descuentoGranja += t.edificios.filter(e => e === "Granja").length;
+  }
+}
+
+  
+    // Calculamos el total de aserraderos
+    for (const t of Object.values(gameState.territorios)) {
+      if (t.propietario === casa && Array.isArray(t.edificios)) {
+        descuento += t.edificios.filter(e => e === "Aserradero").length * 5;
+      }
     }
+  
+    // Aplicamos descuento visual y actualizamos los textos también
+    for (const tipo in cantidadesReclutas) {
+      const cantidad = cantidadesReclutas[tipo];
+      const precioBase = preciosReclutas[tipo];
+      let precioFinal = precioBase;
+
+      if (tipo === "soldado" || tipo === "regulares") {
+        precioFinal = Math.max(0, precioBase - descuentoGranja);
+      }
+      
+  
+      if (["barco", "catapulta", "torre", "escorpion"].includes(tipo)) {
+        precioFinal = Math.max(0, precioBase - descuento);
+      }
+  
+      total += cantidad * precioFinal;
+  
+      // Cambiar el texto visual del coste
+      const box = document.querySelector(`.recluta-box[data-tipo="${tipo}"]`);
+      if (box) {
+        const p = box.querySelector('p');
+        if (p) {
+          p.textContent = `Coste: ${precioFinal} oro`;
+        }
+      }
+    }
+  
     document.getElementById('costo-total-recluta').textContent = total;
   }
+  
+  
   
   // Confirmar reclutamiento visual
   function confirmarReclutamiento() {
@@ -1156,10 +1319,41 @@ const preciosReclutas = {
       unidadesValidas[tipo] = cantidadesReclutas[tipo];
     }
   
-    const totalOro = Object.entries(unidadesValidas).reduce(
-      (suma, [tipo, cantidad]) => suma + cantidad * preciosReclutas[tipo],
-      0
-    );
+    let totalOro = 0;
+let descuento = 0;
+
+let descuentoGranja = 0;
+for (const t of Object.values(gameState.territorios)) {
+  if (t.propietario === casa && Array.isArray(t.edificios)) {
+    descuentoGranja += t.edificios.filter(e => e === "Granja").length;
+  }
+}
+
+
+// Calculamos el descuento total según los aserraderos
+for (const t of Object.values(gameState.territorios)) {
+  if (t.propietario === casa && Array.isArray(t.edificios)) {
+    descuento += t.edificios.filter(e => e === "Aserradero").length * 5;
+  }
+}
+
+// Calcular oro total con descuento aplicado
+for (const tipo in unidadesValidas) {
+  const cantidad = unidadesValidas[tipo];
+  let precioUnitario = preciosReclutas[tipo];
+
+  if (tipo === "soldado" || tipo === "regulares") {
+    precioUnitario = Math.max(0, precioUnitario - descuentoGranja);
+  }
+  
+
+  if (["barco", "catapulta", "torre", "escorpion"].includes(tipo)) {
+    precioUnitario = Math.max(0, precioUnitario - descuento);
+  }
+
+  totalOro += cantidad * precioUnitario;
+}
+
   
     const mensajeEl = document.getElementById('mensaje-reclutamiento');
     if (totalOro > jugador.oro) {

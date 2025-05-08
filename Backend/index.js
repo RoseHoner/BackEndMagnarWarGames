@@ -189,6 +189,34 @@ io.on('connection', (socket) => {
               ingreso += t.oroBase || 0;
             }
           }
+            // 🔨 BONUS por cada mina construida en territorios del jugador
+  for (const nombreTerritorio in territorios) {
+    const territorio = territorios[nombreTerritorio];
+    if (territorio.propietario === casa && Array.isArray(territorio.edificios)) {
+        const minas = territorio.edificios.filter(e => e === "Mina").length;
+        const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
+        const canteras = territorio.edificios.filter(e => e === "Cantera").length;
+        const granjas = territorio.edificios.filter(e => e === "Granja").length;
+        const tienePuerto = territorio.edificios.includes("Puerto");
+if (tienePuerto) {
+  // Contar cuántos edificios de producción hay en todos los territorios del jugador
+  let totalProduccion = 0;
+  for (const otro of Object.values(territorios)) {
+    if (otro.propietario === casa && Array.isArray(otro.edificios)) {
+      totalProduccion += otro.edificios.filter(e =>
+        ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)
+      ).length;
+    }
+  }
+  ingreso += totalProduccion * 10;
+}
+        ingreso += minas * 10;
+        ingreso += aserraderos * 5;
+        ingreso += canteras * 5;
+        ingreso += granjas * 5;
+      }
+    }
+
           const barcos = j.barcos || 0;
           const catapultas = j.catapulta || 0;
           const torres = j.torre || 0;
@@ -385,13 +413,22 @@ io.on('connection', (socket) => {
       };
     const costo = COSTOS[tipoEdificio] ?? 999;
   
-    if (jugador.oro < costo) {
-      io.to(room.playerSockets[nombre]).emit('error-accion', 'Oro insuficiente para construir.');
-      return;
-    }
-  
-    // Construcción válida
-    jugador.oro -= costo;
+
+    let descuentoCantera = 0;
+for (const nombreTerritorio in room.estadoTerritorios) {
+  const t = room.estadoTerritorios[nombreTerritorio];
+  if (t.propietario === jugador.casa && Array.isArray(t.edificios)) {
+    descuentoCantera += t.edificios.filter(e => e === "Cantera").length * 5;
+  }
+}
+const costoFinal = Math.max(0, costo - descuentoCantera);
+
+if (jugador.oro < costoFinal) {
+  io.to(room.playerSockets[nombre]).emit('error-accion', 'Oro insuficiente para construir.');
+  return;
+}
+jugador.oro -= costoFinal;
+
     territorioObj.edificios.push(tipoEdificio);
   
     // Emitir estado actualizado
@@ -433,6 +470,34 @@ io.on('connection', (socket) => {
               ingreso += t.oroBase || 0;
             }
           }
+            // 🔨 BONUS por cada mina construida en territorios del jugador
+  for (const nombreTerritorio in territorios) {
+    const territorio = territorios[nombreTerritorio];
+    if (territorio.propietario === casa && Array.isArray(territorio.edificios)) {
+      const minas = territorio.edificios.filter(e => e === "Mina").length;
+      const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
+      const canteras = territorio.edificios.filter(e => e === "Cantera").length;
+      const granjas = territorio.edificios.filter(e => e === "Granja").length;
+      const tienePuerto = territorio.edificios.includes("Puerto");
+if (tienePuerto) {
+  // Contar cuántos edificios de producción hay en todos los territorios del jugador
+  let totalProduccion = 0;
+  for (const otro of Object.values(territorios)) {
+    if (otro.propietario === casa && Array.isArray(otro.edificios)) {
+      totalProduccion += otro.edificios.filter(e =>
+        ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)
+      ).length;
+    }
+  }
+  ingreso += totalProduccion * 10;
+}
+      ingreso += minas * 10;
+      ingreso += aserraderos * 5;
+      ingreso += canteras * 5;
+      ingreso += granjas * 5;
+    }
+}
+
           j.oro += ingreso;
           j.oro = Math.max(0, j.oro - j.tropas);
         }
@@ -484,15 +549,48 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
   };
   
 
-  const costoUnitario = COSTOS[tipoUnidad] ?? 999;
-  const costoTotal = costoUnitario * cantidad;
+  let costoUnitario = COSTOS[tipoUnidad] ?? 999;
 
+  // Si el jugador está reclutando barcos,escorpion,torre y catapulta aplicamos el descuento por aserraderos, tambien si hay granjas descontamos soldados
+  let descuento = 0;
+
+  if (tipoUnidad === "soldado") {
+    for (const nombreTerritorio in room.estadoTerritorios) {
+      const territorio = room.estadoTerritorios[nombreTerritorio];
+      if (territorio.propietario === jugador.casa && Array.isArray(territorio.edificios)) {
+        descuento += territorio.edificios.filter(e => e === "Granja").length;
+      }
+    }
+  }
+
+  costoUnitario = Math.max(0, costoUnitario - descuento);
+  
+
+if (["barco", "catapulta", "escorpion", "torre"].includes(tipoUnidad)) {
+  for (const nombreTerritorio in room.estadoTerritorios) {
+    const territorio = room.estadoTerritorios[nombreTerritorio];
+    if (territorio.propietario === jugador.casa && Array.isArray(territorio.edificios)) {
+      const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
+const canteras = territorio.edificios.filter(e => e === "Cantera").length;
+ingreso += aserraderos * 5;
+ingreso += canteras * 5;
+
+    }
+  }
+  costoUnitario = Math.max(0, COSTOS[tipoUnidad] - descuento);
+}
+
+  
+  // Calcular costo final con el costo unitario (con o sin descuento)
+  const costoTotal = costoUnitario * cantidad;
+  
   if (jugador.oro < costoTotal) {
     io.to(room.playerSockets[nombre]).emit('error-accion', 'Oro insuficiente para reclutar.');
     return;
   }
-
+  
   jugador.oro -= costoTotal;
+  
 
   if (tipoUnidad === 'barco') {
     jugador.barcos = (jugador.barcos || 0) + cantidad;
@@ -544,6 +642,35 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
             ingreso += t.oroBase || 0;
           }
         }
+
+          // 🔨 BONUS por cada mina construida en territorios del jugador
+  for (const nombreTerritorio in territorios) {
+    const territorio = territorios[nombreTerritorio];
+    if (territorio.propietario === casa && Array.isArray(territorio.edificios)) {
+      const minas = territorio.edificios.filter(e => e === "Mina").length;
+      const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
+      const canteras = territorio.edificios.filter(e => e === "Cantera").length;
+      const granjas = territorio.edificios.filter(e => e === "Granja").length;
+      const tienePuerto = territorio.edificios.includes("Puerto");
+if (tienePuerto) {
+  // Contar cuántos edificios de producción hay en todos los territorios del jugador
+  let totalProduccion = 0;
+  for (const otro of Object.values(territorios)) {
+    if (otro.propietario === casa && Array.isArray(otro.edificios)) {
+      totalProduccion += otro.edificios.filter(e =>
+        ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)
+      ).length;
+    }
+  }
+  ingreso += totalProduccion * 10;
+}
+      ingreso += minas * 10;
+      ingreso += aserraderos * 5;
+      ingreso += canteras * 5;
+      ingreso += granjas * 5;
+    }
+}
+
         const barcos = j.barcos || 0;
         const costoBarcos = barcos * 2;
         const costoTropas = j.tropas || 0;
@@ -608,6 +735,35 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
                     ingreso += territorio.oroBase || 0;
                 }
             }
+
+              // 🔨 BONUS por cada mina construida en territorios del jugador
+  for (const nombreTerritorio in territorios) {
+    const territorio = territorios[nombreTerritorio];
+    if (territorio.propietario === casa && Array.isArray(territorio.edificios)) {
+      const minas = territorio.edificios.filter(e => e === "Mina").length;
+      const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
+      const canteras = territorio.edificios.filter(e => e === "Cantera").length;
+      const granjas = territorio.edificios.filter(e => e === "Granja").length;
+      const tienePuerto = territorio.edificios.includes("Puerto");
+if (tienePuerto) {
+  // Contar cuántos edificios de producción hay en todos los territorios del jugador
+  let totalProduccion = 0;
+  for (const otro of Object.values(territorios)) {
+    if (otro.propietario === casa && Array.isArray(otro.edificios)) {
+      totalProduccion += otro.edificios.filter(e =>
+        ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)
+      ).length;
+    }
+  }
+  ingreso += totalProduccion * 10;
+}
+      ingreso += minas * 10;
+      ingreso += aserraderos * 5;
+      ingreso += canteras * 5;
+      ingreso += granjas * 5;
+    }
+}
+
             // 2. Sumar el ingreso
             jugador.oro += ingreso;
             // 3. Restar mantenimiento por tropas (1 oro por cada tropa)
@@ -640,6 +796,23 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
       
     }
   });
+
+  socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
+    const room = rooms[partida];
+    if (!room || !room.estadoJugadores?.[nombre]) return;
+    if (!["catapulta", "torre", "escorpion"].includes(tipo)) return;
+  
+    const jugador = room.estadoJugadores[nombre];
+    jugador[tipo] = (jugador[tipo] || 0) + 1;
+  
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+  
 
   // Cuando un jugador se desconecta
   socket.on('disconnect', (reason) => {
