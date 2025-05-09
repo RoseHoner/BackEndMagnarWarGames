@@ -56,6 +56,20 @@ const EDIFICIOS_PRODUCCION = ['Granja', 'Cantera', 'Mina', 'Aserradero'];
 // Nombres usados en HTML para máquinas de asedio (para calcular descuentos)
 const MAQUINAS_ASEDIO_UI_VALUES = ['torreAsedio', 'catapulta', 'escorpion'];
 
+const LIMITE_SOLDADOS_POR_CASA = {
+    Stark: 10,
+    Lannister: 9,
+    Targaryen: 8,
+    Baratheon: 10,
+    Tully: 8,
+    Martell: 9,
+    Tyrell: 10,
+    Arryn: 9,
+    Greyjoy: 8
+    // Puedes ajustar estos valores por casa según quieras
+  };
+  
+
 // =============================================
 // PARTE 2: DEFINICIÓN DE FUNCIONES
 // =============================================
@@ -452,15 +466,33 @@ function confirmarReclutar() {
     const territorio = document.getElementById('select-territorio-reclutar').value;
     const tipoUnidad = document.getElementById('select-unidad-reclutar').value;
     const cantidad = parseInt(document.getElementById('input-cantidad-reclutar').value);
+    const mensajeEl = document.getElementById('mensaje-reclutamiento');
 
     if (!territorio || !tipoUnidad || isNaN(cantidad) || cantidad <= 0) {
         alert("Por favor, completa todos los campos para reclutar.");
         return;
     }
+
+    // Solo aplicamos el límite si es tipo soldado (regulares)
+    if (tipoUnidad === '') {
+        const jugador = gameState.jugadores[nombre];
+        const tropasActuales = jugador.tropas || 0;
+        const maximo = LIMITE_SOLDADOS_POR_CASA[casa] || 10; // Por si acaso
+        const totalTrasReclutar = tropasActuales + cantidad;
+
+        if (totalTrasReclutar > maximo) {
+            mensajeEl.textContent = `❌ Límite de soldados (${maximo}) superado. Tienes ${tropasActuales}.`;
+            return; // No dejes confirmar
+        }
+    }
+
+    // Si todo está bien
+    mensajeEl.textContent = ""; // Limpiar mensaje
     console.log(`[Reclutar] Emitiendo: ${cantidad} ${tipoUnidad} en ${territorio}`);
     socket.emit('solicitud-reclutamiento', { partida, nombre, territorio, tipoUnidad, cantidad });
     cerrarModal('modal-reclutar');
 }
+
 
 // --- Lógica Modal Construir ---
 function poblarTerritoriosConstruir() {
@@ -680,10 +712,6 @@ misTerritorios.forEach(t => {
   }
 });
 
-
-
-
-
     // Calculamos mantenimiento
     const mantenimientoTropas = jugador.tropas || 0;
     const mantenimientoBarcos = (jugador.barcos || 0) * 2;
@@ -760,11 +788,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Botones de Acción específica
         setupListener('btn-batalla', 'click', () => { poblarTerritoriosAtacables(); abrirModal('modal-batalla'); });
         setupListener('btn-reclutar', 'click', () => {
+            if (!gameState || !gameState.jugadores?.[nombre]) {
+              alert("⚠️ Esperando sincronización con el servidor. Intenta en unos segundos.");
+              return;
+            }
+          
+            // Resetear cantidades antes de abrir
+            for (const tipo in cantidadesReclutas) {
+              cantidadesReclutas[tipo] = 0;
+              const el = document.getElementById(`cantidad-${tipo}`);
+              if (el) el.textContent = '0';
+            }
+          
+            actualizarCostoTotalRecluta(); // para que el oro se actualice desde 0
             poblarTerritoriosReclutar();
             agregarReclutaBarcoSiAplica();
-            agregarReclutaAsedioSiAplica(); // 👈 se asegura de añadir máquinas de asedio si hay taller
+            agregarReclutaAsedioSiAplica();
             abrirModal('modal-reclutar');
-        });
+          });
+          
+          
         
         
         setupListener('btn-construir', 'click', () => {
@@ -778,7 +821,17 @@ document.addEventListener('DOMContentLoaded', () => {
             abrirModal('modal-construir');
           });
         setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover/Atacar')); // Acción simplificada
-        setupListener('btn-reorganizar', 'click', () => terminarAccionEspecifica('Reorganizar')); // Acción simplificada
+        setupListener('btn-reorganizar', 'click', () => {
+            const turno = gameState?.turno || 1;
+            const accion = gameState?.accion || 1;
+            socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
+            terminarAccionEspecifica('Reorganizar');
+          });
+        
+        
+        
+        
+        
 
         // --- Listeners para Modal Batalla ---
         setupListener('btn-cerrar-modal-batalla', 'click', () => cerrarModal('modal-batalla'));
@@ -1045,9 +1098,8 @@ document.getElementById('btn-confirmar-iniciales').addEventListener('click', () 
       return;
     }
   
-    gameState.jugadores[nombre].oro = oro;
-    gameState.jugadores[nombre].tropas = tropas;
-    socket.emit('actualizar-iniciales', { partida, nombre, oro, tropas });
+    socket.emit('confirmar-iniciales-turno1', { partida, nombre, tropas, oroExtra: oro });
+
   
     actualizarInfoJugador();
     cerrarModal('modal-inicial');
@@ -1204,6 +1256,8 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
         actualizarInfoAdicional();
         actualizarEdificiosJugador();
         actualizarUnidadesMilitares();
+        actualizarBotonReorganizar();
+
 
         // Habilitar/Deshabilitar botones según la fase actual y si el jugador ya terminó
         deshabilitarBotonesAccion(gameState.fase === 'Neutral' || gameState.jugadoresAccionTerminada?.includes(nombre));
@@ -1214,6 +1268,27 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
         // Intentar continuar, pero loguear el error.
     }
 });
+
+function actualizarBotonReorganizar() {
+    const btn = document.getElementById('btn-reorganizar');
+    if (!btn || !gameState || !gameState.reorganizarUsadoPorJugador) return;
+  
+    const disponibleEn = gameState.reorganizarUsadoPorJugador[nombre];
+    const turno = gameState.turno;
+    const accion = gameState.accion;
+    const actualAccionGlobal = (turno - 1) * 4 + accion;
+  
+    if (!disponibleEn || actualAccionGlobal >= disponibleEn) {
+      btn.style.display = 'inline-block';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+  
+
+
+
+
 
 // Listener para cuando otro jugador se desconecta (opcional)
 socket.on('jugador-desconectado', (nombreDesconectado) => {
@@ -1232,6 +1307,7 @@ const preciosReclutas = {
     torre: 20,
     escorpion: 20
 };
+  
 
   
   const cantidadesReclutas = {
@@ -1246,10 +1322,16 @@ const preciosReclutas = {
   
   // Actualiza la UI y costo total al cambiar cantidades
   function ajustarCantidad(tipo, cambio) {
+    
     cantidadesReclutas[tipo] = Math.max(0, cantidadesReclutas[tipo] + cambio);
-    document.getElementById(`cantidad-${tipo}`).textContent = cantidadesReclutas[tipo];
+    const el = document.getElementById(`cantidad-${tipo}`);
+    if (el) el.textContent = cantidadesReclutas[tipo];
     actualizarCostoTotalRecluta();
   }
+  
+  
+  
+  
   
   // Calcula y muestra el costo total
   function actualizarCostoTotalRecluta() {

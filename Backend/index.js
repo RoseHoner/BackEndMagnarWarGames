@@ -88,8 +88,9 @@ const TERRITORIOS_BASE = [
     { nombre: "Gran Wyk", oro: 9, propietarioInicial: "Greyjoy", casa: "Greyjoy", edificios: [] }
   ];
   
-const ORO_INICIAL_POR_DEFECTO = 50;
-const TROPAS_INICIALES_POR_DEFECTO = 30;
+const ORO_INICIAL_POR_DEFECTO = 0;
+const TROPAS_INICIALES_POR_DEFECTO = 0;
+
 
 // Función que genera el estado inicial de los territorios al comenzar la partida
 function inicializarEstadoTerritorios() {
@@ -152,6 +153,7 @@ io.on('connection', (socket) => {
     
   
     io.to(partida).emit('actualizar-estado-juego', {
+      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -228,6 +230,7 @@ if (tienePuerto) {
       }
   
       io.to(partida).emit('actualizar-estado-juego', {
+        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -252,12 +255,75 @@ if (tienePuerto) {
   
     // Opcional: mandar estado actualizado de ese jugador
     io.to(partida).emit('actualizar-estado-juego', {
+      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
       accion: room.accionActual
     });
   });
+
+  socket.on('confirmar-iniciales-turno1', ({ partida, nombre, tropas, oroExtra }) => {
+    const room = rooms[partida];
+    if (!room || !room.estadoJugadores?.[nombre]) return;
+  
+    // Solo debe ejecutarse en el turno 1, acción 1
+    if (room.turnoActual !== 1 || room.accionActual !== 1) return;
+  
+    const jugador = room.estadoJugadores[nombre];
+    const casa = jugador.casa;
+    const territorios = room.estadoTerritorios;
+  
+    jugador.tropas = tropas;
+  
+    // Calcular ingresos como en la fase neutral
+    let ingreso = 0;
+  
+    for (const nombreTerritorio in territorios) {
+      const territorio = territorios[nombreTerritorio];
+      if (territorio.propietario === casa) {
+        ingreso += territorio.oroBase || 0;
+  
+        const minas = territorio.edificios.filter(e => e === "Mina").length;
+        const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
+        const canteras = territorio.edificios.filter(e => e === "Cantera").length;
+        const granjas = territorio.edificios.filter(e => e === "Granja").length;
+  
+        ingreso += minas * 10;
+        ingreso += aserraderos * 5;
+        ingreso += canteras * 5;
+        ingreso += granjas * 5;
+      }
+    }
+  
+    // BONUS por puerto
+    const tienePuerto = Object.values(territorios).some(t => t.propietario === casa && t.edificios.includes("Puerto"));
+    if (tienePuerto) {
+      let totalProd = 0;
+      for (const t of Object.values(territorios)) {
+        if (t.propietario === casa) {
+          totalProd += t.edificios.filter(e => ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)).length;
+        }
+      }
+      ingreso += totalProd * 10;
+    }
+  
+    // Sumar oro extra ingresado por el jugador
+    ingreso += oroExtra;
+  
+    // Restar mantenimiento
+    const mantenimiento = tropas + (jugador.barcos || 0) * 2 + (jugador.catapulta || 0) + (jugador.torre || 0) + (jugador.escorpion || 0);
+    jugador.oro = Math.max(0, ingreso - mantenimiento);
+  
+    io.to(partida).emit('actualizar-estado-juego', {
+      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+  
   
 
   // Crear una nueva partida
@@ -324,10 +390,27 @@ if (tienePuerto) {
     io.to(partida).emit('jugadores-actualizados', room.players);
   });
 
+  socket.on('usar-reorganizar', ({ partida, nombre, turno, accion }) => {
+    const room = rooms[partida];
+    if (!room) return;
+  
+    if (!room.reorganizarUsadoPorJugador) room.reorganizarUsadoPorJugador = {};
+  
+    let actual = (turno - 1) * 4 + accion;
+let siguiente = actual + 1;
+let disponibleEn = siguiente + 5; // 1 + 5 = 6 acciones después
+  
+    room.reorganizarUsadoPorJugador[nombre] = disponibleEn;
+  });
+  
+  
+
   // El host inicia el juego
   socket.on('iniciar-juego', ({ partida }) => {
     const room = rooms[partida];
     if (!room) return;
+
+    room.reorganizarUsadoPorJugador = {}; // { nombreJugador: turnoEnQueLoUso }
 
     // Inicializamos estado de juego
     room.estadoTerritorios = inicializarEstadoTerritorios();
@@ -347,6 +430,7 @@ if (tienePuerto) {
       socket.join(partida);
       console.log(`[Juego] ${nombre} se conectó a la sala de ${partida}`);
       socket.emit('actualizar-estado-juego', {
+        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -377,6 +461,7 @@ if (tienePuerto) {
     }
 
     io.to(partida).emit('actualizar-estado-juego', {
+      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       recursos: {
         [atacante]: room.estadoJugadores[atacante],
@@ -433,6 +518,7 @@ jugador.oro -= costoFinal;
   
     // Emitir estado actualizado
     io.to(partida).emit('actualizar-estado-juego', {
+      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -504,6 +590,7 @@ if (tienePuerto) {
       }
   
       io.to(partida).emit('actualizar-estado-juego', {
+        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -512,6 +599,7 @@ if (tienePuerto) {
   
       // Emitir estado actualizado ANTES de avanzar acción
       io.to(partida).emit('actualizar-estado-juego', {
+        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -602,6 +690,7 @@ ingreso += canteras * 5;
   
 
   io.to(partida).emit('actualizar-estado-juego', {
+    reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -680,6 +769,7 @@ if (tienePuerto) {
     }
 
     io.to(partida).emit('actualizar-estado-juego', {
+      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -779,6 +869,7 @@ if (tienePuerto) {
         }
       
           io.to(partida).emit('actualizar-estado-juego', {
+            reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
             territorios: room.estadoTerritorios,
             jugadores: room.estadoJugadores,
             turno: room.turnoActual,
@@ -806,6 +897,7 @@ if (tienePuerto) {
     jugador[tipo] = (jugador[tipo] || 0) + 1;
   
     io.to(partida).emit('actualizar-estado-juego', {
+      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
