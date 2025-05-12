@@ -94,18 +94,36 @@ const TROPAS_INICIALES_POR_DEFECTO = 0;
 
 // Función que genera el estado inicial de los territorios al comenzar la partida
 function inicializarEstadoTerritorios() {
+    const CAPITALES = [
+        "Invernalia", "Aguasdulces", "Nido de Águilas", "Roca Casterly",
+        "Altojardín", "Desembarco del Rey", "Bastión de Tormentas", "Lanza del Sol", "Pyke"
+    ];
+
     const estadoTerritorios = {};
     TERRITORIOS_BASE.forEach(t => {
         estadoTerritorios[t.nombre] = {
-            nombre: t.nombre, // ✅ AÑADIDO AQUÍ
+            nombre: t.nombre,
             propietario: t.propietarioInicial,
             oroBase: t.oro,
-            edificios: [],
+            edificios: CAPITALES.includes(t.nombre) ? ["Castillo"] : [],
             tropas: {}
         };
     });
     return estadoTerritorios;
 }
+
+
+const BARCOS_INICIALES = {
+  Greyjoy: 4,
+  Stark: 2,
+  Arryn: 1,
+  Targaryen: 2,
+  Baratheon: 2,
+  Martell: 1,
+  Tyrell: 2,
+  Lannister: 1,
+  Tully: 0
+};
 
   
 
@@ -117,7 +135,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
       casa: casasAsignadas[nombre] || 'Desconocida',
       tropas: TROPAS_INICIALES_POR_DEFECTO,
       oro: ORO_INICIAL_POR_DEFECTO,
-      barcos: 0,
+      barcos: BARCOS_INICIALES[casasAsignadas[nombre]] || 0,
       catapulta: 0,
       torre: 0,
       escorpion: 0
@@ -129,6 +147,92 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
 // Cuando un cliente se conecta por socket
 io.on('connection', (socket) => {
   console.log(`🔌 Connect: ${socket.id}`);
+
+  socket.on("tyrell-inicial-completo", ({ partida, nombre, territorio, oro, tropas }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  const t = room.estadoTerritorios[territorio];
+  if (!jugador || jugador.casa !== "Tyrell" || !t) return;
+
+  // Añadir la Granja
+  t.edificios.push("Granja");
+
+  // Asignar tropas (necesario antes de calcular mantenimiento)
+  jugador.tropas = tropas;
+
+  // Calcular ingresos
+  let ingreso = 0;
+  for (const terr of Object.values(room.estadoTerritorios)) {
+    if (terr.propietario === "Tyrell") {
+      ingreso += terr.oroBase || 0;
+      ingreso += (terr.edificios.filter(e => e === "Mina").length) * 10;
+      ingreso += (terr.edificios.filter(e => e === "Cantera").length) * 5;
+      ingreso += (terr.edificios.filter(e => e === "Granja").length) * 5;
+      ingreso += (terr.edificios.filter(e => e === "Aserradero").length) * 5;
+    }
+  }
+
+  // Bonus por Puerto
+  const tienePuerto = Object.values(room.estadoTerritorios).some(
+    t => t.propietario === "Tyrell" && t.edificios.includes("Puerto")
+  );
+
+  if (tienePuerto) {
+    let prodEdificios = 0;
+    for (const terr of Object.values(room.estadoTerritorios)) {
+      if (terr.propietario === "Tyrell") {
+        prodEdificios += terr.edificios.filter(e =>
+          ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)
+        ).length;
+      }
+    }
+    ingreso += prodEdificios * 10;
+  }
+
+  // Sumar oro extra elegido por el jugador
+  ingreso += oro;
+
+  // Calcular mantenimiento
+  const mantenimiento =
+    tropas +
+    (jugador.barcos || 0) * 2 +
+    (jugador.catapulta || 0) +
+    (jugador.torre || 0) +
+    (jugador.escorpion || 0);
+
+  jugador.oro = Math.max(0, ingreso - mantenimiento);
+
+  // Emitir estado actualizado
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
+
+
+
+  socket.on("colocar-granja-tyrell", ({ partida, nombre, territorio }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  const t = room.estadoTerritorios[territorio];
+  if (!jugador || jugador.casa !== "Tyrell" || !t || t.propietario !== "Tyrell") return;
+
+  t.edificios.push("Granja");
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
 
 
   socket.on('actualizar-perdidas-neutral', ({ partida, nombre, perdidas, territoriosPerdidos, nuevoPropietarioPorTerritorio }) => {
@@ -153,7 +257,6 @@ io.on('connection', (socket) => {
     
   
     io.to(partida).emit('actualizar-estado-juego', {
-      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -230,7 +333,6 @@ if (tienePuerto) {
       }
   
       io.to(partida).emit('actualizar-estado-juego', {
-        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -255,7 +357,6 @@ if (tienePuerto) {
   
     // Opcional: mandar estado actualizado de ese jugador
     io.to(partida).emit('actualizar-estado-juego', {
-      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -316,12 +417,43 @@ if (tienePuerto) {
     jugador.oro = Math.max(0, ingreso - mantenimiento);
   
     io.to(partida).emit('actualizar-estado-juego', {
-      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
       accion: room.accionActual
     });
+
+  const listos = room.jugadoresAccionTerminada.length;
+  const total = room.players.length;
+
+  io.to(partida).emit(
+    'estado-espera-jugadores',
+    listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`
+  );
+
+  if (listos === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+
   });
   
   
@@ -390,18 +522,6 @@ if (tienePuerto) {
     io.to(partida).emit('jugadores-actualizados', room.players);
   });
 
-  socket.on('usar-reorganizar', ({ partida, nombre, turno, accion }) => {
-    const room = rooms[partida];
-    if (!room) return;
-  
-    if (!room.reorganizarUsadoPorJugador) room.reorganizarUsadoPorJugador = {};
-  
-    let actual = (turno - 1) * 4 + accion;
-let siguiente = actual + 1;
-let disponibleEn = siguiente + 5; // 1 + 5 = 6 acciones después
-  
-    room.reorganizarUsadoPorJugador[nombre] = disponibleEn;
-  });
   
   
 
@@ -409,8 +529,6 @@ let disponibleEn = siguiente + 5; // 1 + 5 = 6 acciones después
   socket.on('iniciar-juego', ({ partida }) => {
     const room = rooms[partida];
     if (!room) return;
-
-    room.reorganizarUsadoPorJugador = {}; // { nombreJugador: turnoEnQueLoUso }
 
     // Inicializamos estado de juego
     room.estadoTerritorios = inicializarEstadoTerritorios();
@@ -430,7 +548,6 @@ let disponibleEn = siguiente + 5; // 1 + 5 = 6 acciones después
       socket.join(partida);
       console.log(`[Juego] ${nombre} se conectó a la sala de ${partida}`);
       socket.emit('actualizar-estado-juego', {
-        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -461,7 +578,6 @@ let disponibleEn = siguiente + 5; // 1 + 5 = 6 acciones después
     }
 
     io.to(partida).emit('actualizar-estado-juego', {
-      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       recursos: {
         [atacante]: room.estadoJugadores[atacante],
@@ -518,7 +634,6 @@ jugador.oro -= costoFinal;
   
     // Emitir estado actualizado
     io.to(partida).emit('actualizar-estado-juego', {
-      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -590,7 +705,6 @@ if (tienePuerto) {
       }
   
       io.to(partida).emit('actualizar-estado-juego', {
-        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -599,7 +713,6 @@ if (tienePuerto) {
   
       // Emitir estado actualizado ANTES de avanzar acción
       io.to(partida).emit('actualizar-estado-juego', {
-        reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -690,7 +803,6 @@ ingreso += canteras * 5;
   
 
   io.to(partida).emit('actualizar-estado-juego', {
-    reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -769,7 +881,6 @@ if (tienePuerto) {
     }
 
     io.to(partida).emit('actualizar-estado-juego', {
-      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -869,7 +980,6 @@ if (tienePuerto) {
         }
       
           io.to(partida).emit('actualizar-estado-juego', {
-            reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
             territorios: room.estadoTerritorios,
             jugadores: room.estadoJugadores,
             turno: room.turnoActual,
@@ -897,7 +1007,6 @@ if (tienePuerto) {
     jugador[tipo] = (jugador[tipo] || 0) + 1;
   
     io.to(partida).emit('actualizar-estado-juego', {
-      reorganizarUsadoPorJugador: room.reorganizarUsadoPorJugador,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,

@@ -28,6 +28,34 @@
     <div id="accion-jugador" class="accion-texto">Acción 1</div>
     <div id="estado-turno"></div>
 
+    <!-- Modal Tyrell Inicio Combinado -->
+<div id="modal-inicial-tyrell" class="modal-juego" style="display: none; z-index: 99999;">
+  <h2>🌿 Tyrell: Configura tu inicio</h2>
+
+  <div class="campo-formulario">
+    <label for="select-tyrell-granja">Selecciona territorio para tu Granja:</label>
+    <select id="select-tyrell-granja"><option value="">-- Selecciona --</option></select>
+  </div>
+
+  <div class="campo-formulario">
+    <label for="input-oro-tyrell">💰 Oro Extra:</label>
+    <input type="number" id="input-oro-tyrell" min="0" value="50" style="width: 100%;">
+  </div>
+
+  <div class="campo-formulario">
+    <label for="input-tropas-tyrell">🛡️ Tropas Iniciales:</label>
+    <input type="number" id="input-tropas-tyrell" min="0" value="30" style="width: 100%;">
+  </div>
+
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button id="btn-confirmar-inicial-tyrell" class="btn-confirmar" style="width: 100%;">
+      ✔️ Confirmar
+    </button>
+  </div>
+</div>
+
+
+
     <!-- CONTENEDOR BOTONES ACCIÓN (Sin cambios estructurales) -->
     <div id="acciones-container">
         <button id="btn-batalla" class="btn-accion-juego">⚔️ Batalla</button>
@@ -213,7 +241,7 @@
     </div>
 
     <!-- Modal para elegir recursos iniciales -->
-<div id="modal-inicial" class="modal-juego" style="display: block; z-index: 9999; backdrop-filter: blur(2px);">
+<div id="modal-inicial" class="modal-juego" style="display: none; z-index: 9999; backdrop-filter: blur(2px);">
     <h2>⚙️ Configura tus recursos iniciales</h2>
   
     <div class="campo-formulario">

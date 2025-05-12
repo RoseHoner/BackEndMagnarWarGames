@@ -5,6 +5,9 @@ let tropasPerdidas = 0;
 let territoriosPerdidos = [];
 let nuevoPropietarioPorTerritorio = {};
 
+let inicialYaConfirmado = false;
+let modalInicialYaMostrado = false;
+
 
 // --- Conexión Socket.IO ---
 // Asegúrate de que esta IP/Puerto sea la correcta y accesible desde tus clientes
@@ -68,6 +71,10 @@ const LIMITE_SOLDADOS_POR_CASA = {
     Greyjoy: 8
     // Puedes ajustar estos valores por casa según quieras
   };
+
+  let turnoReorganizarUsado = null;
+  let accionReorganizarUsado = null;
+
   
 
 // =============================================
@@ -148,6 +155,22 @@ function actualizarInfoJugador() {
     if (tropasJugadorDiv) tropasJugadorDiv.style.display = 'flex';
 }
 
+function poblarSelectTyrellGranja() {
+  const select = document.getElementById('select-tyrell-granja');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">-- Selecciona --</option>';
+  Object.values(gameState.territorios)
+    .filter(t => t.propietario === "Tyrell")
+    .forEach(t => {
+      const option = document.createElement('option');
+      option.value = t.nombre;
+      option.textContent = t.nombre;
+      select.appendChild(option);
+    });
+}
+
+
 // Muestra en pantalla el turno actual y el estado de la acción
 function actualizarTurnoAccionUI() {
     if (!gameState) return;
@@ -171,6 +194,30 @@ function actualizarTurnoAccionUI() {
              estadoTurnoEl.textContent = ""; // Limpiar si no aplica
         }
      }
+
+     const btnReorganizar = document.getElementById('btn-reorganizar');
+if (btnReorganizar) {
+    if (turnoReorganizarUsado === null || accionReorganizarUsado === null) {
+        btnReorganizar.style.display = 'inline-block'; // No se ha usado nunca
+    } else {
+        const turnoDisponible = turnoReorganizarUsado + 2;
+        const debeMostrar = (
+            gameState.turno === turnoDisponible && gameState.accion === 1
+        );
+
+        if (debeMostrar) {
+            btnReorganizar.style.display = 'inline-block';
+            // 🔄 Reseteamos para evitar que lo vuelva a ocultar
+            turnoReorganizarUsado = null;
+            accionReorganizarUsado = null;
+        } else {
+            btnReorganizar.style.display = 'none';
+        }
+    }
+}
+
+
+
 }
 
 function actualizarInfoAdicional() {
@@ -240,7 +287,7 @@ function setLogoPorCasa(casaNombre) {
 }
 
 function setFondoPorCasa(casaNombre) {
-     const fondos = { Stark: 'url("../imgs/FondosCasas/stark.png")', Lannister: 'url("../imgs/FondosCasas/lannister.png")', Targaryen: 'url("../imgs/FondosCasas/targaryen.png")', Baratheon: 'url("../imgs/FondosCasas/baratheon.png")', Greyjoy: 'url("../imgs/FondosCasas/greyjoy.png")', Martell: 'url("../imgs/FondosCasas/martell.png")', Tyrell: 'url("../imgs/FondosCasas/tyrell.png")', Arryn: 'url("../imgs/FondosCasas/arryn.png")', Tully: 'url("../imgs/FondosCasas/tully.png")' };
+     const fondos = { Stark: 'url("../imgs/FondosCasas/stark.png")', Lannister: 'url("../imgs/FondosCasas/lannister.png")', Targaryen: 'url("../imgs/FondosCasas/targaryen.png")', Baratheon: 'url("../imgs/FondosCasas/baratheon.png")', Greyjoy: 'url("../imgs/FondosCasas/greyjoy.png")', Martell: 'url("../imgs/FondosCasas/martell.png")', Tyrell: 'url("../imgs/FondosCasas/tyrrel.png")', Arryn: 'url("../imgs/FondosCasas/arryn.png")', Tully: 'url("../imgs/FondosCasas/tully.png")' };
      const fondo = fondos[casaNombre] || 'url("../imgs/mapa/mapafinal.jpeg")';
      document.body.style.backgroundImage = fondo; document.body.style.backgroundSize = 'cover';
      document.body.style.backgroundPosition = 'center center'; document.body.style.backgroundRepeat = 'no-repeat';
@@ -401,14 +448,28 @@ function poblarUnidadesReclutar() {
      selectUnidadEl.value = 'regulares'; // Reset selection
      actualizarCostoReclutar(); // Update cost
 }
-function ajustarCantidadReclutar(cantidad) {
-    const input = document.getElementById('input-cantidad-reclutar');
-    if (!input) return;
-    let v = parseInt(input.value) || 1;
-    v = Math.max(1, v + cantidad);
-    input.value = v;
-    actualizarCostoReclutar();
+function ajustarCantidad(tipo, cambio) {
+  if (!gameState?.jugadores?.[nombre]) return;
+
+  const jugador = gameState.jugadores[nombre];
+  const casaJugador = jugador.casa;
+  const limite = LIMITE_SOLDADOS_POR_CASA[casaJugador] ?? 5;
+
+  // Si es soldado, aplicar límite
+  if (tipo === 'soldado') {
+    const actual = cantidadesReclutas[tipo] ?? 0;
+    const nuevoValor = actual + cambio;
+    
+    // 👇 Esto impide subir si ya estás en el límite
+    if (nuevoValor > limite) return;
+  }
+
+  cantidadesReclutas[tipo] = Math.max(0, (cantidadesReclutas[tipo] ?? 0) + cambio);
+  const el = document.getElementById(`cantidad-${tipo}`);
+  if (el) el.textContent = cantidadesReclutas[tipo];
+  actualizarCostoTotalRecluta();
 }
+
 function actualizarCostoReclutar() {
     if (!gameState || !gameState.territorios || !gameState.jugadores[nombre]) return;
     const jugador = gameState.jugadores[nombre];
@@ -782,6 +843,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+
+
         // Botones barra superior y principal
         setupListener('logo-casa-container', 'click', abrirModalMisTerritorios);
 
@@ -822,11 +885,15 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover/Atacar')); // Acción simplificada
         setupListener('btn-reorganizar', 'click', () => {
-            const turno = gameState?.turno || 1;
-            const accion = gameState?.accion || 1;
-            socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
-            terminarAccionEspecifica('Reorganizar');
-          });
+  const turno = gameState?.turno || 1;
+  const accion = gameState?.accion || 1;
+  turnoReorganizarUsado = turno;
+  accionReorganizarUsado = accion;
+
+  socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
+  terminarAccionEspecifica('Reorganizar');
+});
+
         
         
         
@@ -1086,7 +1153,6 @@ function agregarReclutaAsedioSiAplica() {
 
 
     // Mostrar modal inicial al entrar
-abrirModal('modal-inicial');
 
 // Evento para confirmar recursos iniciales
 document.getElementById('btn-confirmar-iniciales').addEventListener('click', () => {
@@ -1099,6 +1165,7 @@ document.getElementById('btn-confirmar-iniciales').addEventListener('click', () 
     }
   
     socket.emit('confirmar-iniciales-turno1', { partida, nombre, tropas, oroExtra: oro });
+    inicialYaConfirmado = true;
 
   
     actualizarInfoJugador();
@@ -1122,6 +1189,29 @@ if (barcoBox) {
     barcoBox.appendChild(aviso);
   }
 }
+
+document.getElementById('btn-confirmar-inicial-tyrell').addEventListener('click', () => {
+  const territorio = document.getElementById('select-tyrell-granja').value;
+  const oro = parseInt(document.getElementById('input-oro-tyrell').value) || 0;
+  const tropas = parseInt(document.getElementById('input-tropas-tyrell').value) || 0;
+
+  if (!territorio) {
+    alert("Debes seleccionar un territorio para la Granja.");
+    return;
+  }
+
+  socket.emit("tyrell-inicial-completo", {
+    partida,
+    nombre,
+    territorio,
+    oro,
+    tropas
+  });
+
+
+  inicialYaConfirmado = true;
+  cerrarModal("modal-inicial-tyrell");
+});
 
 
 
@@ -1256,7 +1346,6 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
         actualizarInfoAdicional();
         actualizarEdificiosJugador();
         actualizarUnidadesMilitares();
-        actualizarBotonReorganizar();
 
 
         // Habilitar/Deshabilitar botones según la fase actual y si el jugador ya terminó
@@ -1267,23 +1356,32 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
         console.error("Error al actualizar la UI con el nuevo estado:", error);
         // Intentar continuar, pero loguear el error.
     }
+
+    const jugador = gameState.jugadores?.[nombre];
+const yaTermino = gameState.jugadoresAccionTerminada?.includes(nombre);
+
+// Solo mostrar el modal si es turno 1, acción 1 y el jugador NO ha terminado
+if (
+  gameState.turno === 1 &&
+  gameState.accion === 1 &&
+  !inicialYaConfirmado &&
+  !modalInicialYaMostrado
+) {
+  if (casa === "Tyrell") {
+    poblarSelectTyrellGranja();
+    abrirModal("modal-inicial-tyrell");
+  } else {
+    abrirModal("modal-inicial");
+  }
+  modalInicialYaMostrado = true; // ✅ Así nunca se vuelve a mostrar
+}
+
+
+
+
+
 });
 
-function actualizarBotonReorganizar() {
-    const btn = document.getElementById('btn-reorganizar');
-    if (!btn || !gameState || !gameState.reorganizarUsadoPorJugador) return;
-  
-    const disponibleEn = gameState.reorganizarUsadoPorJugador[nombre];
-    const turno = gameState.turno;
-    const accion = gameState.accion;
-    const actualAccionGlobal = (turno - 1) * 4 + accion;
-  
-    if (!disponibleEn || actualAccionGlobal >= disponibleEn) {
-      btn.style.display = 'inline-block';
-    } else {
-      btn.style.display = 'none';
-    }
-  }
   
 
 
@@ -1319,15 +1417,6 @@ const preciosReclutas = {
     torre: 0,
     escorpion: 0,
   };
-  
-  // Actualiza la UI y costo total al cambiar cantidades
-  function ajustarCantidad(tipo, cambio) {
-    
-    cantidadesReclutas[tipo] = Math.max(0, cantidadesReclutas[tipo] + cambio);
-    const el = document.getElementById(`cantidad-${tipo}`);
-    if (el) el.textContent = cantidadesReclutas[tipo];
-    actualizarCostoTotalRecluta();
-  }
   
   
   
