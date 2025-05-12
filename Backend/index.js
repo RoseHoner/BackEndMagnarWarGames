@@ -102,12 +102,22 @@ function inicializarEstadoTerritorios() {
     const estadoTerritorios = {};
     TERRITORIOS_BASE.forEach(t => {
         estadoTerritorios[t.nombre] = {
-            nombre: t.nombre,
-            propietario: t.propietarioInicial,
-            oroBase: t.oro,
-            edificios: CAPITALES.includes(t.nombre) ? ["Castillo"] : [],
-            tropas: {}
-        };
+    nombre: t.nombre,
+    propietario: t.propietarioInicial,
+    oroBase: t.oro,
+    edificios: (() => {
+        if (CAPITALES.includes(t.nombre)) {
+            // Si es capital, por defecto lleva Castillo
+            if (t.nombre === "Lanza del Sol") {
+                return ["Castillo", "Puerto"];
+            }
+            return ["Castillo"];
+        }
+        return [];
+    })(),
+    tropas: {}
+};
+
     });
     return estadoTerritorios;
 }
@@ -132,14 +142,19 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   const estadoJugadores = {};
   players.forEach(nombre => {
     estadoJugadores[nombre] = {
-      casa: casasAsignadas[nombre] || 'Desconocida',
-      tropas: TROPAS_INICIALES_POR_DEFECTO,
-      oro: ORO_INICIAL_POR_DEFECTO,
-      barcos: BARCOS_INICIALES[casasAsignadas[nombre]] || 0,
-      catapulta: 0,
-      torre: 0,
-      escorpion: 0
-    };
+  sacerdotes: casasAsignadas[nombre] === "Baratheon" ? 1 : 0,
+  dragones: casasAsignadas[nombre] === "Targaryen" ? 1 : 0,
+  casa: casasAsignadas[nombre] || 'Desconocida',
+  tropas: TROPAS_INICIALES_POR_DEFECTO, // soldado
+  mercenarios: 0,
+  elite: 0,
+  oro: ORO_INICIAL_POR_DEFECTO,
+  barcos: BARCOS_INICIALES[casasAsignadas[nombre]] || 0,
+  catapulta: 0,
+  torre: 0,
+  escorpion: 0
+};
+
   });
   return estadoJugadores;
 }
@@ -169,7 +184,9 @@ io.on('connection', (socket) => {
       ingreso += terr.oroBase || 0;
       ingreso += (terr.edificios.filter(e => e === "Mina").length) * 10;
       ingreso += (terr.edificios.filter(e => e === "Cantera").length) * 5;
+      if (jugador.casa !== "Tyrell") {
       ingreso += (terr.edificios.filter(e => e === "Granja").length) * 5;
+    }
       ingreso += (terr.edificios.filter(e => e === "Aserradero").length) * 5;
     }
   }
@@ -196,13 +213,17 @@ io.on('connection', (socket) => {
 
   // Calcular mantenimiento
   const mantenimiento =
-    tropas +
-    (jugador.barcos || 0) * 2 +
-    (jugador.catapulta || 0) +
-    (jugador.torre || 0) +
-    (jugador.escorpion || 0);
+  tropas +
+  (jugador.mercenarios || 0) +
+  (jugador.elite || 0) +
+  (jugador.barcos || 0) * 2 +
+  (jugador.catapulta || 0) +
+  (jugador.torre || 0) +
+  (jugador.escorpion || 0) +
+  (jugador.dragones || 0) * 5 +
+  (jugador.sacerdotes || 0);
+jugador.oro = Math.max(0, ingreso - mantenimiento);
 
-  jugador.oro = Math.max(0, ingreso - mantenimiento);
 
   // Emitir estado actualizado
   io.to(partida).emit("actualizar-estado-juego", {
@@ -318,17 +339,29 @@ if (tienePuerto) {
         ingreso += minas * 10;
         ingreso += aserraderos * 5;
         ingreso += canteras * 5;
-        ingreso += granjas * 5;
+        if (casa !== "Tyrell") {
+  ingreso += granjas * 5;
+}
       }
     }
 
           const barcos = j.barcos || 0;
-          const catapultas = j.catapulta || 0;
-          const torres = j.torre || 0;
-          const escorpiones = j.escorpion || 0;
-          const mantenimiento = j.tropas + barcos * 2 + catapultas + torres + escorpiones;
-          j.oro += ingreso;
-          j.oro = Math.max(0, j.oro - mantenimiento);
+const catapultas = j.catapulta || 0;
+const torres = j.torre || 0;
+const escorpiones = j.escorpion || 0;
+const dragones = j.dragones || 0;
+
+const costoBarcos = barcos * 2;
+const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
+const costoMaquinas = catapultas + torres + escorpiones;
+const costoDragones = dragones * 5;
+const costoSacerdotes = j.sacerdotes || 0;
+
+
+
+j.oro += ingreso;
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes);
+
         }
       }
   
@@ -393,7 +426,9 @@ if (tienePuerto) {
         ingreso += minas * 10;
         ingreso += aserraderos * 5;
         ingreso += canteras * 5;
-        ingreso += granjas * 5;
+        if (casa !== "Tyrell") {
+  ingreso += granjas * 5;
+}
       }
     }
   
@@ -413,8 +448,18 @@ if (tienePuerto) {
     ingreso += oroExtra;
   
     // Restar mantenimiento
-    const mantenimiento = tropas + (jugador.barcos || 0) * 2 + (jugador.catapulta || 0) + (jugador.torre || 0) + (jugador.escorpion || 0);
-    jugador.oro = Math.max(0, ingreso - mantenimiento);
+    const mantenimiento =
+  tropas +
+  (jugador.mercenarios || 0) +
+  (jugador.elite || 0) +
+  (jugador.barcos || 0) * 2 +
+  (jugador.catapulta || 0) +
+  (jugador.torre || 0) +
+  (jugador.escorpion || 0) +
+  (jugador.dragones || 0) * 5 +
+  (jugador.sacerdotes || 0);
+jugador.oro = Math.max(0, ingreso - mantenimiento);
+
   
     io.to(partida).emit('actualizar-estado-juego', {
       territorios: room.estadoTerritorios,
@@ -598,6 +643,7 @@ if (tienePuerto) {
     if (!jugador || !territorioObj || territorioObj.propietario !== jugador.casa) return;
   
     const COSTOS = {
+      sacerdoteLuz: 20,
         Puerto: 30,
         Granja: 20,
         Cantera: 20,
@@ -695,12 +741,29 @@ if (tienePuerto) {
       ingreso += minas * 10;
       ingreso += aserraderos * 5;
       ingreso += canteras * 5;
-      ingreso += granjas * 5;
+      if (casa !== "Tyrell") {
+  ingreso += granjas * 5;
+}
     }
 }
 
-          j.oro += ingreso;
-          j.oro = Math.max(0, j.oro - j.tropas);
+          const barcos = j.barcos || 0;
+const catapultas = j.catapulta || 0;
+const torres = j.torre || 0;
+const escorpiones = j.escorpion || 0;
+const dragones = j.dragones || 0;
+
+const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
+const costoBarcos = barcos * 2;
+const costoMaquinas = catapultas + torres + escorpiones;
+const costoDragones = dragones * 5;
+const costoSacerdotes = j.sacerdotes || 0;
+
+
+
+j.oro += ingreso;
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes);
+
         }
       }
   
@@ -740,6 +803,7 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
   if (!jugador || !territorioObj || territorioObj.propietario !== jugador.casa) return;
 
   const COSTOS = {
+    sacerdoteLuz: 20,
     soldado: 4,
     mercenario: 5,
     elite: 7,
@@ -792,14 +856,23 @@ ingreso += canteras * 5;
   
   jugador.oro -= costoTotal;
   
+  
 
-  if (tipoUnidad === 'barco') {
-    jugador.barcos = (jugador.barcos || 0) + cantidad;
-  } else if (["catapulta", "torre", "escorpion"].includes(tipoUnidad)) {
-    jugador[tipoUnidad] = (jugador[tipoUnidad] || 0) + cantidad;
-  } else {
-    jugador.tropas = (jugador.tropas || 0) + cantidad;
-  }
+  if (tipoUnidad === 'soldado') {
+  jugador.tropas = (jugador.tropas || 0) + cantidad;
+} else if (tipoUnidad === 'mercenario') {
+  jugador.mercenarios = (jugador.mercenarios || 0) + cantidad;
+} else if (tipoUnidad === 'elite') {
+  jugador.elite = (jugador.elite || 0) + cantidad;
+} else if (tipoUnidad === 'barco') {
+  jugador.barcos = (jugador.barcos || 0) + cantidad;
+} else if (tipoUnidad === 'sacerdoteLuz') {
+  jugador.sacerdotes = (jugador.sacerdotes || 0) + cantidad;
+} else if (["catapulta", "torre", "escorpion"].includes(tipoUnidad)) {
+  jugador[tipoUnidad] = (jugador[tipoUnidad] || 0) + cantidad;
+}
+
+
   
 
   io.to(partida).emit('actualizar-estado-juego', {
@@ -868,15 +941,28 @@ if (tienePuerto) {
       ingreso += minas * 10;
       ingreso += aserraderos * 5;
       ingreso += canteras * 5;
-      ingreso += granjas * 5;
+      if (casa !== "Tyrell") {
+  ingreso += granjas * 5;
+}
     }
 }
 
         const barcos = j.barcos || 0;
-        const costoBarcos = barcos * 2;
-        const costoTropas = j.tropas || 0;
-        j.oro += ingreso;
-        j.oro = Math.max(0, j.oro - costoTropas - costoBarcos);
+const catapultas = j.catapulta || 0;
+const torres = j.torre || 0;
+const escorpiones = j.escorpion || 0;
+const dragones = j.dragones || 0;
+
+const costoBarcos = barcos * 2;
+const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
+const costoMaquinas = catapultas + torres + escorpiones;
+const costoDragones = dragones * 5;
+const costoSacerdotes = j.sacerdotes || 0;
+
+
+j.oro += ingreso;
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes);
+
       }
     }
 
@@ -961,7 +1047,9 @@ if (tienePuerto) {
       ingreso += minas * 10;
       ingreso += aserraderos * 5;
       ingreso += canteras * 5;
-      ingreso += granjas * 5;
+      if (casa !== "Tyrell") {
+  ingreso += granjas * 5;
+}
     }
 }
 
@@ -973,10 +1061,15 @@ if (tienePuerto) {
             const escorpiones = jugador.escorpion || 0;
             const costoMaquinas = catapultas * 1 + torres * 1 + escorpiones * 1; // o el coste de mantenimiento que quieras
 
-            const costoTropas = jugador.tropas || 0;
+            const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
             const barcos = jugador.barcos || 0;
             const costoBarcos = barcos * 2;
-            jugador.oro = Math.max(0, jugador.oro - costoTropas - costoBarcos - costoMaquinas);
+            const dragones = jugador.dragones || 0;
+            const costoDragones = dragones * 5;
+            const costoSacerdotes = j.sacerdotes || 0;
+
+            jugador.oro = Math.max(0, jugador.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes);
+
         }
       
           io.to(partida).emit('actualizar-estado-juego', {

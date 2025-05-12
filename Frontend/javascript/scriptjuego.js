@@ -105,11 +105,33 @@ function actualizarUnidadesMilitares() {
     const jugador = gameState.jugadores[nombre];
     lista.innerHTML = ''; // Limpiamos la lista
 
+    const unidadesBasicas = [
+  { tipo: 'tropas', nombre: 'Tropa', icono: 'soldado.png' },
+  { tipo: 'mercenarios', nombre: 'Mercenario', icono: 'mercenario.png' },
+  { tipo: 'elite', nombre: 'Mercenario de élite', icono: 'elite.png' }
+];
+
+unidadesBasicas.forEach(u => {
+  const cantidad = jugador[u.tipo] || 0;
+  if (cantidad > 0) {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <img src="../imgs/reclutas/${u.icono}" alt="${u.nombre}" style="width: 24px; vertical-align: middle; margin-right: 6px;">
+      <span style="color: white;">${u.nombre} x${cantidad}</span>
+    `;
+    lista.appendChild(li);
+  }
+});
+
+
     const unidades = [
+        { tipo: 'dragones', nombre: 'Dragón', icono: 'dragon.png' },
         { tipo: 'barcos', nombre: 'Barco', icono: 'barco.png' },
         { tipo: 'catapulta', nombre: 'Catapulta', icono: 'catapulta.png' },
         { tipo: 'torre', nombre: 'Torre de Asedio', icono: 'torre.png' },
-        { tipo: 'escorpion', nombre: 'Escorpión', icono: 'escorpion.png' }
+        { tipo: 'escorpion', nombre: 'Escorpión', icono: 'escorpion.png' },
+        { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'sacerdote.png' }
+
     ];
 
     unidades.forEach(u => {
@@ -146,13 +168,9 @@ function actualizarInfoJugador() {
     const jugador = gameState.jugadores[nombre];
     const cantidadOroEl = document.getElementById('cantidad-oro');
     const oroJugadorDiv = document.getElementById('oro-jugador');
-    const cantidadTropasEl = document.getElementById('cantidad-tropas');
-    const tropasJugadorDiv = document.getElementById('tropas-jugador');
 
     if (cantidadOroEl) cantidadOroEl.textContent = jugador.oro ?? 0;
     if (oroJugadorDiv) oroJugadorDiv.style.display = 'flex';
-    if (cantidadTropasEl) cantidadTropasEl.textContent = jugador.tropas ?? 0;
-    if (tropasJugadorDiv) tropasJugadorDiv.style.display = 'flex';
 }
 
 function poblarSelectTyrellGranja() {
@@ -756,10 +774,13 @@ misTerritorios.forEach(t => {
 
 // Calculamos granjas
 let oroPorGranjas = 0;
-misTerritorios.forEach(t => {
-    const granjas = t.edificios?.filter(ed => ed === "Granja").length || 0;
-    oroPorGranjas += granjas * 5;
-});
+if (casa !== "Tyrell") {
+  misTerritorios.forEach(t => {
+      const granjas = t.edificios?.filter(ed => ed === "Granja").length || 0;
+      oroPorGranjas += granjas * 5;
+  });
+}
+
 
 // BONUS por puertos
 let oroPorPuertos = 0;
@@ -781,7 +802,10 @@ misTerritorios.forEach(t => {
         (jugador.torre || 0) +
         (jugador.escorpion || 0);
 
-    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas;
+    const mantenimientoDragones = (jugador.dragones || 0) * 5;
+    const mantenimientoSacerdotes = (jugador.sacerdotes || 0) * 1;
+
+    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + mantenimientoDragones + mantenimientoSacerdotes;
 
     const oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
     document.getElementById('oro-estimado-final-turno').textContent = oroEstimado;
@@ -824,7 +848,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
      // 3. Ocultar elementos hasta recibir estado
      document.getElementById('oro-jugador').style.display = 'none';
-     document.getElementById('tropas-jugador').style.display = 'none';
      deshabilitarBotonesAccion(true); // Deshabilitar botones de acción al inicio
 
     // 4. Añadir TODOS los Event Listeners
@@ -867,6 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
             poblarTerritoriosReclutar();
             agregarReclutaBarcoSiAplica();
             agregarReclutaAsedioSiAplica();
+            agregarSacerdoteLuzSiBaratheon(); // << Añade esto
             abrirModal('modal-reclutar');
           });
           
@@ -1107,7 +1131,32 @@ const tieneTaller = Object.values(gameState.territorios).some(
       contenedor.appendChild(div);
     });
   }
+
 }
+function agregarSacerdoteLuzSiBaratheon() {
+  const contenedor = document.getElementById('contenedor-reclutas');
+  if (!contenedor || casa !== "Baratheon") return;
+
+  const existente = contenedor.querySelector('.recluta-box[data-tipo="sacerdoteLuz"]');
+  if (!existente) {
+    const div = document.createElement('div');
+    div.className = 'recluta-box';
+    div.dataset.tipo = 'sacerdoteLuz';
+    div.dataset.costo = '20';
+    div.innerHTML = `
+      <h3>Sacerdote de Luz</h3>
+      <img src="../imgs/reclutas/sacerdote.png" alt="Sacerdote de Luz" style="width: 80px;">
+      <div class="control-numero">
+        <button onclick="ajustarCantidad('sacerdoteLuz', -1)">-</button>
+        <span id="cantidad-sacerdoteLuz">0</span>
+        <button onclick="ajustarCantidad('sacerdoteLuz', 1)">+</button>
+      </div>
+      <p>Coste: 20 oro</p>
+    `;
+    contenedor.appendChild(div);
+  }
+}
+
 
 function agregarReclutaAsedioSiAplica() {
     const contenedor = document.getElementById('contenedor-reclutas');
@@ -1403,7 +1452,9 @@ const preciosReclutas = {
     barco: 20,
     catapulta: 20,
     torre: 20,
-    escorpion: 20
+    escorpion: 20,
+    sacerdoteLuz: 20
+
 };
   
 
@@ -1416,6 +1467,7 @@ const preciosReclutas = {
     catapulta: 0,
     torre: 0,
     escorpion: 0,
+    sacerdoteLuz: 0
   };
   
   
