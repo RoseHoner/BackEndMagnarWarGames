@@ -8,6 +8,11 @@ const cors = require('cors'); // Permitir conexiones entre dominios diferentes (
 const app = express();
 app.use(cors()); // Permitimos cualquier origen (útil en desarrollo)
 
+app.get('/', (req, res) => {
+  res.send('Servidor backend funcionando');
+});
+
+
 // Creamos el servidor HTTP y lo conectamos con socket.io
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -1163,3 +1168,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Servidor backend funcionando en http://localhost:${PORT}`);
 });
+
