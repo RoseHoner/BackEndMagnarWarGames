@@ -84,46 +84,39 @@
         <button id="btn-batalla" class="btn-accion-juego">⚔️ Batalla</button>
         <button id="btn-reclutar" class="btn-accion-juego">➕ Reclutar</button>
         <button id="btn-construir" class="btn-accion-juego">🔨 Construir</button>
-        <button id="btn-mover" class="btn-accion-juego">➡️ Mover/Atacar</button> <!-- Texto actualizado -->
+        <button id="btn-mover" class="btn-accion-juego">➡️ Mover</button> <!-- Texto actualizado -->
         <button id="btn-reorganizar" class="btn-accion-juego">🔄 Reorganizar</button>
         <!-- Podríamos añadir botones para habilidades específicas aquí -->
     </div>
 
     <!-- Modal Batalla (Sin cambios estructurales) -->
-    <div id="modal-batalla" class="modal-juego" style="display: none;">
-        <button id="btn-cerrar-modal-batalla" class="modal-cerrar">X</button>
-        <h2>Resultado de Batalla</h2>
-        <div class="campo-formulario">
-            <label for="select-territorio-atacado">Territorio Atacado:</label>
-            <select id="select-territorio-atacado"><option value="">-- Selecciona --</option></select>
+    <div id="modal-atacar-coordinado" class="modal-juego" style="display: none;">
+      <button class="modal-cerrar" onclick="cerrarModal('modal-atacar-coordinado')">X</button>
+      <h2>⚔️ Plan de Ataque</h2>
+    
+      <div style="display: flex; gap: 20px;">
+        <!-- LADO IZQUIERDO: Atacantes -->
+        <div style="flex: 1;">
+          <h3 style="margin-bottom: 10px;">Atacantes</h3>
+          <p><b>Tú:</b> <span id="nombre-casa-atacante"></span></p>
+          <div id="lista-aliados-atacantes"></div>
+          <button onclick="agregarAliadoAtacante()">➕ Agregar Casa Aliada</button>
         </div>
-        <div class="campo-formulario">
-            <fieldset><legend>Resultado:</legend>
-                <label><input type="radio" name="resultado-batalla" value="victoria" checked> Victoria</label>
-                <label><input type="radio" name="resultado-batalla" value="derrota"> Derrota</label>
-            </fieldset>
+    
+        <!-- LADO DERECHO: Territorios objetivo -->
+        <div style="flex: 1;">
+          <h3 style="margin-bottom: 10px;">Territorios a Atacar</h3>
+          <div id="lista-territorios-a-atacar"></div>
+          <button onclick="agregarTerritorioAtaque()">➕ Agregar Territorio</button>
         </div>
-        <div class="campo-formulario campo-perdidas">
-            <label for="input-perdidas-atacante">Mis Pérdidas:</label>
-            <div class="control-numero">
-                <button id="btn-restar-perdidas-atacante">-</button>
-                <input type="number" id="input-perdidas-atacante" value="0" min="0">
-                <button id="btn-sumar-perdidas-atacante">+</button>
-            </div>
-        </div>
-        <div class="campo-formulario campo-perdidas">
-            <label for="input-perdidas-defensor">Pérdidas Defensor:</label>
-            <div class="control-numero">
-                <button id="btn-restar-perdidas-defensor">-</button>
-                <input type="number" id="input-perdidas-defensor" value="0" min="0">
-                <button id="btn-sumar-perdidas-defensor">+</button>
-            </div>
-        </div>
-        <div class="botones-modal">
-             <button id="btn-confirmar-batalla" class="btn-confirmar">✔️ Confirmar</button>
-             <button id="btn-cancelar-batalla" class="btn-cancelar">✖️ Cancelar</button>
-        </div>
+      </div>
+    
+      <div class="botones-modal" style="margin-top: 20px;">
+        <button class="btn-confirmar" onclick="confirmarAtaqueCoordinado()">✔️ Aceptar</button>
+        <button class="btn-cancelar" onclick="cerrarModal('modal-atacar-coordinado')">✖️ Cancelar</button>
+      </div>
     </div>
+    
     <!-- Fin Modal Batalla -->
 
     <button id="btn-organizar-torneo" class="btn-accion-juego" style="display: none;">🏇 Organizar Torneo</button>
@@ -304,15 +297,17 @@
     </div>
   </div>
 
-  <!-- Paso 1: Tropas perdidas -->
 <!-- Modal Fase Neutral -->
 <div id="modal-fase-neutral" class="modal-juego" style="display: none;">
-  <!-- Paso 1: Tropas perdidas -->
+  <!-- Paso 1: Pérdidas por unidad -->
   <div id="fase-neutral-paso1">
-    <h2>¿Cuántas tropas perdiste?</h2>
-    <input type="number" id="input-tropas-perdidas-neutral" min="0" value="0" />
+    <h2>¿Qué unidades perdiste?</h2>
+    <div id="lista-perdidas-por-unidad" class="lista-scrollable" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+      <!-- Aquí se rellenará dinámicamente -->
+    </div>
     <button id="btn-confirmar-perdidas-neutral">✔️ Confirmar</button>
   </div>
+
 
   <!-- Paso 2: ¿Perdiste territorios? -->
   <div id="fase-neutral-paso2" style="display:none;">
@@ -357,6 +352,123 @@
       <button id="btn-confirmar-perdidas-impuestos" class="btn-confirmar">✔️ Confirmar</button>
     </div>
   </div>
+
+  <div id="modal-soborno-lannister" class="modal-juego" style="display: none;">
+    <h2>🪙 Sobornar Soldados</h2>
+  
+    <div class="campo-formulario">
+      <label for="select-territorio-soborno">¿Dónde sobornas?</label>
+      <select id="select-territorio-soborno"><option value="">-- Selecciona --</option></select>
+    </div>
+  
+    <div class="campo-formulario">
+      <label for="input-cantidad-soborno">¿Cuántos soldados sobornas?</label>
+      <input type="number" id="input-cantidad-soborno" min="1" value="1" style="width: 100%;">
+    </div>
+    <p id="mensaje-soborno-insuficiente" style="color: red; font-size: 0.9em; display: none; margin-top: 5px;">⚠️ Oro insuficiente</p>
+
+  
+    <div class="botones-modal">
+      <button id="btn-confirmar-soborno" class="btn-confirmar">✔️ Confirmar</button>
+    </div>
+  </div>
+
+  <div id="modal-soborno-final-lannister" class="modal-juego" style="display: none;">
+    <h2>🩸 Resultado del Soborno</h2>
+    <label for="input-tropas-perdidas-soborno-lannister">¿Cuántas tropas perdiste?</label>
+    <input type="number" id="input-tropas-perdidas-soborno-lannister" min="0" value="0" style="width: 100%; margin-bottom: 10px;">
+    <label>¿Ganaste el territorio?</label>
+    <div style="margin-top: 5px;">
+      <label><input type="radio" name="soborno-resultado" value="si" checked> Sí</label>
+      <label><input type="radio" name="soborno-resultado" value="no"> No</label>
+    </div>
+    <div class="botones-modal" style="margin-top: 15px;">
+      <button id="btn-confirmar-soborno-final-lannister" class="btn-confirmar">✔️ Confirmar</button>
+    </div>
+  </div>
+
+  <div id="modal-soborno-final-defensor" class="modal-juego" style="display: none;">
+    <h2>🩸 Has sido sobornado</h2>
+    <label for="input-tropas-perdidas-soborno-defensor">¿Cuántas tropas perdiste?</label>
+    <input type="number" id="input-tropas-perdidas-soborno-defensor" min="0" value="0" style="width: 100%; margin-bottom: 10px;">
+    <div class="botones-modal" style="margin-top: 15px;">
+      <button id="btn-confirmar-soborno-defensor" class="btn-confirmar">✔️ Confirmar</button>
+    </div>
+  </div>
+  
+  <div id="modal-militantes-fe" class="modal-juego" style="display: none;">
+    <h2>✝️ Militantes de la Fe</h2>
+    <p>Tienes un Septo. ¿Cuántos militantes de la fe deseas recibir?</p>
+    <input type="number" id="input-militantes-fe" min="1" value="1" style="width: 100%; margin-top: 10px;">
+    <div class="botones-modal" style="margin-top: 20px;">
+      <button onclick="confirmarMilitantesFe()" class="btn-confirmar">✔️ Confirmar</button>
+    </div>
+  </div>
+
+  <!-- Botón solo para Trirren -->
+<button id="btn-obtener-tecnologia" class="btn-accion-juego" style="display: none;">🔧 Obtener Tecnología</button>
+
+<!-- Modal Pregunta Tecnología Tyrell -->
+<div id="modal-pregunta-tecnologia" class="modal-juego" style="display: none;">
+  <h2>¿Has conseguido tecnología?</h2>
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button id="btn-si-tecnologia" class="btn-confirmar">✔️ Sí</button>
+    <button id="btn-no-tecnologia" class="btn-cancelar">✖️ No</button>
+  </div>
+</div>
+
+<!-- Modal para elegir tecnología -->
+<div id="modal-tecnologia-trirren" class="modal-juego" style="display: none;">
+  <h2>📚 Obtener Tecnología</h2>
+  <p>¿Qué tecnología quieres construir?</p>
+
+  <div class="campo-formulario">
+    <label for="select-edificio-tecnologia">Tecnología:</label>
+    <select id="select-edificio-tecnologia">
+      <option value="">-- Selecciona --</option>
+      <option value="Armería">Armería de los Lannister</option>
+      <option value="Arquería">Arquería de los Tully</option>
+      <option value="Academia de Caballería">Academia de Caballería de los Arryn</option>
+    </select>
+  </div>
+
+  <div class="campo-formulario">
+    <label for="select-territorio-tecnologia">¿Dónde construirla?</label>
+    <select id="select-territorio-tecnologia"></select>
+  </div>
+
+  <div class="botones-modal">
+    <button id="btn-confirmar-tecnologia" class="btn-confirmar">✔️ Confirmar</button>
+    <button class="btn-cancelar" onclick="cerrarModal('modal-tecnologia-trirren')">✖️ Cancelar</button>
+  </div>
+</div>
+
+  
+<!-- Modal de Pérdidas por Batalla -->
+<div id="modal-perdidas-ataque" class="modal-juego" style="display: none;">
+  <h2>🩸 Indica tus pérdidas</h2>
+  <p>Selecciona cuántas unidades perdiste en la batalla:</p>
+
+  <div id="lista-perdidas-ataque" class="lista-scrollable" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+    <!-- Aquí se insertarán los inputs dinámicamente -->
+  </div>
+
+  <div class="botones-modal">
+    <button id="btn-confirmar-perdidas-ataque" class="btn-confirmar">✔️ Confirmar</button>
+  </div>
+</div>
+
+<div id="modal-asignar-territorios" class="modal-juego" style="display: none;">
+  <h2>🏰 Asignar territorios conquistados</h2>
+  <div id="lista-territorios-asignar" class="lista-scrollable" style="max-height: 300px; overflow-y: auto;">
+    <!-- Aquí se generará dinámicamente cada territorio con su selección de victoria y nuevo dueño -->
+  </div>
+  <button id="btn-confirmar-asignacion-territorios" class="btn-confirmar">✔️ Confirmar</button>
+</div>
+
+
+  
+  
   
   
   <script defer src="../javascript/scriptjuego.js"></script>
