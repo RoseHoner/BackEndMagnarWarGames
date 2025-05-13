@@ -1,8 +1,17 @@
 // --- En tu archivo script.js (para index.html) ---
+const isLocalhost = window.location.hostname === 'localhost';
+const BACKEND_URL = isLocalhost
+  ? 'http://localhost:3000'
+  : 'https://backendmagnarwargames-production.up.railway.app';
 
 // Conexión al backend con Socket.IO
 // Asegúrate de que sea la IP correcta donde corre tu servidor
-const socket = io('http://localhost:3000'); // Cambia localhost por tu IP si accedes desde otro dispositivo
+const socket = io(BACKEND_URL, {
+    path: '/socket.io',
+    transports: ['websocket']
+  });
+  
+//   Cambia localhost por tu IP si accedes desde otro dispositivo
 
 // Cuando se establece la conexión con el servidor
 socket.on('connect', () => {
@@ -56,7 +65,7 @@ function crearPartida() {
   // Redirigimos al lobby con los datos como parámetros en la URL
   // El parámetro 'host=true' indica que este jugador es el creador
   const params = new URLSearchParams({ nombre, partida, clave, host: 'true' });
-  window.location.href = `lobby.html?${params.toString()}`;
+  window.location.href = `html/lobby.html?${params.toString()}`;
 }
 
 // Función que se ejecuta cuando haces clic en el botón "Unirse a Partida"
@@ -89,5 +98,5 @@ function unirsePartida() {
 
     // Redirigimos al lobby, sin 'host=true' porque no es el creador
     const params = new URLSearchParams({ nombre, partida, clave });
-    window.location.href = `lobby.html?${params.toString()}`;
+    window.location.href = `html/lobby.html?${params.toString()}`;
 }

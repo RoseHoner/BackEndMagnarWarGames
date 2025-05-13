@@ -1,3 +1,9 @@
+const isLocalhost = window.location.hostname === 'localhost';
+const BACKEND_URL = isLocalhost
+  ? 'http://localhost:3000'
+  : 'https://backendmagnarwargames-production.up.railway.app';
+
+
 // =============================================
 // PARTE 1: INICIALIZACIÓN Y GLOBALES
 // =============================================
@@ -12,7 +18,12 @@ let modalInicialYaMostrado = false;
 // --- Conexión Socket.IO ---
 // Asegúrate de que esta IP/Puerto sea la correcta y accesible desde tus clientes
 // Inicializa conexión con el servidor usando Socket.IO
-const socket = io('http://localhost:3000');
+const socket = io(BACKEND_URL, {
+  path: '/socket.io',
+  transports: ['websocket']
+});
+
+
 
 // --- Parámetros URL ---
 // Extrae parámetros de la URL como partida, nombre y casa
@@ -46,7 +57,7 @@ const COSTOS_BASE_UI = {
     'taller de maquinaria de asedio': 30, // Corresponde al value en HTML
     // Facciones (Nombres DEBEN coincidir con los `value` en HTML y lógica backend)
     'Academia de Caballería': 20, // Arryn
-    'Atalaya': 40, // Arryn
+    'Atalayas': 40, // Arryn
     'Armería': 30, // Lannister
     'Arquería': 30, // Tully
     'Septo': 50, // Tyrell
@@ -130,7 +141,9 @@ unidadesBasicas.forEach(u => {
         { tipo: 'catapulta', nombre: 'Catapulta', icono: 'catapulta.png' },
         { tipo: 'torre', nombre: 'Torre de Asedio', icono: 'torre.png' },
         { tipo: 'escorpion', nombre: 'Escorpión', icono: 'escorpion.png' },
-        { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'sacerdote.png' }
+        { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'sacerdote.png' },
+        { tipo: 'caballero', nombre: 'Caballero', icono: 'caballero.png' },
+
 
     ];
 
@@ -196,6 +209,16 @@ function actualizarTurnoAccionUI() {
     const accionEl = document.getElementById('accion-jugador');
     const estadoTurnoEl = document.getElementById('estado-turno');
 
+    const btnTorneo = document.getElementById('btn-organizar-torneo');
+if (btnTorneo) {
+  if (casa === "Arryn" && !gameState.jugadores?.[nombre]?.torneoUsadoEsteTurno) {
+    btnTorneo.style.display = 'inline-block';
+  } else {
+    btnTorneo.style.display = 'none';
+  }
+}
+
+
     if (turnoEl) turnoEl.textContent = `Turno ${gameState.turno}`;
     if (accionEl) {
         const nombresAccion = ["Acción 1", "Acción 2", "Acción 3", "Fase Neutral"];
@@ -214,6 +237,23 @@ function actualizarTurnoAccionUI() {
      }
 
      const btnReorganizar = document.getElementById('btn-reorganizar');
+
+
+     // Mostrar botones especiales de Lannister
+const btnDoble = document.getElementById('btn-doble-impuestos');
+const btnSobornar = document.getElementById('btn-sobornar-soldados');
+
+if (btnDoble && btnSobornar) {
+  if (casa === "Lannister") {
+    btnDoble.style.display = 'inline-block';
+    btnSobornar.style.display = 'inline-block';
+  } else {
+    btnDoble.style.display = 'none';
+    btnSobornar.style.display = 'none';
+  }
+}
+
+
 if (btnReorganizar) {
     if (turnoReorganizarUsado === null || accionReorganizarUsado === null) {
         btnReorganizar.style.display = 'inline-block'; // No se ha usado nunca
@@ -425,40 +465,6 @@ function poblarUnidadesReclutar() {
          if (!basicas.includes(option.value)) option.remove();
      });
 
-     // Eliminar optgroup de facción si existe
-     const oldOptgroup = selectUnidadEl.querySelector('optgroup[label="Facción"]');
-     if (oldOptgroup) oldOptgroup.remove();
-
-     // Crear nuevo optgroup para facción
-     const optgroupFaction = document.createElement('optgroup');
-     optgroupFaction.label = "Facción";
-     let factionOptionsAdded = false;
-
-     // Añadir opciones según la casa y el estado del juego
-     if (jugador.casa === 'Arryn') {
-         if (jugador.academiaConstruida) { // Chequear estado del gameState
-             optgroupFaction.appendChild(new Option('Caballero Arryn', 'caballero')); // Usa 'caballero' como value
-             factionOptionsAdded = true;
-         }
-         // Añadir Cetrería aquí si es reclutable
-     } else if (jugador.casa === 'Baratheon') {
-         optgroupFaction.appendChild(new Option('Sacerdote de Luz', 'sacerdoteLuz')); // Usa 'sacerdoteLuz'
-         factionOptionsAdded = true;
-         // Añadir martilladores/venados si son reclutables
-     } else if (jugador.casa === 'Tully') {
-          // La arquería permite *tirar* a los arqueros, no necesariamente reclutarlos como unidad separada?
-          // Revisa las reglas: ¿Tully recluta "Arqueros" o sus tropas regulares obtienen la habilidad?
-          // Si es una unidad, añade: optgroupFaction.appendChild(new Option('Arquero Tully', 'arquero'));
-          // Si murcielagos son reclutables: optgroupFaction.appendChild(new Option('Murciélago Gigante', 'murcielagoGigante'));
-          // factionOptionsAdded = true; // Si añades alguna
-     }
-     // ... Añadir lógica para OTRAS CASAS ...
-     else if (jugador.casa === 'Tyrell' && jugador.septoConstruido) {
-         optgroupFaction.appendChild(new Option('Militante de la Fe', 'militante'));
-         factionOptionsAdded = true;
-     }
-
-
      if (factionOptionsAdded) {
          selectUnidadEl.appendChild(optgroupFaction);
      }
@@ -592,61 +598,55 @@ function poblarTerritoriosConstruir() {
      actualizarCostoConstruir();
 }
 function poblarEdificiosConstruir() {
-      if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) return;
-      const jugador = gameState.jugadores[nombre];
-      const selectEdificioEl = document.getElementById('select-edificio-construir');
-      if (!selectEdificioEl) return console.error("Select edificios construir no encontrado.");
+  if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) return;
+  const jugador = gameState.jugadores[nombre];
+  const select = document.getElementById('select-edificio-construir');
+  if (!select) return;
 
-      // Limpiar opciones de facción previas
-      const oldOptgroup = selectEdificioEl.querySelector('optgroup[label="Facción"]');
-      if (oldOptgroup) oldOptgroup.remove();
+  // Limpia el contenido
+  select.innerHTML = `
+    <option value="">-- Selecciona --</option>
+  `;
 
-      // Crear nuevo grupo de facción
-      const optgroupFaction = document.createElement('optgroup');
-      optgroupFaction.label = "Facción";
-      let factionOptionsAdded = false;
+  // Grupo Producción
+  const optProduccion = document.createElement("optgroup");
+  optProduccion.label = "Producción";
 
-      // Añadir edificios específicos según casa y estado
-       if (jugador.casa === 'Arryn') {
-           // Atalaya: ¿Límite por territorio o global? Asumiendo global por ahora
-           if (jugador.puedeConstruirAtalaya) { // Necesita este estado en gameState
-                optgroupFaction.appendChild(new Option('Atalaya', 'Atalaya'));
-                factionOptionsAdded = true;
-           }
-           if (!jugador.academiaConstruida) { // Solo si no tiene la academia (asumiendo 1 global)
-               optgroupFaction.appendChild(new Option('Academia de Caballería', 'Academia de Caballería'));
-               factionOptionsAdded = true;
-           }
-       } else if (jugador.casa === 'Lannister') {
-           if (!jugador.armeriaConstruida) { // Asumiendo 1 global
-               optgroupFaction.appendChild(new Option('Armería', 'Armería'));
-               factionOptionsAdded = true;
-           }
-       } else if (jugador.casa === 'Tully') {
-            // Asumiendo 1 arquería global
-           if (!jugador.arqueriaConstruida) { // Necesita este estado
-                optgroupFaction.appendChild(new Option('Arquería', 'Arquería'));
-                factionOptionsAdded = true;
-           }
-           // Asumiendo 1 puerto fluvial global
-           if (!jugador.puertoFluvialConstruido) { // Necesita este estado
-               optgroupFaction.appendChild(new Option('Puerto Fluvial', 'Puerto Fluvial'));
-               factionOptionsAdded = true;
-           }
-       } else if (jugador.casa === 'Tyrell') {
-           if (!jugador.septoConstruido) { // Asumiendo 1 global
-                optgroupFaction.appendChild(new Option('Septo', 'Septo'));
-                factionOptionsAdded = true;
-           }
-       }
-       // ... Añadir lógica para OTRAS CASAS ...
+  ["Granja", "Cantera", "Mina", "Aserradero"].forEach(ed => {
+    const op = document.createElement("option");
+    op.value = ed;
+    op.textContent = ed;
+    optProduccion.appendChild(op);
+  });
 
-      if (factionOptionsAdded) {
-          selectEdificioEl.appendChild(optgroupFaction);
-      }
-      selectEdificioEl.value = ""; // Reset selection
-      actualizarCostoConstruir(); // Update cost
+  // Grupo Militar
+  const optMilitar = document.createElement("optgroup");
+  optMilitar.label = "Militar";
+
+  ["Castillo", "Puerto", "Taller de maquinaria de asedio"].forEach(ed => {
+    const op = document.createElement("option");
+    op.value = ed;
+    op.textContent = ed;
+    optMilitar.appendChild(op);
+  });
+
+  // Solo si es Arryn, añade estas dos
+  if (jugador.casa === "Arryn") {
+    ["Atalayas", "Academia de Caballería"].forEach(ed => {
+      const op = document.createElement("option");
+      op.value = ed;
+      op.textContent = ed;
+      optMilitar.appendChild(op);
+    });
+  }
+
+  select.appendChild(optProduccion);
+  select.appendChild(optMilitar);
+
+  actualizarCostoConstruir();
 }
+
+
 function actualizarCostoConstruir() {
      if (!gameState || !gameState.territorios || !gameState.jugadores[nombre]) return;
      const selectTerritorioEl = document.getElementById('select-territorio-construir');
@@ -661,15 +661,28 @@ function actualizarCostoConstruir() {
      const territorio = gameState.territorios[nombreTerritorio];
      const jugador = gameState.jugadores[nombre];
 
-     if (!tipoEdificio || !territorio || !jugador) {
-         if(costoValorEl) costoValorEl.textContent = '--';
-         if(limiteInfoEl) limiteInfoEl.style.display = 'none';
-         return;
-     }
+     // Si es Atalayas, ocultar el selector de territorio
+const campoTerritorio = document.getElementById('select-territorio-construir');
+if (tipoEdificio === 'Atalayas') {
+    campoTerritorio.parentElement.style.display = 'none';
+} else {
+    campoTerritorio.parentElement.style.display = 'block';
+}
+
+
+if (!tipoEdificio || !jugador) {
+  if (costoValorEl) costoValorEl.textContent = '--';
+  if (limiteInfoEl) limiteInfoEl.style.display = 'none';
+  return;
+}
+
+
+
 
      // Buscar costo base usando el 'value'
 // Costos base de cada unidad o edificio usados en la interfaz del cliente
-    let costoBase = COSTOS_BASE_UI[tipoEdificio.toLowerCase()] ?? COSTOS_BASE_UI[tipoEdificio] ?? 0;
+let costoBase = COSTOS_BASE_UI[tipoEdificio] ?? COSTOS_BASE_UI[tipoEdificio.toLowerCase()] ?? 0;
+
 
      if(costoBase === 0) { // Probar con el texto si el value no coincide
 // Costos base de cada unidad o edificio usados en la interfaz del cliente
@@ -696,16 +709,29 @@ function confirmarConstruir() {
     const territorio = document.getElementById('select-territorio-construir').value;
     const tipoEdificio = document.getElementById('select-edificio-construir').value; // El 'value' del select
 
-    if (!territorio || !tipoEdificio) {
-        alert("Por favor, selecciona territorio y edificio.");
-        return;
-    }
 
-    const tipoFormateado = tipoEdificio.charAt(0).toUpperCase() + tipoEdificio.slice(1).toLowerCase();
+    
+    if (!tipoEdificio) {
+      alert("Por favor, selecciona el tipo de edificio.");
+      return;
+  }
+  
+  if (tipoEdificio !== "Atalayas" && !territorio) {
+      alert("Por favor, selecciona un territorio donde construir.");
+      return;
+  }
+
+    const tipoFormateado = tipoEdificio; // Dejarlo como está, ya está correcto
 
     console.log(`[Construir] Emitiendo: ${tipoFormateado} en ${territorio}`);
-    socket.emit('solicitud-construccion', { partida, nombre, territorio, tipoEdificio: tipoFormateado });
+
+    if (tipoFormateado === "Atalayas") {
+      socket.emit('construir-atalayas-arryn', { partida, nombre });
+    } else {
+      socket.emit('solicitud-construccion', { partida, nombre, territorio, tipoEdificio: tipoFormateado });
+    }
     cerrarModal('modal-construir');
+
     if (tipoFormateado === "Taller de maquinaria de asedio") {
         abrirModal('modal-elegir-asedio');
       }
@@ -714,6 +740,7 @@ function confirmarConstruir() {
 
 // --- Lógica Modal Mis Territorios ---
 function abrirModalMisTerritorios() {
+
     if (!gameState || !gameState.territorios || !gameState.jugadores?.[nombre]) {
         console.warn("Estado o jugador no disponible.");
         abrirModal('modal-mis-territorios');
@@ -754,9 +781,11 @@ function abrirModalMisTerritorios() {
     // Calculamos minas
     let oroPorMinas = 0;
     misTerritorios.forEach(t => {
-        const minas = t.edificios?.filter(ed => ed === "Mina").length || 0;
-        oroPorMinas += minas * 10;
-    });
+      const minas = t.edificios?.filter(ed => ed === "Mina").length || 0;
+      const oroPorMina = (casa === "Lannister") ? 20 : 10;
+      oroPorMinas += minas * oroPorMina;
+  });
+  
 
     // Calculamos aserraderos
     let oroPorAserraderos = 0;
@@ -794,6 +823,9 @@ misTerritorios.forEach(t => {
   }
 });
 
+
+
+
     // Calculamos mantenimiento
     const mantenimientoTropas = jugador.tropas || 0;
     const mantenimientoBarcos = (jugador.barcos || 0) * 2;
@@ -804,16 +836,40 @@ misTerritorios.forEach(t => {
 
     const mantenimientoDragones = (jugador.dragones || 0) * 5;
     const mantenimientoSacerdotes = (jugador.sacerdotes || 0) * 1;
+    const mantenimientoCaballeros = jugador.caballero || 0;
 
-    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + mantenimientoDragones + mantenimientoSacerdotes;
+    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros;
 
-    const oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
-    document.getElementById('oro-estimado-final-turno').textContent = oroEstimado;
+
+    let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
+
+    //oro 20 de los tully
+if (casa === "Tully") {
+  oroEstimado += 20;
+}
+
+document.getElementById('oro-estimado-final-turno').textContent = oroEstimado;
+
+const contenedorScroll = modalEl.querySelector('.lista-scrollable');
+if (contenedorScroll) {
+  // Borrar texto anterior si lo hubiera
+  const bonusAnterior = contenedorScroll.querySelector('.bonus-tully');
+  if (bonusAnterior) bonusAnterior.remove();
+
+  if (casa === "Tully") {
+    const pBonus = document.createElement('p');
+    pBonus.className = 'bonus-tully';
+    pBonus.innerHTML = 'Bonus por aduana Tully: +20 <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">';
+    contenedorScroll.insertBefore(pBonus, contenedorScroll.firstChild);
+  }
+}
+
 
     const tituloModal = modalEl.querySelector('h2');
 if (tituloModal) {
     tituloModal.innerHTML = `Mis Territorios (<span id="contador-territorios">${contador}</span>)`;
 }
+
     abrirModal('modal-mis-territorios');
 }
 
@@ -868,6 +924,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
+        setupListener('btn-organizar-torneo', 'click', () => {
+          document.getElementById('input-caballeros-torneo').value = 1;
+          abrirModal('modal-torneo-arryn');
+        });
+        
+
+        setupListener('btn-confirmar-torneo', 'click', () => {
+          const cantidad = parseInt(document.getElementById('input-caballeros-torneo').value) || 0;
+          if (cantidad <= 0) return alert("Debes ingresar al menos 1 caballero.");
+          socket.emit('organizar-torneo-arryn', { partida, nombre, cantidad });
+          cerrarModal('modal-torneo-arryn');
+        });
+        
+
         // Botones barra superior y principal
         setupListener('logo-casa-container', 'click', abrirModalMisTerritorios);
 
@@ -890,6 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
             poblarTerritoriosReclutar();
             agregarReclutaBarcoSiAplica();
             agregarReclutaAsedioSiAplica();
+            agregarCaballeroSiArrynConAcademia();
             agregarSacerdoteLuzSiBaratheon(); // << Añade esto
             abrirModal('modal-reclutar');
           });
@@ -958,6 +1030,15 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('fase-neutral-paso2').style.display = 'block';
         });
         
+
+        document.getElementById('btn-confirmar-perdidas-impuestos').addEventListener('click', () => {
+          const perdidas = parseInt(document.getElementById('input-tropas-perdidas-impuestos').value) || 0;
+          cerrarModal('modal-lannister-perdidas');
+          socket.emit('doble-impuestos-completo', { partida, nombre, perdidas });
+        });
+        
+        
+
         // Paso 2 - NO perdió territorios
         document.getElementById('btn-no-perdi-territorios').addEventListener('click', () => {
           gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
@@ -1013,6 +1094,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           
             cerrarModal('modal-fase-neutral');
+          });
+          
+          document.getElementById('btn-doble-impuestos')?.addEventListener('click', () => {
+            // Mostramos directamente el modal para ingresar tropas perdidas
+            document.getElementById('input-tropas-perdidas-impuestos').value = 0;
+            abrirModal('modal-lannister-perdidas');
+          });
+          
+          
+          document.getElementById('btn-sobornar-soldados')?.addEventListener('click', () => {
+            socket.emit('lannister-sobornar-soldados', { partida, nombre });
+            terminarAccionEspecifica('Sobornar Soldados');
           });
           
 
@@ -1133,6 +1226,39 @@ const tieneTaller = Object.values(gameState.territorios).some(
   }
 
 }
+
+function agregarCaballeroSiArrynConAcademia() {
+  const contenedor = document.getElementById('contenedor-reclutas');
+  if (!contenedor || casa !== "Arryn" || !gameState || !gameState.territorios) return;
+
+  const tieneAcademia = Object.values(gameState.territorios).some(
+    t => t.propietario === casa && t.edificios.includes("Academia de Caballería")
+  );
+
+  if (!tieneAcademia) return;
+
+  // Evitar duplicados
+  const existente = contenedor.querySelector('.recluta-box[data-tipo="caballero"]');
+  if (existente) return;
+
+  // Crear visualmente
+  const div = document.createElement('div');
+  div.className = 'recluta-box';
+  div.dataset.tipo = 'caballero';
+  div.dataset.costo = '10';
+  div.innerHTML = `
+    <h3>Caballero</h3>
+    <img src="../imgs/reclutas/caballero.png" alt="Caballero" style="width: 80px;">
+    <div class="control-numero">
+      <button onclick="ajustarCantidad('caballero', -1)">-</button>
+      <span id="cantidad-caballero">0</span>
+      <button onclick="ajustarCantidad('caballero', 1)">+</button>
+    </div>
+    <p>Coste: 10 oro</p>
+  `;
+  contenedor.appendChild(div);
+}
+
 function agregarSacerdoteLuzSiBaratheon() {
   const contenedor = document.getElementById('contenedor-reclutas');
   if (!contenedor || casa !== "Baratheon") return;
@@ -1238,6 +1364,24 @@ if (barcoBox) {
     barcoBox.appendChild(aviso);
   }
 }
+
+document.getElementById('btn-confirmar-inicial-arryn').addEventListener('click', () => {
+  const caballeros = parseInt(document.getElementById('input-caballeros-arryn').value) || 0;
+  const oro = parseInt(document.getElementById('input-oro-arryn').value) || 0;
+  const tropas = parseInt(document.getElementById('input-tropas-arryn').value) || 0;
+
+  socket.emit("arryn-inicial-completo", {
+    partida,
+    nombre,
+    caballeros,
+    oro,
+    tropas
+  });
+
+  inicialYaConfirmado = true;
+  cerrarModal("modal-inicial-arryn");
+});
+
 
 document.getElementById('btn-confirmar-inicial-tyrell').addEventListener('click', () => {
   const territorio = document.getElementById('select-tyrell-granja').value;
@@ -1351,6 +1495,14 @@ socket.on('avanzar-accion', (nuevoEstado) => {
     console.log(`[${nombre}] Avanzado localmente a T${gameState?.turno}, A${gameState?.accion}, F:${gameState?.fase}`);
 });
 
+socket.on('lannister-impuestos-usados', ({ oroGanado }) => {
+  alert(`💰 Has cobrado ${oroGanado} de oro por Doble Impuestos.`);
+  document.getElementById('input-tropas-perdidas-impuestos').value = 0;
+  abrirModal('modal-lannister-perdidas');
+  terminarAccionEspecifica('Doble Impuestos');
+});
+
+
 socket.on('estado-espera-jugadores', (mensaje) => {
     const estadoTurnoEl = document.getElementById('estado-turno');
     // Mostrar mensaje de espera solo si este jugador *no* ha terminado su acción aún
@@ -1419,11 +1571,14 @@ if (
   if (casa === "Tyrell") {
     poblarSelectTyrellGranja();
     abrirModal("modal-inicial-tyrell");
+  } else if (casa === "Arryn") {
+    abrirModal("modal-inicial-arryn");
   } else {
     abrirModal("modal-inicial");
   }
-  modalInicialYaMostrado = true; // ✅ Así nunca se vuelve a mostrar
+  modalInicialYaMostrado = true;
 }
+
 
 
 
@@ -1453,7 +1608,9 @@ const preciosReclutas = {
     catapulta: 20,
     torre: 20,
     escorpion: 20,
-    sacerdoteLuz: 20
+    sacerdoteLuz: 20,
+    caballero: 10,
+
 
 };
   

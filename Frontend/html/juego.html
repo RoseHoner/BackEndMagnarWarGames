@@ -50,6 +50,33 @@
   </div>
 </div>
 
+<!-- Modal Arryn Inicio Combinado -->
+<div id="modal-inicial-arryn" class="modal-juego" style="display: none; z-index: 99999;">
+  <h2>🦅 Arryn: Configura tu inicio</h2>
+
+  <div class="campo-formulario">
+    <label for="input-caballeros-arryn">¿Con cuántos caballeros comienzas?</label>
+    <input type="number" id="input-caballeros-arryn" min="0" value="0" style="width: 100%;">
+  </div>
+
+  <div class="campo-formulario">
+    <label for="input-oro-arryn">💰 Oro Extra:</label>
+    <input type="number" id="input-oro-arryn" min="0" value="50" style="width: 100%;">
+  </div>
+
+  <div class="campo-formulario">
+    <label for="input-tropas-arryn">🛡️ Tropas Iniciales:</label>
+    <input type="number" id="input-tropas-arryn" min="0" value="30" style="width: 100%;">
+  </div>
+
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button id="btn-confirmar-inicial-arryn" class="btn-confirmar" style="width: 100%;">
+      ✔️ Confirmar
+    </button>
+  </div>
+</div>
+
+
 
 
     <!-- CONTENEDOR BOTONES ACCIÓN (Sin cambios estructurales) -->
@@ -98,6 +125,24 @@
         </div>
     </div>
     <!-- Fin Modal Batalla -->
+
+    <button id="btn-organizar-torneo" class="btn-accion-juego" style="display: none;">🏇 Organizar Torneo</button>
+
+    <button id="btn-doble-impuestos" class="btn-accion-juego" style="display: none;">💰 Doble Impuestos</button>
+<button id="btn-sobornar-soldados" class="btn-accion-juego" style="display: none;">🪙 Sobornar Soldados</button>
+
+
+    <!-- Modal Organizar Torneo -->
+<div id="modal-torneo-arryn" class="modal-juego" style="display: none; z-index: 99999;">
+  <h2>🏇 Organizar Torneo</h2>
+  <p>¿Cuántos caballeros deseas ganar?</p>
+  <input type="number" id="input-caballeros-torneo" min="1" value="1" style="width: 100%; margin-top: 10px;">
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button id="btn-confirmar-torneo" class="btn-confirmar">✔️ Confirmar</button>
+    <button class="btn-cancelar" onclick="cerrarModal('modal-torneo-arryn')">✖️ Cancelar</button>
+  </div>
+</div>
+
 
     <!-- Modal Reclutar (NUEVO) -->
 <div id="modal-reclutar" class="modal-juego" style="display: none;">
@@ -175,6 +220,8 @@
                     <option value="Castillo">Castillo</option>
                     <option value="Puerto">Puerto</option>
                     <option value="Taller de maquinaria de asedio">Taller de Asedio</option>
+                    <option value="Atalayas">Atalayas</option>
+                    <option value="Academia de Caballería">Academia de Caballería</option>
                  </optgroup>
             </select>
         </div>
@@ -302,6 +349,15 @@
     <h3 style="margin: 0 0 10px; font-size: 1.2rem; color: white; text-align: center;">🏰 Edificios</h3>
     <ul id="lista-edificios-jugador" style="list-style: none; padding: 0; margin: 0;"></ul>
   </div>
+
+  <div id="modal-lannister-perdidas" class="modal-juego" style="display: none;">
+    <h2>🩸 ¿Cuántas tropas has perdido?</h2>
+    <input type="number" id="input-tropas-perdidas-impuestos" value="0" min="0" style="width: 100%;">
+    <div class="botones-modal">
+      <button id="btn-confirmar-perdidas-impuestos" class="btn-confirmar">✔️ Confirmar</button>
+    </div>
+  </div>
+  
   
   <script defer src="../javascript/scriptjuego.js"></script>
 </body>

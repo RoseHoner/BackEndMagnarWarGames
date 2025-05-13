@@ -1,5 +1,15 @@
-const socket = io('http://localhost:3000'); // O tu IP/URL del servidor
+const isLocalhost = window.location.hostname === 'localhost';
+const BACKEND_URL = isLocalhost
+  ? 'http://localhost:3000'
+  : 'https://backendmagnarwargames-production.up.railway.app';
 
+
+  const socket = io(BACKEND_URL, {
+    path: '/socket.io',
+    transports: ['websocket']
+  });
+  
+  
 // --- Variables Globales del Script ---
 let casasActuales = {};       // Estado { jugador: casa } recibido del servidor
 let jugadoresActuales = [];     // Array [nombre1, nombre2] recibido del servidor
