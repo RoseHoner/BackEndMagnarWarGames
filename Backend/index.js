@@ -551,6 +551,92 @@ room.casasAtacantesTurno = null;
 
     
   });
+
+
+  socket.on('ataque-simple-doble', ({ partida, nombre, casa, territorios, perdidasPorUnidad }) => {
+  const room = rooms[partida];
+  if (!room || !room.estadoJugadores?.[nombre]) return;
+  const jugador = room.estadoJugadores[nombre];
+
+  // Restar unidades perdidas
+  for (const key in perdidasPorUnidad) {
+    if (jugador[key] !== undefined) {
+      jugador[key] = Math.max(0, jugador[key] - perdidasPorUnidad[key]);
+    }
+  }
+
+  // Procesar territorios atacados
+  for (const t of territorios) {
+    const territorio = room.estadoTerritorios?.[t.nombre];
+    if (territorio && territorio.propietario !== casa && t.gano) {
+  territorio.propietario = t.propietario || casa;
+}
+
+  }
+
+  // Marcar acción terminada
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  // Enviar a todos menos al atacante para que informen sus pérdidas
+room.players.forEach(jugador => {
+  if (jugador !== nombre && room.playerSockets[jugador]) {
+    io.to(room.playerSockets[jugador]).emit('abrir-modal-perdidas-defensor');
+  }
+});
+
+
+
+  // Emitir estado actualizado
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  // Avanzar si todos han terminado
+  const total = room.players.length;
+  if (room.jugadoresAccionTerminada.length === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
+
+
+
+socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
+  const room = rooms[partida];
+  if (!room || !room.estadoJugadores?.[nombre]) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  for (const key in perdidas) {
+    if (jugador[key] !== undefined) {
+      jugador[key] = Math.max(0, jugador[key] - perdidas[key]);
+    }
+  }
+
+  // Actualizar estado de ese jugador
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
   
 
   socket.on("arryn-inicial-completo", ({ partida, nombre, caballeros, oro, tropas }) => {

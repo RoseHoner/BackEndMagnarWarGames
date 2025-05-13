@@ -94,6 +94,46 @@ const LIMITE_SOLDADOS_POR_CASA = {
 // PARTE 2: DEFINICIÓN DE FUNCIONES
 // =============================================
 
+function renderizarModalPerdidasDefensor() {
+  const contenedor = document.getElementById('lista-perdidas-defensor');
+  contenedor.innerHTML = '';
+
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador) return;
+
+  const unidades = [
+    { key: 'tropas', nombre: 'Tropas' },
+    { key: 'tropasBlindadas', nombre: 'Tropas con Armadura' },
+    { key: 'mercenarios', nombre: 'Mercenarios' },
+    { key: 'elite', nombre: 'Mercenarios de élite' },
+    { key: 'barcos', nombre: 'Barcos' },
+    { key: 'catapulta', nombre: 'Catapultas' },
+    { key: 'torre', nombre: 'Torres de Asedio' },
+    { key: 'escorpion', nombre: 'Escorpiones' },
+    { key: 'caballero', nombre: 'Caballeros' },
+    { key: 'sacerdotes', nombre: 'Sacerdotes' },
+    { key: 'dragones', nombre: 'Dragones' },
+    { key: 'militantesFe', nombre: 'Militantes de la Fe' },
+    { key: 'arquero', nombre: 'Arqueros' }
+  ];
+
+  unidades.forEach(({ key, nombre }) => {
+    const cantidad = jugador[key] ?? 0;
+    if (cantidad > 0) {
+      const div = document.createElement('div');
+      div.classList.add('campo-formulario');
+      div.innerHTML = `
+        <label for="perdidas-def-${key}">${nombre} (Tienes ${cantidad}):</label>
+        <input type="number" id="perdidas-def-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
+      `;
+      contenedor.appendChild(div);
+    }
+  });
+
+  abrirModal('modal-perdidas-defensor');
+}
+
+
 function renderizarModalPerdidasAtaque(jugadorData) {
   const contenedor = document.getElementById('lista-perdidas-ataque');
   contenedor.innerHTML = '';
@@ -1303,11 +1343,8 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover/Atacar')); // Acción simplificada
         setupListener('btn-batalla', 'click', () => {
-          document.getElementById('nombre-casa-atacante').textContent = casa;
-          document.getElementById('lista-aliados-atacantes').innerHTML = '';
-          document.getElementById('lista-territorios-a-atacar').innerHTML = '';
-          agregarTerritorioAtaque(); // Iniciar con 1 territorio
-          abrirModal('modal-atacar-coordinado');
+          poblarSelectTerritorioAtaque();
+          abrirModal('modal-ataque-simple');
         });
         
         setupListener('btn-reorganizar', 'click', () => {
@@ -1485,7 +1522,115 @@ validarOroSoborno();
         }
         
         
-        
+        function poblarSelectTerritorioAtaque() {
+  const select1 = document.getElementById('select-territorio-ataque1');
+  const select2 = document.getElementById('select-territorio-ataque2');
+  if (!select1 || !select2 || !gameState?.territorios) return;
+
+  const atacables = Object.values(gameState.territorios)
+    .filter(t => t.propietario && t.propietario !== casa);
+
+  [select1, select2].forEach(select => {
+    select.innerHTML = '<option value="">-- Selecciona --</option>';
+    atacables.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.nombre;
+      opt.textContent = `${t.nombre} (${t.propietario})`;
+      select.appendChild(opt);
+    });
+  });
+
+  // Mostrar pérdidas posibles
+  const contenedor = document.getElementById('contenedor-perdidas-ataque');
+  const jugador = gameState.jugadores?.[nombre];
+  if (!contenedor || !jugador) return;
+
+  contenedor.innerHTML = '';
+  const unidades = [
+    { key: 'tropas', nombre: 'Tropas' },
+    { key: 'tropasBlindadas', nombre: 'Tropas con Armadura' },
+    { key: 'mercenarios', nombre: 'Mercenarios' },
+    { key: 'elite', nombre: 'Mercenarios de élite' },
+    { key: 'barcos', nombre: 'Barcos' },
+    { key: 'catapulta', nombre: 'Catapultas' },
+    { key: 'torre', nombre: 'Torres de Asedio' },
+    { key: 'escorpion', nombre: 'Escorpiones' },
+    { key: 'caballero', nombre: 'Caballeros' },
+    { key: 'sacerdotes', nombre: 'Sacerdotes' },
+    { key: 'dragones', nombre: 'Dragones' },
+    { key: 'militantesFe', nombre: 'Militantes de la Fe' },
+    { key: 'arquero', nombre: 'Arqueros' }
+  ];
+
+  unidades.forEach(({ key, nombre }) => {
+    const tiene = jugador[key] ?? 0;
+    if (tiene > 0) {
+      const div = document.createElement('div');
+      div.classList.add('campo-formulario');
+      div.innerHTML = `
+        <label for="perdida-${key}">${nombre} (Tienes ${tiene}):</label>
+        <input type="number" id="perdida-${key}" min="0" max="${tiene}" value="0" style="width: 100%;">
+      `;
+      contenedor.appendChild(div);
+    }
+  });
+}
+
+
+
+function confirmarAtaqueSimple() {
+  const territorio1 = document.getElementById('select-territorio-ataque1').value;
+  const territorio2 = document.getElementById('select-territorio-ataque2').value;
+
+  const resultado1 = document.querySelector('input[name="resultado-ataque1"]:checked')?.value;
+  const resultado2 = document.querySelector('input[name="resultado-ataque2"]:checked')?.value;
+
+  if (!territorio1 || resultado1 === undefined) {
+    alert("Debes seleccionar al menos un territorio y si lo ganaste.");
+    return;
+  }
+
+  const perdidasPorUnidad = {};
+  const jugador = gameState.jugadores?.[nombre];
+  if (!jugador) return;
+
+  const unidades = [
+    'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
+    'barcos', 'catapulta', 'torre', 'escorpion',
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+  ];
+
+  unidades.forEach(key => {
+    const input = document.getElementById(`perdida-${key}`);
+    if (input) {
+      const valor = parseInt(input.value) || 0;
+      if (valor > 0) perdidasPorUnidad[key] = valor;
+    }
+  });
+
+  const propietario1 = document.getElementById('select-propietario-ataque1')?.value || casa;
+const propietario2 = document.getElementById('select-propietario-ataque2')?.value || casa;
+
+
+
+  const territorios = [
+  { nombre: territorio1, gano: resultado1 === "si", propietario: propietario1 }
+];
+
+if (territorio2 && territorio2 !== territorio1) {
+  territorios.push({ nombre: territorio2, gano: resultado2 === "si", propietario: propietario2 });
+}
+
+  socket.emit('ataque-simple-doble', {
+    partida, nombre, casa, territorios, perdidasPorUnidad
+  });
+
+  cerrarModal('modal-ataque-simple');
+}
+window.confirmarAtaqueSimple = confirmarAtaqueSimple;
+
+
+
 
         function agregarArquerosSiTullyConArqueria() {
           const contenedor = document.getElementById('contenedor-reclutas');
@@ -2031,6 +2176,29 @@ if (barcoBox) {
   }
 }
 
+document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('click', () => {
+  const perdidas = {};
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador) return;
+
+  const unidades = [
+    'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
+    'barcos', 'catapulta', 'torre', 'escorpion',
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+  ];
+
+  for (const key of unidades) {
+    const input = document.getElementById(`perdidas-def-${key}`);
+    if (!input) continue;
+    const valor = parseInt(input.value) || 0;
+    if (valor > 0) perdidas[key] = valor;
+  }
+
+  cerrarModal('modal-perdidas-defensor');
+  socket.emit('perdidas-defensor', { partida, nombre, perdidas });
+});
+
+
 document.getElementById('btn-confirmar-soborno-final-lannister')?.addEventListener('click', () => {
   const perdidas = parseInt(document.getElementById('input-tropas-perdidas-soborno-lannister').value) || 0;
   const gano = document.querySelector('input[name="soborno-resultado"]:checked')?.value === 'si';
@@ -2112,6 +2280,30 @@ window.agregarAliadoAtacante = function () {
 
 window.confirmarAtaqueCoordinado = confirmarAtaqueCoordinado;
 
+document.querySelectorAll('input[name="resultado-ataque1"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const cont = document.getElementById('asignar-propietario-ataque1');
+    if (radio.value === 'si' && radio.checked) {
+      cont.style.display = 'block';
+      poblarSelectPropietarios();
+    } else {
+      cont.style.display = 'none';
+    }
+  });
+});
+
+document.querySelectorAll('input[name="resultado-ataque2"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const cont = document.getElementById('asignar-propietario-ataque2');
+    if (radio.value === 'si' && radio.checked) {
+      cont.style.display = 'block';
+      poblarSelectPropietarios();
+    } else {
+      cont.style.display = 'none';
+    }
+  });
+});
+
 
 
 
@@ -2180,6 +2372,11 @@ socket.on('abrir-modal-perdidas-ataque', ({ jugador, datosJugador }) => {
   if (jugador !== nombre) return; // Solo abre para el jugador correcto
   renderizarModalPerdidasAtaque(datosJugador);
 });
+
+socket.on('abrir-modal-perdidas-defensor', () => {
+  renderizarModalPerdidasDefensor();
+});
+
 
 
 socket.on('avanzar-accion', (nuevoEstado) => {
@@ -2542,6 +2739,25 @@ for (const tipo in unidadesValidas) {
     actualizarInfoJugador();
     cerrarModal('modal-reclutar');
   }
+
+  function poblarSelectPropietarios() {
+  const casas = getListaCasasPosibles(); // Ya definida en tu script
+  const select1 = document.getElementById('select-propietario-ataque1');
+  const select2 = document.getElementById('select-propietario-ataque2');
+
+  [select1, select2].forEach(select => {
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Elige casa --</option>';
+    casas.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      select.appendChild(opt);
+    });
+    select.value = casa; // Selecciona tu propia casa por defecto
+  });
+}
+
   
   function obtenerTerritorioConPuerto() {
     const t = Object.values(gameState.territorios).find(

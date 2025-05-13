@@ -89,35 +89,65 @@
         <!-- Podríamos añadir botones para habilidades específicas aquí -->
     </div>
 
-    <!-- Modal Batalla (Sin cambios estructurales) -->
-    <div id="modal-atacar-coordinado" class="modal-juego" style="display: none;">
-      <button class="modal-cerrar" onclick="cerrarModal('modal-atacar-coordinado')">X</button>
-      <h2>⚔️ Plan de Ataque</h2>
-    
-      <div style="display: flex; gap: 20px;">
-        <!-- LADO IZQUIERDO: Atacantes -->
-        <div style="flex: 1;">
-          <h3 style="margin-bottom: 10px;">Atacantes</h3>
-          <p><b>Tú:</b> <span id="nombre-casa-atacante"></span></p>
-          <div id="lista-aliados-atacantes"></div>
-          <button onclick="agregarAliadoAtacante()">➕ Agregar Casa Aliada</button>
-        </div>
-    
-        <!-- LADO DERECHO: Territorios objetivo -->
-        <div style="flex: 1;">
-          <h3 style="margin-bottom: 10px;">Territorios a Atacar</h3>
-          <div id="lista-territorios-a-atacar"></div>
-          <button onclick="agregarTerritorioAtaque()">➕ Agregar Territorio</button>
-        </div>
-      </div>
-    
-      <div class="botones-modal" style="margin-top: 20px;">
-        <button class="btn-confirmar" onclick="confirmarAtaqueCoordinado()">✔️ Aceptar</button>
-        <button class="btn-cancelar" onclick="cerrarModal('modal-atacar-coordinado')">✖️ Cancelar</button>
-      </div>
-    </div>
-    
-    <!-- Fin Modal Batalla -->
+    <!-- Modal Ataque Simple Mejorado -->
+<div id="modal-ataque-simple" class="modal-juego" style="display: none;">
+  <h2>⚔️ Ataque</h2>
+
+  <!-- Primer territorio -->
+  <div class="campo-formulario">
+    <label for="select-territorio-ataque1">🛡️ Primer territorio a atacar:</label>
+    <select id="select-territorio-ataque1"><option value="">-- Selecciona --</option></select>
+  </div>
+
+  <!-- Segundo territorio -->
+  <div class="campo-formulario">
+    <label for="select-territorio-ataque2">🛡️ Segundo territorio (opcional):</label>
+    <select id="select-territorio-ataque2"><option value="">-- Ninguno --</option></select>
+  </div>
+
+  <!-- Lista de pérdidas por unidad -->
+  <div class="campo-formulario">
+    <div id="contenedor-perdidas-ataque"></div>
+  </div>
+
+  <!-- ¿Ganó el primer territorio? -->
+  <div class="campo-formulario">
+    <label>¿Ganaste el PRIMER territorio?</label><br>
+    <label><input type="radio" name="resultado-ataque1" value="si" checked> Sí</label>
+    <label><input type="radio" name="resultado-ataque1" value="no"> No</label>
+    <div id="asignar-propietario-ataque1" class="campo-formulario" style="display: none;">
+  <label for="select-propietario-ataque1">¿Quién se queda con el PRIMER territorio?</label>
+  <select id="select-propietario-ataque1">
+    <option value="">-- Elige casa --</option>
+  </select>
+</div>
+
+
+  </div>
+
+  <!-- ¿Ganó el segundo territorio? -->
+  <div class="campo-formulario">
+    <label>¿Ganaste el SEGUNDO territorio?</label><br>
+    <label><input type="radio" name="resultado-ataque2" value="si" checked> Sí</label>
+    <label><input type="radio" name="resultado-ataque2" value="no"> No</label>
+    <<div id="asignar-propietario-ataque2" class="campo-formulario" style="display: none;">
+  <label for="select-propietario-ataque2">¿Quién se queda con el PRIMER territorio?</label>
+  <select id="select-propietario-ataque2">
+    <option value="">-- Elige casa --</option>
+  </select>
+</div>
+
+
+  </div>
+
+  <!-- Botones -->
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button class="btn-confirmar" onclick="confirmarAtaqueSimple()">✔️ Confirmar</button>
+    <button class="btn-cancelar" onclick="cerrarModal('modal-ataque-simple')">✖️ Cancelar</button>
+  </div>
+</div>
+
+
 
     <button id="btn-organizar-torneo" class="btn-accion-juego" style="display: none;">🏇 Organizar Torneo</button>
 
@@ -467,7 +497,20 @@
 </div>
 
 
-  
+  <!-- Modal para defensores: ¿Has perdido tropas? -->
+<div id="modal-perdidas-defensor" class="modal-juego" style="display: none;">
+  <h2>🩸 ¿Perdiste tropas en la batalla?</h2>
+  <p>Indica cuántas tropas has perdido de cada tipo:</p>
+
+  <div id="lista-perdidas-defensor" class="lista-scrollable" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+    <!-- Se rellenará con inputs dinámicos -->
+  </div>
+
+  <div class="botones-modal">
+    <button id="btn-confirmar-perdidas-defensor" class="btn-confirmar">✔️ Confirmar</button>
+  </div>
+</div>
+
   
   
   
