@@ -117,6 +117,7 @@ function inicializarEstadoTerritorios() {
         }
         return ["Castillo"];
     }
+    
         return [];
     })(),
     tropas: {}
@@ -158,6 +159,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   catapulta: 0,
   torre: 0,
   escorpion: 0,
+  tropasBlindadas: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -170,6 +172,210 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
 // Cuando un cliente se conecta por socket
 io.on('connection', (socket) => {
   console.log(`🔌 Connect: ${socket.id}`);
+
+
+  socket.on('ataque-coordinado', ({ partida, nombre, casaAtacante, aliados, territorios }) => {
+    const room = rooms[partida];
+    if (!room) return;
+
+    // Guardamos el atacante principal y los territorios atacados
+room.atacantePrincipalTurno = nombre;
+room.casaAtacantePrincipal = casaAtacante;
+room.territoriosAtacadosPorTurno = territorios;
+room.casasAtacantesTurno = [casaAtacante, ...aliados];
+
+  
+    const implicados = new Set();
+
+// Añadir atacante principal
+implicados.add(nombre);
+
+// Añadir aliados válidos
+for (const casaAliada of aliados) {
+  const jugadorAliado = Object.entries(room.estadoJugadores).find(([_, j]) => j.casa === casaAliada);
+  if (jugadorAliado) implicados.add(jugadorAliado[0]);
+}
+
+  
+    // AÑADIR defensores (por cada territorio, buscamos su propietario actual)
+    for (const t of territorios) {
+      const territorio = room.estadoTerritorios[t];
+      const casaDefensora = territorio?.propietario;
+      const jugadorDefensor = Object.entries(room.estadoJugadores).find(
+        ([_, j]) => j.casa === casaDefensora
+      );
+      if (jugadorDefensor) implicados.add(jugadorDefensor[0]);
+    }
+  
+    // Enviar a cada implicado su modal de pérdidas
+    for (const jugadorNombre of implicados) {
+      const datosJugador = room.estadoJugadores[jugadorNombre];
+      const socketId = room.playerSockets[jugadorNombre];
+      if (socketId && datosJugador) {
+        io.to(socketId).emit('abrir-modal-perdidas-ataque', {
+          jugador: jugadorNombre,
+          datosJugador
+        });
+      }
+    }
+  });
+
+  socket.on('perdidas-en-batalla', ({ partida, nombre, perdidas }) => {
+    const room = rooms[partida];
+    if (!room) return;
+  
+    const jugador = room.estadoJugadores[nombre];
+    if (!jugador) return;
+  
+    // Aplicar las pérdidas recibidas
+    for (const key in perdidas) {
+      if (jugador[key] !== undefined) {
+        jugador[key] = Math.max(0, jugador[key] - perdidas[key]);
+      }
+    }
+  
+    // Marcar como listo
+    // ✅ Solo el atacante principal gasta acción
+    if (jugador?.casa === room.casaAtacantePrincipal && !room.jugadoresAccionTerminada.includes(nombre)) {
+      room.jugadoresAccionTerminada.push(nombre);
+    }
+    
+
+  // Comprobamos si todos los implicados en la batalla ya terminaron
+const implicados = new Set();
+
+// Atacante principal
+implicados.add(room.atacantePrincipalTurno);
+
+// Aliados
+for (const casaAliada of room.casasAtacantesTurno) {
+  const jugadorAliado = Object.entries(room.estadoJugadores).find(([_, j]) => j.casa === casaAliada);
+  if (jugadorAliado) implicados.add(jugadorAliado[0]);
+}
+
+// Defensores
+for (const territorio of room.territoriosAtacadosPorTurno) {
+  const casaDefensora = room.estadoTerritorios[territorio]?.propietario;
+  const defensor = Object.entries(room.estadoJugadores).find(([_, j]) => j.casa === casaDefensora);
+  if (defensor) implicados.add(defensor[0]);
+}
+
+// Verificar si todos los implicados ya terminaron
+const todosListos = [...implicados].every(j => room.jugadoresAccionTerminada.includes(j));
+
+console.log(`[Modal 3] Atacante principal: ${room.atacantePrincipalTurno}`);
+console.log(`[Modal 3] playerSockets disponibles:`, room.playerSockets);
+
+if (
+  todosListos &&
+  room.atacantePrincipalTurno &&
+  room.territoriosAtacadosPorTurno &&
+  room.casasAtacantesTurno
+) {
+  
+  const atacanteCasa = room.casaAtacantePrincipal;
+const atacanteJugador = Object.entries(room.estadoJugadores).find(([_, j]) => j.casa === atacanteCasa);
+const socketAtacante = atacanteJugador ? room.playerSockets[atacanteJugador[0]] : null;
+
+
+if (!socketAtacante) {
+  console.warn(`[Modal 3] No se encontró socket del atacante principal (${atacante}) en partida ${partida}`);
+  return; // Evita fallos silenciosos
+}
+
+
+  if (socketAtacante) {
+    io.to(socketAtacante).emit('abrir-modal-asignar-territorios', {
+      territorios: room.territoriosAtacadosPorTurno,
+      posiblesCasas: room.casasAtacantesTurno
+    });
+  }
+
+  // ❌ NO borres aún los datos del ataque. Lo haremos cuando confirme el modal 3.
+}
+
+    
+  
+    // Emitimos estado actualizado (opcional)
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+  
+  
+
+
+
+  socket.on('tyrell-obtener-tecnologia', ({ partida, nombre, edificio, territorio }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores[nombre];
+    const t = room.estadoTerritorios[territorio];
+    if (!jugador || jugador.casa !== "Tyrell" || !t || t.propietario !== "Tyrell") return;
+  
+    const COSTOS = {
+      "Armería": 30,
+      "Arquería": 30,
+      "Academia de Caballería": 20
+    };
+  
+    const costo = COSTOS[edificio] ?? 999;
+    let descuento = 0;
+    for (const terr of Object.values(room.estadoTerritorios)) {
+      if (terr.propietario === "Tyrell") {
+        descuento += terr.edificios.filter(e => e === "Cantera").length * 5;
+      }
+    }
+  
+    const costoFinal = Math.max(0, costo - descuento);
+    if (jugador.oro < costoFinal) return;
+  
+    jugador.oro -= costoFinal;
+    t.edificios.push(edificio);
+    jugador.tecnologiaTyrellUsada = true;
+  
+    if (!room.jugadoresAccionTerminada.includes(nombre)) {
+      room.jugadoresAccionTerminada.push(nombre);
+    }
+  
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  
+    const listos = room.jugadoresAccionTerminada.length;
+    const total = room.players.length;
+  
+    if (listos === total) {
+      room.jugadoresAccionTerminada = [];
+      room.accionActual += 1;
+      if (room.accionActual > 4) {
+        room.accionActual = 1;
+        room.turnoActual += 1;
+      }
+  
+      io.to(partida).emit('actualizar-estado-juego', {
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+  
+      io.to(partida).emit('avanzar-accion', {
+        turno: room.turnoActual,
+        accion: room.accionActual,
+        fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+      });
+    }
+
+
+  });
+  
 
   socket.on('organizar-torneo-arryn', ({ partida, nombre, cantidad }) => {
     const room = rooms[partida];
@@ -299,6 +505,139 @@ io.on('connection', (socket) => {
     }
   });
   
+  socket.on('asignar-territorios-post-batalla', ({ partida, nombre, asignaciones }) => {
+    const room = rooms[partida];
+    if (!room) return;
+  
+    for (const t in asignaciones) {
+      if (room.estadoTerritorios[t]) {
+        room.estadoTerritorios[t].propietario = asignaciones[t];
+      }
+    }
+  
+    // Avanzar acción solo para el atacante principal
+    if (!room.jugadoresAccionTerminada.includes(nombre)) {
+      room.jugadoresAccionTerminada.push(nombre);
+    }
+  
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  
+    const total = room.players.length;
+    if (room.jugadoresAccionTerminada.length === total) {
+      room.jugadoresAccionTerminada = [];
+      room.accionActual++;
+      if (room.accionActual > 4) {
+        room.accionActual = 1;
+        room.turnoActual++;
+      }
+  
+      io.to(partida).emit('avanzar-accion', {
+        turno: room.turnoActual,
+        accion: room.accionActual,
+        fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+      });
+    }
+
+    // ✅ LIMPIAR datos del ataque al final del modal 3
+room.atacantePrincipalTurno = null;
+room.casaAtacantePrincipal = null;
+room.territoriosAtacadosPorTurno = null;
+room.casasAtacantesTurno = null;
+
+    
+  });
+
+
+  socket.on('ataque-simple-doble', ({ partida, nombre, casa, territorios, perdidasPorUnidad }) => {
+  const room = rooms[partida];
+  if (!room || !room.estadoJugadores?.[nombre]) return;
+  const jugador = room.estadoJugadores[nombre];
+
+  // Restar unidades perdidas
+  for (const key in perdidasPorUnidad) {
+    if (jugador[key] !== undefined) {
+      jugador[key] = Math.max(0, jugador[key] - perdidasPorUnidad[key]);
+    }
+  }
+
+  // Procesar territorios atacados
+  for (const t of territorios) {
+    const territorio = room.estadoTerritorios?.[t.nombre];
+    if (territorio && territorio.propietario !== casa && t.gano) {
+  territorio.propietario = t.propietario || casa;
+}
+
+  }
+
+  // Marcar acción terminada
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  // Enviar a todos menos al atacante para que informen sus pérdidas
+room.players.forEach(jugador => {
+  if (jugador !== nombre && room.playerSockets[jugador]) {
+    io.to(room.playerSockets[jugador]).emit('abrir-modal-perdidas-defensor');
+  }
+});
+
+
+
+  // Emitir estado actualizado
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  // Avanzar si todos han terminado
+  const total = room.players.length;
+  if (room.jugadoresAccionTerminada.length === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
+
+
+
+socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
+  const room = rooms[partida];
+  if (!room || !room.estadoJugadores?.[nombre]) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  for (const key in perdidas) {
+    if (jugador[key] !== undefined) {
+      jugador[key] = Math.max(0, jugador[key] - perdidas[key]);
+    }
+  }
+
+  // Actualizar estado de ese jugador
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
+  
 
   socket.on("arryn-inicial-completo", ({ partida, nombre, caballeros, oro, tropas }) => {
     const room = rooms[partida];
@@ -336,7 +675,8 @@ io.on('connection', (socket) => {
           ).length;
         }
       }
-      ingreso += totalProd * 10;
+      const oroPorEdificio = casa === "Martell" ? 15 : 10;
+      ingreso += totalProd * oroPorEdificio;
     }
   
     ingreso += oro;
@@ -457,7 +797,8 @@ jugador.oro = Math.max(0, ingreso - mantenimiento);
 });
 
 
-  socket.on('actualizar-perdidas-neutral', ({ partida, nombre, perdidas, territoriosPerdidos, nuevoPropietarioPorTerritorio }) => {
+socket.on('actualizar-perdidas-neutral', ({ partida, nombre, perdidas, perdidasPorUnidad, territoriosPerdidos, nuevoPropietarioPorTerritorio }) => {
+
 
     const room = rooms[partida];
     if (!room) return;
@@ -466,6 +807,15 @@ jugador.oro = Math.max(0, ingreso - mantenimiento);
     if (!jugador) return;
   
     jugador.tropas = Math.max(0, jugador.tropas - perdidas);
+
+    if (perdidasPorUnidad && typeof perdidasPorUnidad === 'object') {
+      for (const key in perdidasPorUnidad) {
+        if (jugador.hasOwnProperty(key)) {
+          jugador[key] = Math.max(0, jugador[key] - perdidasPorUnidad[key]);
+        }
+      }
+    }
+    
   
     if (territoriosPerdidos && typeof nuevoPropietarioPorTerritorio === "object") {
       territoriosPerdidos.forEach(nombreTerritorio => {
@@ -476,7 +826,17 @@ jugador.oro = Math.max(0, ingreso - mantenimiento);
         }
       });
     }
-    
+    // Si el jugador es Tyrell y tiene un Septo, pedir militantes
+if (jugador.casa === "Tyrell") {
+  const tieneSepto = Object.values(room.estadoTerritorios).some(
+    t => t.propietario === "Tyrell" && t.edificios.includes("Septo")
+  );
+
+  if (tieneSepto) {
+    io.to(room.playerSockets[nombre]).emit("abrir-modal-militantes-fe");
+  }
+}
+
   
     io.to(partida).emit('actualizar-estado-juego', {
       territorios: room.estadoTerritorios,
@@ -510,6 +870,8 @@ jugador.oro = Math.max(0, ingreso - mantenimiento);
           const j = jugadores[jugadorNombre];
           const casa = j.casa;
           let ingreso = 0;
+          
+
           for (const nombreTerritorio in territorios) {
             const t = territorios[nombreTerritorio];
             if (t.propietario === casa) {
@@ -535,7 +897,15 @@ if (tienePuerto) {
       ).length;
     }
   }
-  ingreso += totalProduccion * 10;
+  const oroPorEdificio = casa === "Martell" ? 15 : 10;
+  ingreso += totalProduccion * oroPorEdificio;
+}
+
+if (casa === "Martell") {
+  const puertoInicial = territorios["Lanza del Sol"];
+  if (puertoInicial && puertoInicial.propietario === "Martell" && puertoInicial.edificios.includes("Puerto")) {
+    ingreso += 10;
+  }
 }
 ingreso += minas * (casa === "Lannister" ? 20 : 10);
 
@@ -554,7 +924,8 @@ const escorpiones = j.escorpion || 0;
 const dragones = j.dragones || 0;
 
 const costoBarcos = barcos * 2;
-const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
+const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0) + (j.militantesFe || 0);
+
 const costoMaquinas = catapultas + torres + escorpiones;
 const costoDragones = dragones * 5;
 const costoSacerdotes = j.sacerdotes || 0;
@@ -641,9 +1012,23 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
 
         ingreso += aserraderos * 5;
         ingreso += canteras * 5;
-        if (casa !== "Tyrell") {
-  ingreso += granjas * 5;
-}
+        if (casa === "Tully") {
+          ingreso += granjas * 10;
+        } else if (casa !== "Tyrell") {
+          ingreso += granjas * 5;
+        }
+
+        // 💰 Bonus Martell por Puerto inicial en Lanza del Sol
+
+
+        
+      }
+    }
+
+    if (casa === "Martell") {
+      const puertoInicial = territorios["Lanza del Sol"];
+      if (puertoInicial && puertoInicial.propietario === "Martell" && puertoInicial.edificios.includes("Puerto")) {
+        ingreso += 10;
       }
     }
   
@@ -656,7 +1041,8 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
           totalProd += t.edificios.filter(e => ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)).length;
         }
       }
-      ingreso += totalProd * 10;
+      const oroPorEdificio = casa === "Martell" ? 15 : 10;
+      ingreso += totalProd * oroPorEdificio;
     }
   
     // Sumar oro extra ingresado por el jugador
@@ -876,7 +1262,9 @@ room.playerSockets[nombre] = socket.id;
         Arquería: 30,
         Septo: 50,
         "Puerto Fluvial": 30,
-        caballero: 10
+        "Foso": 40,
+        "Arquería": 30,
+
       };
     const costo = COSTOS[tipoEdificio] ?? 999;
   
@@ -895,6 +1283,29 @@ if (jugador.oro < costoFinal) {
   return;
 }
 jugador.oro -= costoFinal;
+
+if (tipoEdificio === "Foso") {
+  if (jugador.casa !== "Tully") return;
+  if (!territorioObj.edificios.includes("Castillo")) {
+    io.to(room.playerSockets[nombre]).emit('error-accion', 'Solo puedes construir un Foso donde haya un Castillo.');
+    return;
+  }
+}
+
+if (tipoEdificio === "Arquería") {
+  if (jugador.casa !== "Tully") return;
+}
+
+
+if (tipoEdificio === "Puerto Fluvial") {
+  if (jugador.casa !== "Tully") return;
+  if (territorio !== "El Tridente") {
+    io.to(room.playerSockets[nombre]).emit('error-accion', 'Solo puedes construir el Puerto Fluvial en El Tridente.');
+    return;
+  }
+}
+
+
 
     territorioObj.edificios.push(tipoEdificio);
   
@@ -974,7 +1385,8 @@ const torres = j.torre || 0;
 const escorpiones = j.escorpion || 0;
 const dragones = j.dragones || 0;
 
-const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
+const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0) + (j.militantesFe || 0);
+
 const costoBarcos = barcos * 2;
 const costoMaquinas = catapultas + torres + escorpiones;
 const costoDragones = dragones * 5;
@@ -1035,18 +1447,25 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
     );
     if (!tieneAcademia) return;
   }
+
+  
   
 
   const COSTOS = {
     sacerdoteLuz: 20,
     soldado: 4,
-    mercenario: 5,
-    elite: 7,
+    mercenario: jugador.casa === "Martell" ? 5 : 8,
+  elite: jugador.casa === "Martell" ? 9 : 15,
     barco: 20,
     catapulta: 20,
     escorpion: 20,
     torre: 20,
-    caballero: 10
+    caballero: 10,
+    soldadoBlindado: 10,
+    armadura: 6,
+    "Foso": 40,
+    "Puerto Fluvial": 30,
+    "Arquería": 30,
   };
   
 
@@ -1063,6 +1482,12 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
       }
     }
   }
+
+  if (tipoUnidad === 'soldadoBlindado') {
+    jugador.tropasBlindadas = (jugador.tropasBlindadas || 0) + cantidad;
+  }
+  
+  
 
   costoUnitario = Math.max(0, costoUnitario - descuento);
   
@@ -1091,6 +1516,14 @@ ingreso += canteras * 5;
   }
   
   jugador.oro -= costoTotal;
+
+  // Después de jugador.oro -= costoTotal;
+if (tipoUnidad === 'armadura') {
+  if ((jugador.tropas || 0) < cantidad) return;
+  jugador.tropas -= cantidad;
+  jugador.tropasBlindadas = (jugador.tropasBlindadas || 0) + cantidad;
+}
+
   
   
 
@@ -1194,7 +1627,8 @@ const escorpiones = j.escorpion || 0;
 const dragones = j.dragones || 0;
 
 const costoBarcos = barcos * 2;
-const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
+const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0) + (j.militantesFe || 0);
+
 const costoMaquinas = catapultas + torres + escorpiones;
 const costoDragones = dragones * 5;
 const costoSacerdotes = j.sacerdotes || 0;
@@ -1225,7 +1659,129 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
   }
 });
 
+socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  const territorioObj = room.estadoTerritorios[territorio];
+  if (!jugador || !territorioObj || territorioObj.propietario !== jugador.casa) return;
+
+  const COSTOS = {
+    soldado: 4,
+    mercenario: jugador.casa === "Martell" ? 5 : 8,
+    elite: jugador.casa === "Martell" ? 9 : 15,
+    barco: 20,
+    catapulta: 20,
+    escorpion: 20,
+    torre: 20,
+    sacerdoteLuz: 20,
+    caballero: 10,
+    soldadoBlindado: 10,
+    armadura: 6,
+    arquero: 6,
+  };
+
+  let descuento = 0;
+  for (const t of Object.values(room.estadoTerritorios)) {
+    if (t.propietario === jugador.casa && Array.isArray(t.edificios)) {
+      descuento += t.edificios.filter(e => e === "Aserradero").length * 5;
+    }
+  }
+
+  let totalCosto = 0;
+
+  for (const tipo in unidades) {
+    const cantidad = unidades[tipo] ?? 0;
+    let precioUnitario = COSTOS[tipo] ?? 999;
+
+    if (tipo === "soldado") {
+      let descuentoGranja = 0;
+      for (const t of Object.values(room.estadoTerritorios)) {
+        if (t.propietario === jugador.casa && Array.isArray(t.edificios)) {
+          descuentoGranja += t.edificios.filter(e => e === "Granja").length;
+        }
+      }
+      precioUnitario = Math.max(0, precioUnitario - descuentoGranja);
+    }
+
+    if (["barco", "catapulta", "torre", "escorpion"].includes(tipo)) {
+      precioUnitario = Math.max(0, precioUnitario - descuento);
+    }
+
+    totalCosto += cantidad * precioUnitario;
+  }
+
+  if (jugador.oro < totalCosto) {
+    io.to(room.playerSockets[nombre]).emit('error-accion', 'Oro insuficiente para reclutar.');
+    return;
+  }
+
+  jugador.oro -= totalCosto;
+
+  for (const tipo in unidades) {
+    const cantidad = unidades[tipo];
+    if (!cantidad || cantidad <= 0) continue;
+
+    if (tipo === 'soldado') jugador.tropas += cantidad;
+    else if (tipo === 'mercenario') jugador.mercenarios += cantidad;
+    else if (tipo === 'elite') jugador.elite += cantidad;
+    else if (tipo === 'barco') jugador.barcos += cantidad;
+    else if (tipo === 'catapulta' || tipo === 'torre' || tipo === 'escorpion') jugador[tipo] += cantidad;
+    else if (tipo === 'soldadoBlindado') jugador.tropasBlindadas += cantidad;
+    else if (tipo === 'armadura') {
+      if (jugador.tropas >= cantidad) {
+        jugador.tropas -= cantidad;
+        jugador.tropasBlindadas += cantidad;
+      }
+    } else if (tipo === 'arquero') {
+    jugador.arquero = (jugador.arquero || 0) + cantidad;
+  }
   
+    else if (tipo === 'sacerdoteLuz') jugador.sacerdotes += cantidad;
+    else if (tipo === 'caballero') jugador.caballero += cantidad;
+  }
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  const listos = room.jugadoresAccionTerminada.length;
+  const total = room.players.length;
+
+  io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+
+  if (listos === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
 
   // Cuando un jugador termina su acción
   socket.on('accion-terminada', ({ partida, nombre }) => {
@@ -1267,12 +1823,23 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
               }
 
 
+
+
             for (const nombreTerritorio in territorios) {
                 const territorio = territorios[nombreTerritorio];
                 if (territorio.propietario === casa) {
                     ingreso += territorio.oroBase || 0;
                 }
             }
+
+            // 💰 Bonus Martell por Puerto inicial en Lanza del Sol
+if (casa === "Martell") {
+  const puertoInicial = territorios["Lanza del Sol"];
+  if (puertoInicial && puertoInicial.propietario === "Martell" && puertoInicial.edificios.includes("Puerto")) {
+    ingreso += 10;
+  }
+}
+
 
               // 🔨 BONUS por cada mina construida en territorios del jugador
   for (const nombreTerritorio in territorios) {
@@ -1293,15 +1860,19 @@ if (tienePuerto) {
       ).length;
     }
   }
-  ingreso += totalProduccion * 10;
+  const oroPorEdificio = casa === "Martell" ? 15 : 10;
+  ingreso += totalProduccion * oroPorEdificio;
 }
 ingreso += minas * (casa === "Lannister" ? 20 : 10);
 
       ingreso += aserraderos * 5;
       ingreso += canteras * 5;
-      if (casa !== "Tyrell") {
-  ingreso += granjas * 5;
-}
+      if (casa === "Tully") {
+        ingreso += granjas * 10;
+      } else if (casa !== "Tyrell") {
+        ingreso += granjas * 5;
+      }
+      
     }
 }
 
@@ -1313,7 +1884,8 @@ ingreso += minas * (casa === "Lannister" ? 20 : 10);
             const escorpiones = jugador.escorpion || 0;
             const costoMaquinas = catapultas * 1 + torres * 1 + escorpiones * 1; // o el coste de mantenimiento que quieras
 
-            const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0);
+            const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0) + (j.militantesFe || 0);
+
             const barcos = jugador.barcos || 0;
             const costoBarcos = barcos * 2;
             const dragones = jugador.dragones || 0;
@@ -1325,7 +1897,22 @@ const costoCaballeros = caballeros * 1;
 
             jugador.oro = Math.max(0, jugador.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes);
 
+
+            // ✅ Si el jugador es Tyrell y tiene un Septo, lanzar el modal
+if (casa === "Tyrell") {
+  const tieneSepto = Object.values(territorios).some(
+    t => t.propietario === casa && t.edificios.includes("Septo")
+  );
+
+  if (tieneSepto) {
+    io.to(room.playerSockets[jugadorNombre]).emit("abrir-modal-militantes-fe");
+  }
+}
+
+
         }
+        
+
       
           io.to(partida).emit('actualizar-estado-juego', {
             territorios: room.estadoTerritorios,
@@ -1345,6 +1932,24 @@ const costoCaballeros = caballeros * 1;
       
     }
   });
+
+  socket.on("confirmar-militantes-fe", ({ partida, nombre, cantidad }) => {
+    const room = rooms[partida];
+    if (!room || !room.estadoJugadores?.[nombre]) return;
+  
+    const jugador = room.estadoJugadores[nombre];
+    if (jugador.casa !== "Tyrell") return;
+  
+    jugador.militantesFe = (jugador.militantesFe || 0) + cantidad;
+  
+    io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+  
 
   socket.on('doble-impuestos-completo', ({ partida, nombre, perdidas }) => {
     const room = rooms[partida];
@@ -1412,6 +2017,140 @@ const costoCaballeros = caballeros * 1;
       });
     }
   });
+
+  socket.on('defensor-soborno-perdidas', ({ partida, nombre, perdidas }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores[nombre];
+    if (!jugador) return;
+  
+    jugador.tropas = Math.max(0, jugador.tropas - perdidas);
+  
+    io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+  
+
+  socket.on('lannister-soborno-final', ({ partida, nombre, perdidas, gano }) => {
+    const room = rooms[partida];
+    if (!room || !room.sobornoEnCurso) return;
+  
+    const jugador = room.estadoJugadores[nombre];
+    if (!jugador || jugador.casa !== "Lannister") return;
+  
+    const territorio = room.sobornoEnCurso.territorio;
+    const defensor = room.sobornoEnCurso.defensor;
+    const t = room.estadoTerritorios[territorio];
+  
+    jugador.tropas = Math.max(0, jugador.tropas - perdidas);
+  
+    if (gano && t) {
+      t.propietario = "Lannister";
+    }
+  
+    // Borramos info temporal
+    delete room.sobornoEnCurso;
+  
+    io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+    
+    if (defensor && room.playerSockets[defensor]) {
+      io.to(room.playerSockets[defensor]).emit('actualizar-estado-juego', {
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+    }
+
+    if (!room.jugadoresAccionTerminada.includes(nombre)) {
+      room.jugadoresAccionTerminada.push(nombre);
+    }
+    
+    const listos = room.jugadoresAccionTerminada.length;
+    const totalJugadores = room.players.length;
+    
+    io.to(partida).emit(
+      'estado-espera-jugadores',
+      listos < totalJugadores ? `⌛ Esperando a ${totalJugadores - listos}...` : `✅ Procesando...`
+    );
+    
+    if (listos === totalJugadores) {
+      room.jugadoresAccionTerminada = [];
+      room.accionActual += 1;
+    
+      if (room.accionActual > 4) {
+        room.accionActual = 1;
+        room.turnoActual += 1;
+      }
+    
+      io.to(partida).emit('actualizar-estado-juego', {
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+    
+      io.to(partida).emit('avanzar-accion', {
+        turno: room.turnoActual,
+        accion: room.accionActual,
+        fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+      });
+    }
+    
+    
+  });
+  
+  
+  socket.on('lannister-soborno-inicial', ({ partida, nombre, territorio, cantidad }) => {
+    const room = rooms[partida];
+    if (!room) return;
+  
+    const jugador = room.estadoJugadores[nombre];
+    if (!jugador || jugador.casa !== "Lannister") return;
+  
+    const t = room.estadoTerritorios[territorio];
+    if (!t || !t.propietario || t.propietario === "Lannister") return;
+  
+    const casaDefensora = t.propietario;
+    const rival = Object.entries(room.estadoJugadores).find(([k, v]) => v.casa === casaDefensora);
+  
+    jugador.tropas += cantidad;
+    const costoPorSoldado = 4; // Costo base de reclutar un soldado
+const costoSoborno = costoPorSoldado * 2; // Doble del costo de reclutamiento
+jugador.oro = Math.max(0, jugador.oro - cantidad * costoSoborno);
+
+  
+    if (rival) {
+      const [nombreRival, jugadorRival] = rival;
+      jugadorRival.tropas = Math.max(0, jugadorRival.tropas - cantidad);
+  
+      room.sobornoEnCurso = { territorio, defensor: nombreRival };
+  
+      io.to(room.playerSockets[nombre]).emit('abrir-modal-soborno-lannister-final', { territorio });
+      io.to(room.playerSockets[nombreRival]).emit('abrir-modal-soborno-rival', { territorio, cantidad });
+    } else {
+      // No hay jugador que controle el territorio (es un NPC)
+      room.sobornoEnCurso = { territorio, defensor: null };
+      io.to(room.playerSockets[nombre]).emit('abrir-modal-soborno-lannister-final', { territorio });
+    }
+  
+    io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+  
   
   
   
