@@ -257,31 +257,29 @@
                  </optgroup>
             </select>
         </div>
-         <div id="costo-construccion" style="text-align: center; margin-top: 15px; font-weight: bold;">
-            Costo: <span id="costo-construir-valor">--</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">
-        </div>
-         <div id="limite-construccion-info" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: #ccc;">
-             (<span id="limite-construir-actual">0</span> / <span id="limite-construir-maximo">1</span> edificios este turno)
-        </div>
-        <div class="botones-modal">
-             <button id="btn-confirmar-construir" class="btn-confirmar">✔️ Construir</button>
-             <button class="btn-cancelar" onclick="cerrarModal('modal-construir')">✖️ Cancelar</button>
-        </div>
-    </div>
-    <!-- Fin Modal Construir -->
-
-    <!-- SOLO visible si eres Targaryen -->
-<div id="contenedor-construccion-extra" class="campo-formulario" style="display: none;">
+        <div id="contenedor-construccion-extra" class="campo-formulario" style="display: none;">
   <label for="select-territorio-construir-2">Segundo territorio:</label>
   <select id="select-territorio-construir-2"><option value="">-- Selecciona territorio --</option></select>
 
   <label for="select-edificio-construir-2">Segundo edificio:</label>
   <select id="select-edificio-construir-2">
     <option value="">-- Selecciona --</option>
-    <!-- Aquí se pueden poblar igual que el primer select -->
   </select>
 </div>
 
+        <div class="botones-modal">
+          <div id="costo-construccion" style="text-align: center; margin-top: 15px; font-weight: bold;">
+            Costo: <span id="costo-construir-valor">--</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">
+        </div>
+         <div id="limite-construccion-info" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: #ccc;">
+             (<span id="limite-construir-actual">0</span> / <span id="limite-construir-maximo">1</span> edificios este turno)
+        </div>
+             <button id="btn-confirmar-construir" class="btn-confirmar">✔️ Construir</button>
+             <button class="btn-cancelar" onclick="cerrarModal('modal-construir')">✖️ Cancelar</button>
+        </div>
+    </div>
+    <!-- Fin Modal Construir -->
+     
 
     <!-- Modal Elección Máquina de Asedio -->
 <div id="modal-elegir-asedio" class="modal-juego" style="display: none;">
@@ -463,7 +461,25 @@
     </div>
   </div>
 
-  <!-- Botón solo para Trirren -->
+  <button id="btn-casarse-targaryen" class="btn-accion-juego" style="display: none;">💍 Casarse</button>
+
+  <div id="modal-casarse-targaryen" class="modal-juego" style="display: none;">
+  <h2>💍 Matrimonio Targaryen</h2>
+  <p>¿Con qué casa deseas casarte?</p>
+  <select id="select-casa-matrimonio">
+    <option value="">-- Elige casa --</option>
+    <option value="Velaryon">Casa Velaryon</option>
+    <option value="Qoherys">Casa Qoherys</option>
+    <option value="Celtigar">Casa Celtigar</option>
+  </select>
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button id="btn-confirmar-casamiento" class="btn-confirmar">✔️ Casarse</button>
+    <button class="btn-cancelar" onclick="cerrarModal('modal-casarse-targaryen')">✖️ Cancelar</button>
+  </div>
+</div>
+
+
+  <!-- Botón solo para Tyrrell -->
 <button id="btn-obtener-tecnologia" class="btn-accion-juego" style="display: none;">🔧 Obtener Tecnología</button>
 
 <!-- Modal Pregunta Tecnología Tyrell -->
@@ -538,6 +554,28 @@
     <button id="btn-confirmar-perdidas-defensor" class="btn-confirmar">✔️ Confirmar</button>
   </div>
 </div>
+
+
+
+<!-- Modal Hijos Targaryen -->
+<div id="modal-hijos-targaryen" class="modal-juego" style="display: none;">
+  <h2>👶 ¿Has tenido un hijo?</h2>
+  <div class="botones-modal">
+    <button id="btn-hijo-si" class="btn-confirmar">✔️ Sí</button>
+    <button id="btn-hijo-no" class="btn-cancelar">✖️ No</button>
+  </div>
+</div>
+
+<!-- Modal Eclosión Huevos -->
+<div id="modal-eclosion-huevo" class="modal-juego" style="display: none;">
+  <h2>🐣 ¿Ha eclosionado este huevo?</h2>
+  <p id="texto-eclosion-huevo">Huevo X</p>
+  <div class="botones-modal">
+    <button id="btn-eclosion-si" class="btn-confirmar">✔️ Sí</button>
+    <button id="btn-eclosion-no" class="btn-cancelar">✖️ No</button>
+  </div>
+</div>
+
 
   
   

@@ -154,6 +154,9 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   tropas: TROPAS_INICIALES_POR_DEFECTO, // soldado
   mercenarios: 0,
   elite: 0,
+  jinete: casasAsignadas[nombre] === "Targaryen" ? 1 : 0,
+  huevos: 0,
+  casadoCon: null,
   caballero: 0,
   oro: ORO_INICIAL_POR_DEFECTO,
   barcos: BARCOS_INICIALES[casasAsignadas[nombre]] || 0,
@@ -173,6 +176,29 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
 // Cuando un cliente se conecta por socket
 io.on('connection', (socket) => {
   console.log(`🔌 Connect: ${socket.id}`);
+
+  socket.on('targaryen-ganar-hijo', ({ partida, nombre }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Targaryen") return;
+
+  jugador.jinete = (jugador.jinete || 0) + 1;
+  jugador.huevos = (jugador.huevos || 0) + 1;
+});
+
+socket.on('targaryen-eclosionar-huevo', ({ partida, nombre }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Targaryen") return;
+
+  if ((jugador.huevos || 0) > 0) {
+    jugador.huevos -= 1;
+    jugador.dragones = (jugador.dragones || 0) + 1;
+  }
+});
+
 
 
   socket.on('ataque-coordinado', ({ partida, nombre, casaAtacante, aliados, territorios }) => {
@@ -875,6 +901,11 @@ if (jugador.casa === "Tyrell") {
           const casa = j.casa;
           let ingreso = 0;
           
+          // 💍 Bonus por casarse con Casa Celtigar
+if (j.casa === "Targaryen" && j.casadoCon === "Celtigar") {
+  ingreso += 30;
+}
+
 
           for (const nombreTerritorio in territorios) {
             const t = territorios[nombreTerritorio];
@@ -1209,6 +1240,48 @@ room.playerSockets[nombre] = socket.id;
     }
   });
 
+  socket.on('targaryen-casarse', ({ partida, nombre, casaElegida }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Targaryen" || jugador.casadoCon) return;
+
+  jugador.casadoCon = casaElegida;
+
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  const listos = room.jugadoresAccionTerminada.length;
+  const total = room.players.length;
+
+  if (listos === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
+
+
+
   // Registro de una batalla
   socket.on('registrar-batalla', (data) => {
     const { partida, atacante, casaAtacante, territorioAtacado, resultado, perdidasAtacante, perdidasDefensor } = data;
@@ -1346,6 +1419,12 @@ if (tipoEdificio === "Puerto Fluvial") {
           const j = jugadores[jugadorNombre];
           const casa = j.casa;
           let ingreso = 0;
+
+          // 💍 Bonus por casarse con Casa Celtigar
+if (j.casa === "Targaryen" && j.casadoCon === "Celtigar") {
+  ingreso += 30;
+}
+
           for (const nombreTerritorio in territorios) {
             const t = territorios[nombreTerritorio];
             if (t.propietario === casa) {
@@ -1587,6 +1666,12 @@ if (tipoUnidad === 'caballero') {
         const j = jugadores[jugadorNombre];
         const casa = j.casa;
         let ingreso = 0;
+
+        // 💍 Bonus por casarse con Casa Celtigar
+if (j.casa === "Targaryen" && j.casadoCon === "Celtigar") {
+  ingreso += 30;
+}
+
         for (const nombreTerritorio in territorios) {
           const t = territorios[nombreTerritorio];
           if (t.propietario === casa) {
@@ -1839,6 +1924,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades }) 
             const casa = jugador.casa;
             
             let ingreso = 0;
+
 
               // BONUS por aduanas si es Tully
               if (casa === "Tully") {

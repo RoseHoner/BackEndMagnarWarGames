@@ -191,7 +191,8 @@ function renderizarInputsPerdidas() {
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
-    { key: 'arquero', nombre: 'Arqueros' }
+    { key: 'arquero', nombre: 'Arqueros' },
+    { key: 'jinete', nombre: 'Jinetes' },
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -240,6 +241,8 @@ function actualizarUnidadesMilitares() {
       { tipo: 'elite', nombre: 'Mercenario de élite', icono: 'elite.png' },
       { tipo: 'militantesFe', nombre: 'Militante de la Fe', icono: 'soldado.png' },
       { tipo: 'arquero', nombre: 'Arquero', icono: 'soldado.png' },
+      { tipo: 'jinete', nombre: 'Jinete', icono: 'soldado.png' }, 
+      { tipo: 'huevos', nombre: 'Huevo de Dragón', icono: 'dragon.png' }
 
     ];
     
@@ -389,6 +392,36 @@ if (btnDoble && btnSobornar) {
     btnSobornar.style.display = 'none';
   }
 }
+
+const btnCasarse = document.getElementById('btn-casarse-targaryen');
+if (btnCasarse) {
+  const jugador = gameState.jugadores?.[nombre];
+  if (casa === "Targaryen") {
+    if (!jugador?.casadoCon) {
+      btnCasarse.style.display = 'inline-block';
+      // Eliminar texto previo si existía
+      const anterior = document.getElementById('casado-texto-targaryen');
+      if (anterior) anterior.remove();
+    } else {
+      btnCasarse.style.display = 'none';
+
+      // Crear texto de casado si no existe
+      if (!document.getElementById('casado-texto-targaryen')) {
+        const texto = document.createElement('div');
+        texto.id = 'casado-texto-targaryen';
+        texto.textContent = `💍 Casado con Casa ${jugador.casadoCon}`;
+        texto.style.color = 'white';
+        texto.style.fontSize = '0.9rem';
+        texto.style.marginTop = '6px';
+        texto.style.textAlign = 'center';
+
+        btnCasarse.parentNode.insertBefore(texto, btnCasarse.nextSibling);
+      }
+    }
+  }
+}
+
+
 
 
 if (btnReorganizar) {
@@ -624,7 +657,12 @@ function ajustarCantidad(tipo, cambio) {
 
   const jugador = gameState.jugadores[nombre];
   const casaJugador = jugador.casa;
-  const limite = LIMITE_SOLDADOS_POR_CASA[casaJugador] ?? 5;
+  let limite = LIMITE_SOLDADOS_POR_CASA[casaJugador] ?? 5;
+// Si está casado con Qoherys, subir el límite a 12
+if (casaJugador === "Targaryen" && jugador.casadoCon === "Qoherys") {
+  limite = 12;
+}
+
 
   // Si es soldado, aplicar límite
   if (tipo === 'soldado') {
@@ -847,125 +885,78 @@ if (jugador.casa === "Tyrell") {
 
 
 function actualizarCostoConstruir() {
-     if (!gameState || !gameState.territorios || !gameState.jugadores[nombre]) return;
-     const selectTerritorioEl = document.getElementById('select-territorio-construir');
-     const selectEdificioEl = document.getElementById('select-edificio-construir');
-     const costoValorEl = document.getElementById('costo-construir-valor');
-     const limiteActualEl = document.getElementById('limite-construir-actual');
-     const limiteMaximoEl = document.getElementById('limite-construir-maximo');
-     const limiteInfoEl = document.getElementById('limite-construccion-info');
+  if (!gameState || !gameState.territorios || !gameState.jugadores[nombre]) return;
 
-     const nombreTerritorio = selectTerritorioEl.value;
-     const tipoEdificio = selectEdificioEl.value; // Este es el 'value' del option
-     const territorio = gameState.territorios[nombreTerritorio];
-     const jugador = gameState.jugadores[nombre];
+  const jugador = gameState.jugadores[nombre];
+  const territorio1 = document.getElementById('select-territorio-construir').value;
+  const edificio1 = document.getElementById('select-edificio-construir').value;
+  const territorio2 = document.getElementById('select-territorio-construir-2')?.value || "";
+  const edificio2 = document.getElementById('select-edificio-construir-2')?.value || "";
 
-     // Si es Atalayas, ocultar el selector de territorio
-const campoTerritorio = document.getElementById('select-territorio-construir');
-if (tipoEdificio === 'Atalayas') {
-    campoTerritorio.parentElement.style.display = 'none';
-} else {
-    campoTerritorio.parentElement.style.display = 'block';
-}
+  let totalCosto = 0;
 
+  const COSTOS = COSTOS_BASE_UI;
+  let descuentoCantera = 0;
 
-if (!tipoEdificio || !jugador) {
-  if (costoValorEl) costoValorEl.textContent = '--';
-  if (limiteInfoEl) limiteInfoEl.style.display = 'none';
-  return;
-}
-
-
-
-
-     // Buscar costo base usando el 'value'
-// Costos base de cada unidad o edificio usados en la interfaz del cliente
-let costoBase = COSTOS_BASE_UI[tipoEdificio] ?? COSTOS_BASE_UI[tipoEdificio.toLowerCase()] ?? 0;
-
-
-     if(costoBase === 0) { // Probar con el texto si el value no coincide
-// Costos base de cada unidad o edificio usados en la interfaz del cliente
-         costoBase = COSTOS_BASE_UI[tipoEdificio] ?? 0;
-     }
-
-     // Calcular descuento Cantera
-     let descuento = 0;
-for (const t of Object.values(gameState.territorios)) {
-  if (t.propietario === casa && Array.isArray(t.edificios)) {
-    descuento += t.edificios.filter(e => e === "Cantera").length * 5;
+  for (const t of Object.values(gameState.territorios)) {
+    if (t.propietario === casa && Array.isArray(t.edificios)) {
+      descuentoCantera += t.edificios.filter(e => e === "Cantera").length * 5;
+    }
   }
-}
-     const costoTotal = Math.max(0, costoBase - descuento);
-      if(costoValorEl) costoValorEl.textContent = costoTotal;
 
-     // Actualizar info límite
-     const maxConstruccion = (jugador.casa === 'Targaryen') ? 2 : 1;
-      if(limiteActualEl) limiteActualEl.textContent = jugador.edificiosConstruidosTurno ?? 0;
-      if(limiteMaximoEl) limiteMaximoEl.textContent = maxConstruccion;
-      if(limiteInfoEl) limiteInfoEl.style.display = 'block';
+  function costoFinal(edificio) {
+    const base = COSTOS[edificio] ?? COSTOS[edificio.toLowerCase()] ?? 0;
+    return Math.max(0, base - descuentoCantera);
+  }
+
+  if (edificio1) totalCosto += costoFinal(edificio1);
+  if (casa === "Targaryen" && edificio2) totalCosto += costoFinal(edificio2);
+
+  const costoValorEl = document.getElementById('costo-construir-valor');
+  if (costoValorEl) costoValorEl.textContent = totalCosto;
+
+  const limiteActualEl = document.getElementById('limite-construir-actual');
+  const limiteMaximoEl = document.getElementById('limite-construir-maximo');
+  const limiteInfoEl = document.getElementById('limite-construccion-info');
+
+  const maxConstruccion = (jugador.casa === 'Targaryen') ? 2 : 1;
+  if (limiteActualEl) limiteActualEl.textContent = jugador.edificiosConstruidosTurno ?? 0;
+  if (limiteMaximoEl) limiteMaximoEl.textContent = maxConstruccion;
+  if (limiteInfoEl) limiteInfoEl.style.display = 'block';
 }
+
 function confirmarConstruir() {
-    const territorio = document.getElementById('select-territorio-construir').value;
-    const tipoEdificio = document.getElementById('select-edificio-construir').value; // El 'value' del select
+  const jugador = gameState?.jugadores?.[nombre];
+  const territorio1 = document.getElementById('select-territorio-construir').value;
+  const edificio1 = document.getElementById('select-edificio-construir').value;
+  const territorio2 = document.getElementById('select-territorio-construir-2').value;
+  const edificio2 = document.getElementById('select-edificio-construir-2').value;
 
-
-    
-    if (!tipoEdificio) {
-      alert("Por favor, selecciona el tipo de edificio.");
+  if (casa === "Targaryen") {
+    if (!territorio1 || !edificio1) {
+      alert("Debes seleccionar al menos el primer edificio.");
       return;
+    }
+
+    // Enviar siempre el primero
+    socket.emit('solicitud-construccion', { partida, nombre, territorio: territorio1, tipoEdificio: edificio1 });
+
+    // Si también eligió un segundo edificio, lo envías también
+    if (territorio2 && edificio2) {
+      socket.emit('solicitud-construccion', { partida, nombre, territorio: territorio2, tipoEdificio: edificio2 });
+    }
+
+  } else {
+    if (!territorio1 || !edificio1) {
+      alert("Debes seleccionar territorio y edificio.");
+      return;
+    }
+    socket.emit('solicitud-construccion', { partida, nombre, territorio: territorio1, tipoEdificio: edificio1 });
   }
-  
-  if (tipoEdificio !== "Atalayas" && !territorio) {
-      alert("Por favor, selecciona un territorio donde construir.");
-      return;
-  }
 
-    const tipoFormateado = tipoEdificio; // Dejarlo como está, ya está correcto
-
-    console.log(`[Construir] Emitiendo: ${tipoFormateado} en ${territorio}`);
-
-    const jugador = gameState?.jugadores?.[nombre];
-    const territorioObj = gameState?.territorios?.[territorio];
-
-
-    if (tipoFormateado === "Puerto Fluvial") {
-      if (jugador.casa !== "Tully") {
-        alert("Solo los Tully pueden construir un Puerto Fluvial.");
-        return;
-      }
-      if (territorio !== "El Tridente") {
-        alert("Solo puedes construir el Puerto Fluvial en El Tridente.");
-        return;
-      }
-    }
-
-    if (tipoFormateado === "Arquería" && jugador.casa !== "Tully") {
-      alert("Solo los Tully pueden construir una Arquería.");
-      return;
-    }
-    
-    
-
-    if (tipoFormateado === "Foso" && jugador.casa !== "Tully") {
-      alert("Solo los Tully pueden construir Fososo.");
-      return;
-    }
-    if (tipoFormateado === "Foso" && (!territorioObj || !territorioObj.edificios.includes("Castillo"))) {
-      alert("Solo puedes construir un Foso en territorios tuyos que tengan un Castillo.");
-      return;
-    }
-    
-    if (tipoFormateado === "Atalayas") {
-      socket.emit('construir-atalayas-arryn', { partida, nombre });
-    } else {
-      socket.emit('solicitud-construccion', { partida, nombre, territorio, tipoEdificio: tipoFormateado });
-    }
-    cerrarModal('modal-construir');
-
-    if (tipoFormateado === "Taller de maquinaria de asedio") {
-        abrirModal('modal-elegir-asedio');
-      }
+  cerrarModal('modal-construir');
 }
+
 
 
 // --- Lógica Modal Mis Territorios ---
@@ -1099,15 +1090,32 @@ if (casa === "Martell") {
   }
 }
 
+// 💰 Bonus por estar casado con Casa Celtigar
+if (jugador.casadoCon === "Celtigar") {
+  oroEstimado += 30;
+
+  const pBonus = document.createElement('p');
+  pBonus.className = 'bonus-celtigar';
+  pBonus.innerHTML = 'Bonus Casa Celtigar: +30 <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">';
+  const contenedorScroll = modalEl.querySelector('.lista-scrollable');
+  if (contenedorScroll) {
+    contenedorScroll.insertBefore(pBonus, contenedorScroll.firstChild);
+  }
+}
+
+
 document.getElementById('oro-estimado-final-turno').textContent = oroEstimado;
+
 
 const contenedorScroll = modalEl.querySelector('.lista-scrollable');
 if (contenedorScroll) {
   // Limpiar anteriores
   const bonusTully = contenedorScroll.querySelector('.bonus-tully');
   const bonusMartell = contenedorScroll.querySelector('.bonus-martell');
+  const bonusCeltigar = contenedorScroll.querySelector('.bonus-celtigar');
   if (bonusTully) bonusTully.remove();
   if (bonusMartell) bonusMartell.remove();
+  if (bonusCeltigar) bonusCeltigar.remove();
 
   if (casa === "Tully") {
     const pBonus = document.createElement('p');
@@ -1252,7 +1260,71 @@ document.addEventListener('DOMContentLoaded', () => {
           cerrarModal('modal-asignar-territorios');
         });
         
-        
+        let huevosPorEclosionar = 0;
+
+document.getElementById('btn-hijo-si').addEventListener('click', () => {
+  cerrarModal('modal-hijos-targaryen');
+  huevosPorEclosionar = (gameState?.jugadores?.[nombre]?.huevos || 0) + 1;
+  socket.emit('targaryen-ganar-hijo', { partida, nombre }); // Ganar 1 jinete y 1 huevo
+
+  if (huevosPorEclosionar > 0) {
+    mostrarModalEclosion();
+  } else {
+    finalizarFaseNeutralYEmitir();
+  }
+});
+
+document.getElementById('btn-hijo-no').addEventListener('click', () => {
+  cerrarModal('modal-hijos-targaryen');
+  huevosPorEclosionar = gameState?.jugadores?.[nombre]?.huevos || 0;
+  if (huevosPorEclosionar > 0) {
+    mostrarModalEclosion();
+  } else {
+    finalizarFaseNeutralYEmitir();
+  }
+});
+
+function mostrarModalEclosion() {
+  if (huevosPorEclosionar <= 0) return finalizarFaseNeutralYEmitir();
+  document.getElementById('texto-eclosion-huevo').textContent = `🐣 Huevo restante: ${huevosPorEclosionar}`;
+  abrirModal('modal-eclosion-huevo');
+}
+
+document.getElementById('btn-eclosion-si').addEventListener('click', () => {
+  huevosPorEclosionar--;
+  socket.emit('targaryen-eclosionar-huevo', { partida, nombre }); // Gana dragón
+  if (huevosPorEclosionar > 0) {
+    mostrarModalEclosion();
+  } else {
+    cerrarModal('modal-eclosion-huevo');
+    finalizarFaseNeutralYEmitir();
+  }
+});
+
+document.getElementById('btn-eclosion-no').addEventListener('click', () => {
+  huevosPorEclosionar--;
+  if (huevosPorEclosionar > 0) {
+    mostrarModalEclosion();
+  } else {
+    cerrarModal('modal-eclosion-huevo');
+    finalizarFaseNeutralYEmitir();
+  }
+});
+
+function finalizarFaseNeutralYEmitir() {
+  socket.emit('actualizar-perdidas-neutral', {
+    partida,
+    nombre,
+    perdidas: tropasPerdidas,
+    perdidasPorUnidad,
+    territoriosPerdidos,
+    nuevoPropietarioPorTerritorio
+  });
+
+  cerrarModal('modal-fase-neutral');
+
+}
+
         
         document.getElementById('btn-confirmar-tecnologia')?.addEventListener('click', () => {
           const edificio = document.getElementById('select-edificio-tecnologia').value;
@@ -1339,6 +1411,14 @@ document.addEventListener('DOMContentLoaded', () => {
           
             poblarTerritoriosConstruir();
             poblarEdificiosConstruir();
+            if (casa === "Targaryen") {
+  document.getElementById('contenedor-construccion-extra').style.display = 'block';
+  poblarTerritoriosEnSelect('select-territorio-construir-2');
+  poblarEdificiosEnSelect('select-edificio-construir-2');
+} else {
+  document.getElementById('contenedor-construccion-extra').style.display = 'none';
+}
+
             abrirModal('modal-construir');
           });
         setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover/Atacar')); // Acción simplificada
@@ -1359,7 +1439,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
         
-        
+        setupListener('btn-casarse-targaryen', 'click', () => {
+  abrirModal('modal-casarse-targaryen');
+});
+
+setupListener('btn-confirmar-casamiento', 'click', () => {
+  const casaElegida = document.getElementById('select-casa-matrimonio').value;
+  if (!casaElegida) return alert("Debes elegir una casa.");
+
+  socket.emit('targaryen-casarse', {
+    partida,
+    nombre,
+    casaElegida
+  });
+
+  cerrarModal('modal-casarse-targaryen');
+});
+
         
         
         
@@ -1384,6 +1480,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Listeners para Modal Construir ---
          setupListener('select-territorio-construir', 'change', actualizarCostoConstruir);
          setupListener('select-edificio-construir', 'change', actualizarCostoConstruir);
+         setupListener('select-edificio-construir-2', 'change', actualizarCostoConstruir);
+         setupListener('select-territorio-construir-2', 'change', actualizarCostoConstruir);
          setupListener('btn-confirmar-construir', 'click', confirmarConstruir);
          // (El botón cancelar llama a cerrarModal en el HTML)
 
@@ -1399,7 +1497,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const unidades = [
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
-            'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+            'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
+            'jinete'
           ];
         
           let total = 0;
@@ -1850,18 +1949,24 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
 
         // Paso 2 - NO perdió territorios
         document.getElementById('btn-no-perdi-territorios').addEventListener('click', () => {
-          gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
-          socket.emit('actualizar-perdidas-neutral', {
-            partida,
-            nombre,
-            perdidas: tropasPerdidas,
-            perdidasPorUnidad,
-            territoriosPerdidos: [],
-            nuevoPropietarioPorTerritorio: {}
-          });
-          
-          cerrarModal('modal-fase-neutral');
-        });
+  gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
+
+  const jugador = gameState.jugadores[nombre];
+  if (jugador?.casa === "Targaryen" && jugador.casadoCon) {
+    abrirModal('modal-hijos-targaryen');
+  } else {
+    socket.emit('actualizar-perdidas-neutral', {
+      partida,
+      nombre,
+      perdidas: tropasPerdidas,
+      perdidasPorUnidad,
+      territoriosPerdidos: [],
+      nuevoPropietarioPorTerritorio: {}
+    });
+    cerrarModal('modal-fase-neutral');
+  }
+});
+
         
         // Paso 2 - SÍ perdió territorios
         document.getElementById('btn-si-perdi-territorios').addEventListener('click', () => {
@@ -1884,28 +1989,35 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
           
 
         document.getElementById('btn-finalizar-fase-neutral').addEventListener('click', () => {
-            nuevoPropietarioPorTerritorio = {};
-          
-            territoriosPerdidos.forEach(nombre => {
-              const select = document.getElementById(`nuevo-prop-${nombre}`);
-              const nuevo = select?.value;
-              if (nuevo) {
-                nuevoPropietarioPorTerritorio[nombre] = nuevo;
-              }
-            });
-          
-            gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
-          
-            socket.emit('actualizar-perdidas-neutral', {
-              partida,
-              nombre,
-              perdidas: tropasPerdidas,
-              territoriosPerdidos,
-              nuevoPropietarioPorTerritorio
-            });
-          
-            cerrarModal('modal-fase-neutral');
-          });
+  nuevoPropietarioPorTerritorio = {};
+
+  territoriosPerdidos.forEach(nombre => {
+    const select = document.getElementById(`nuevo-prop-${nombre}`);
+    const nuevo = select?.value;
+    if (nuevo) {
+      nuevoPropietarioPorTerritorio[nombre] = nuevo;
+    }
+  });
+
+  gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
+
+  const jugador = gameState.jugadores[nombre];
+  // Solo si es Targaryen y está casado, se abre el flujo de hijos
+  if (jugador?.casa === "Targaryen" && jugador.casadoCon) {
+    abrirModal('modal-hijos-targaryen');
+  } else {
+    socket.emit('actualizar-perdidas-neutral', {
+      partida,
+      nombre,
+      perdidas: tropasPerdidas,
+      perdidasPorUnidad,
+      territoriosPerdidos,
+      nuevoPropietarioPorTerritorio
+    });
+    cerrarModal('modal-fase-neutral');
+  }
+});
+
           
           document.getElementById('btn-doble-impuestos')?.addEventListener('click', () => {
   renderizarModalPerdidasLannister();
@@ -2731,6 +2843,42 @@ for (const t of Object.values(gameState.territorios)) {
 
   abrirModal('modal-lannister-perdidas');
 }
+
+function poblarTerritoriosEnSelect(idSelect) {
+  const select = document.getElementById(idSelect);
+  if (!select || !gameState?.territorios) return;
+
+  select.innerHTML = '<option value="">-- Selecciona --</option>';
+  Object.values(gameState.territorios)
+    .filter(t => t.propietario === casa)
+    .forEach(t => {
+      const option = document.createElement('option');
+      option.value = t.nombre;
+      option.textContent = t.nombre;
+      select.appendChild(option);
+    });
+}
+
+function poblarEdificiosEnSelect(idSelect) {
+  const select = document.getElementById(idSelect);
+  if (!select) return;
+
+  select.innerHTML = `
+    <option value="">-- Selecciona --</option>
+    <optgroup label="Producción">
+      <option value="Granja">Granja</option>
+      <option value="Cantera">Cantera</option>
+      <option value="Mina">Mina</option>
+      <option value="Aserradero">Aserradero</option>
+    </optgroup>
+    <optgroup label="Militar">
+      <option value="Castillo">Castillo</option>
+      <option value="Puerto">Puerto</option>
+      <option value="Taller de maquinaria de asedio">Taller de Asedio</option>
+    </optgroup>
+  `;
+}
+
 
   
   function confirmarCaballeroArryn(deseaCaballero) {
