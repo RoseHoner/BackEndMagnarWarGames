@@ -46,7 +46,7 @@ const COSTOS_BASE_UI = {
     torre: 20,
     catapulta: 20,
     escorpion: 20,
-    sacerdote: 20, // Costo genérico, puede variar por facción
+    sacerdote: 20,
     mercenario: 8,
     mercenarioElite: 15,
     granja: 20,
@@ -73,15 +73,15 @@ const EDIFICIOS_PRODUCCION = ['Granja', 'Cantera', 'Mina', 'Aserradero'];
 const MAQUINAS_ASEDIO_UI_VALUES = ['torreAsedio', 'catapulta', 'escorpion'];
 
 const LIMITE_SOLDADOS_POR_CASA = {
-    Stark: 10,
+    Stark: 7,
     Lannister: 9,
-    Targaryen: 8,
-    Baratheon: 10,
-    Tully: 8,
-    Martell: 9,
-    Tyrell: 10,
-    Arryn: 9,
-    Greyjoy: 8
+    Targaryen: 6,
+    Baratheon: 8,
+    Tully: 7,
+    Martell: 5,
+    Tyrell: 12,
+    Arryn: 7,
+    Greyjoy: 7
     // Puedes ajustar estos valores por casa según quieras
   };
 
@@ -1343,9 +1343,10 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover/Atacar')); // Acción simplificada
         setupListener('btn-batalla', 'click', () => {
-          poblarSelectTerritorioAtaque();
-          abrirModal('modal-ataque-simple');
-        });
+  poblarSelectTerritorioAtaque();
+  abrirModal('modal-ataque-simple');
+});
+
         
         setupListener('btn-reorganizar', 'click', () => {
   const turno = gameState?.turno || 1;
@@ -1418,11 +1419,27 @@ document.addEventListener('DOMContentLoaded', () => {
         
         
 
-        document.getElementById('btn-confirmar-perdidas-impuestos').addEventListener('click', () => {
-          const perdidas = parseInt(document.getElementById('input-tropas-perdidas-impuestos').value) || 0;
-          cerrarModal('modal-lannister-perdidas');
-          socket.emit('doble-impuestos-completo', { partida, nombre, perdidas });
-        });
+        document.getElementById('btn-confirmar-perdidas-impuestos')?.addEventListener('click', () => {
+  const perdidas = {};
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador) return;
+
+  const claves = [
+    'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
+    'barcos', 'catapulta', 'torre', 'escorpion',
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+  ];
+
+  claves.forEach(key => {
+    const input = document.getElementById(`perdidas-lan-${key}`);
+    const val = parseInt(input?.value) || 0;
+    if (val > 0) perdidas[key] = val;
+  });
+
+  cerrarModal('modal-lannister-perdidas');
+  socket.emit('doble-impuestos-completo', { partida, nombre, perdidas });
+});
+
 
         document.getElementById('btn-confirmar-soborno')?.addEventListener('click', () => {
           const territorio = document.getElementById('select-territorio-soborno').value;
@@ -1626,6 +1643,10 @@ if (territorio2 && territorio2 !== territorio1) {
   });
 
   cerrarModal('modal-ataque-simple');
+
+  if (casa === "Arryn") {
+  abrirModal('modal-caballero-batalla-arryn');
+}
 }
 window.confirmarAtaqueSimple = confirmarAtaqueSimple;
 
@@ -1887,10 +1908,9 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
           });
           
           document.getElementById('btn-doble-impuestos')?.addEventListener('click', () => {
-            // Mostramos directamente el modal para ingresar tropas perdidas
-            document.getElementById('input-tropas-perdidas-impuestos').value = 0;
-            abrirModal('modal-lannister-perdidas');
-          });
+  renderizarModalPerdidasLannister();
+});
+
           
 
         document.getElementById('btn-confirmar-territorios-perdidos').addEventListener('click', () => {
@@ -1939,6 +1959,8 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
         alert("Error inicializando controles de la página.");
         return; // Detener ejecución si falla aquí
     }
+
+
 
     // === Generar opción barco SOLO si tiene puerto ===
 function agregarReclutaBarcoSiAplica() {
@@ -2040,11 +2062,14 @@ if (casa === "Tully") {
 
 function agregarCaballeroSiArrynConAcademia() {
   const contenedor = document.getElementById('contenedor-reclutas');
-  if (!contenedor || casa !== "Arryn" || !gameState || !gameState.territorios) return;
+  if (!contenedor || !gameState || !gameState.territorios) return;
 
-  const tieneAcademia = Object.values(gameState.territorios).some(
-    t => t.propietario === casa && t.edificios.includes("Academia de Caballería")
-  );
+const tieneAcademia = Object.values(gameState.territorios).some(
+  t => t.propietario === casa && t.edificios.includes("Academia de Caballería")
+);
+
+if (!tieneAcademia) return;
+
 
   if (!tieneAcademia) return;
 
@@ -2195,6 +2220,9 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
   }
 
   cerrarModal('modal-perdidas-defensor');
+    if (casa === "Arryn") {
+    abrirModal('modal-caballero-batalla-arryn');
+  }
   socket.emit('perdidas-defensor', { partida, nombre, perdidas });
 });
 
@@ -2413,6 +2441,11 @@ socket.on('avanzar-accion', (nuevoEstado) => {
     deshabilitarBotonesAccion(gameState?.fase === 'Neutral');
     console.log(`[${nombre}] Avanzado localmente a T${gameState?.turno}, A${gameState?.accion}, F:${gameState?.fase}`);
 });
+
+socket.on('modal-caballero-batalla-arryn', () => {
+  abrirModal('modal-caballero-batalla-arryn');
+});
+
 
 socket.on('abrir-modal-soborno-lannister-final', ({ territorio }) => {
   abrirModal('modal-soborno-final-lannister');
@@ -2659,8 +2692,59 @@ for (const t of Object.values(gameState.territorios)) {
   
     document.getElementById('costo-total-recluta').textContent = total;
   }
+
+  function renderizarModalPerdidasLannister() {
+  const contenedor = document.getElementById('lista-perdidas-lannister');
+  contenedor.innerHTML = '';
+
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador) return;
+
+  const unidades = [
+    { key: 'tropas', nombre: 'Tropas' },
+    { key: 'tropasBlindadas', nombre: 'Tropas con armadura' },
+    { key: 'mercenarios', nombre: 'Mercenarios' },
+    { key: 'elite', nombre: 'Mercenarios de élite' },
+    { key: 'barcos', nombre: 'Barcos' },
+    { key: 'catapulta', nombre: 'Catapultas' },
+    { key: 'torre', nombre: 'Torres de asedio' },
+    { key: 'escorpion', nombre: 'Escorpiones' },
+    { key: 'caballero', nombre: 'Caballeros' },
+    { key: 'sacerdotes', nombre: 'Sacerdotes' },
+    { key: 'dragones', nombre: 'Dragones' },
+    { key: 'militantesFe', nombre: 'Militantes de la Fe' },
+    { key: 'arquero', nombre: 'Arqueros' }
+  ];
+
+  unidades.forEach(({ key, nombre }) => {
+    const cantidad = jugador[key] ?? 0;
+    if (cantidad > 0) {
+      const div = document.createElement('div');
+      div.classList.add('campo-formulario');
+      div.innerHTML = `
+        <label for="perdidas-lan-${key}">${nombre} (Tienes ${cantidad}):</label>
+        <input type="number" id="perdidas-lan-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
+      `;
+      contenedor.appendChild(div);
+    }
+  });
+
+  abrirModal('modal-lannister-perdidas');
+}
+
   
-  
+  function confirmarCaballeroArryn(deseaCaballero) {
+  cerrarModal('modal-caballero-batalla-arryn');
+  if (deseaCaballero) {
+    socket.emit('arryn-ganar-caballero', { partida, nombre });
+  }
+  poblarSelectTerritorioAtaque();
+  abrirModal('modal-ataque-simple');
+}
+
+window.confirmarCaballeroArryn = confirmarCaballeroArryn;
+
+
   
   // Confirmar reclutamiento visual
   function confirmarReclutamiento() {

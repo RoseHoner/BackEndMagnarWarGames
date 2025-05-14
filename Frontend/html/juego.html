@@ -166,6 +166,15 @@
   </div>
 </div>
 
+<div id="modal-caballero-batalla-arryn" class="modal-juego" style="display: none; z-index: 99999;">
+  <h2>🛡️ ¿Ganas un caballero?</h2>
+  <p>¿Deseas añadir un caballero a tus tropas?</p>
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button onclick="confirmarCaballeroArryn(true)" class="btn-confirmar">✔️ Sí</button>
+    <button onclick="confirmarCaballeroArryn(false)" class="btn-cancelar">✖️ No</button>
+  </div>
+</div>
+
 
     <!-- Modal Reclutar (NUEVO) -->
 <div id="modal-reclutar" class="modal-juego" style="display: none;">
@@ -260,6 +269,19 @@
         </div>
     </div>
     <!-- Fin Modal Construir -->
+
+    <!-- SOLO visible si eres Targaryen -->
+<div id="contenedor-construccion-extra" class="campo-formulario" style="display: none;">
+  <label for="select-territorio-construir-2">Segundo territorio:</label>
+  <select id="select-territorio-construir-2"><option value="">-- Selecciona territorio --</option></select>
+
+  <label for="select-edificio-construir-2">Segundo edificio:</label>
+  <select id="select-edificio-construir-2">
+    <option value="">-- Selecciona --</option>
+    <!-- Aquí se pueden poblar igual que el primer select -->
+  </select>
+</div>
+
 
     <!-- Modal Elección Máquina de Asedio -->
 <div id="modal-elegir-asedio" class="modal-juego" style="display: none;">
@@ -376,12 +398,18 @@
   </div>
 
   <div id="modal-lannister-perdidas" class="modal-juego" style="display: none;">
-    <h2>🩸 ¿Cuántas tropas has perdido?</h2>
-    <input type="number" id="input-tropas-perdidas-impuestos" value="0" min="0" style="width: 100%;">
-    <div class="botones-modal">
-      <button id="btn-confirmar-perdidas-impuestos" class="btn-confirmar">✔️ Confirmar</button>
-    </div>
+  <h2>🩸 ¿Qué unidades perdiste al cobrar impuestos?</h2>
+  <p>Indica cuántas unidades militares has perdido:</p>
+
+  <div id="lista-perdidas-lannister" class="lista-scrollable" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+    <!-- Aquí se insertarán los inputs -->
   </div>
+
+  <div class="botones-modal">
+    <button id="btn-confirmar-perdidas-impuestos" class="btn-confirmar">✔️ Confirmar</button>
+  </div>
+</div>
+
 
   <div id="modal-soborno-lannister" class="modal-juego" style="display: none;">
     <h2>🪙 Sobornar Soldados</h2>
