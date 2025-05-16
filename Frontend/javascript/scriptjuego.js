@@ -7,6 +7,7 @@ const BACKEND_URL = isLocalhost
 // =============================================
 // PARTE 1: INICIALIZACIÓN Y GLOBALES
 // =============================================
+let contadorAccionesNorte = 0;
 let tropasPerdidas = 0;
 let territoriosPerdidos = [];
 let nuevoPropietarioPorTerritorio = {};
@@ -14,6 +15,8 @@ let perdidasPorUnidad = {};
 
 let inicialYaConfirmado = false;
 let modalInicialYaMostrado = false;
+
+
 
 
 // --- Conexión Socket.IO ---
@@ -376,8 +379,6 @@ if (btnTorneo) {
         }
      }
 
-     const btnReorganizar = document.getElementById('btn-reorganizar');
-
 
      // Mostrar botones especiales de Lannister
 const btnDoble = document.getElementById('btn-doble-impuestos');
@@ -420,29 +421,36 @@ if (btnCasarse) {
     }
   }
 }
+const btnReorganizar = document.getElementById('btn-reorganizar');
+const btnReorganizarStark = document.getElementById('btn-stark-reorganizar');
 
+if (btnReorganizar && btnReorganizarStark) {
+  if (turnoReorganizarUsado === null || accionReorganizarUsado === null) {
+    btnReorganizar.style.display = 'inline-block';
+    btnReorganizarStark.style.display = 'inline-block';
+  } else {
+    const turnoDisponible = turnoReorganizarUsado + 2;
+    const debeMostrar = (
+      gameState.turno === turnoDisponible && gameState.accion === 1
+    );
 
-
-
-if (btnReorganizar) {
-    if (turnoReorganizarUsado === null || accionReorganizarUsado === null) {
-        btnReorganizar.style.display = 'inline-block'; // No se ha usado nunca
+    if (debeMostrar) {
+      btnReorganizar.style.display = 'inline-block';
+      btnReorganizarStark.style.display = 'inline-block';
+      turnoReorganizarUsado = null;
+      accionReorganizarUsado = null;
     } else {
-        const turnoDisponible = turnoReorganizarUsado + 2;
-        const debeMostrar = (
-            gameState.turno === turnoDisponible && gameState.accion === 1
-        );
-
-        if (debeMostrar) {
-            btnReorganizar.style.display = 'inline-block';
-            // 🔄 Reseteamos para evitar que lo vuelva a ocultar
-            turnoReorganizarUsado = null;
-            accionReorganizarUsado = null;
-        } else {
-            btnReorganizar.style.display = 'none';
-        }
+      btnReorganizar.style.display = 'none';
+      btnReorganizarStark.style.display = 'none';
     }
+  }
 }
+
+
+
+
+
+
 
 const btnTecnologia = document.getElementById('btn-obtener-tecnologia');
 if (btnTecnologia) {
@@ -454,11 +462,86 @@ if (btnTecnologia) {
   }
 }
 
+// Mostrar botones especiales de Stark
+const esStark = casa === "Stark";
 
+const btnStarkAtacar = document.getElementById('btn-stark-atacar');
+const btnStarkMover = document.getElementById('btn-stark-mover');
+const btnStarkReorganizar = document.getElementById('btn-stark-reorganizar');
+const btnStarkReclutar = document.getElementById('btn-stark-reclutar');
 
+if (esStark) {
+  mostrarBotonesStark(); // los mostramos por defecto si es Stark
 
+  btnStarkAtacar?.addEventListener('click', incrementarContadorNorte);
+  btnStarkMover?.addEventListener('click', incrementarContadorNorte);
+  btnStarkReorganizar?.addEventListener('click', incrementarContadorNorte);
+  btnStarkReclutar?.addEventListener('click', incrementarContadorNorte);
+} else {
+  ocultarBotonesStark(); // si no es Stark, asegurarse que no se vean
+}
+
+// Mostrar contador solo si es Stark
+const divContador = document.getElementById("contador-stark");
+const spanContador = document.getElementById("valor-contador-stark");
+
+if (divContador && spanContador) {
+  if (casa === "Stark") {
+    divContador.style.display = 'block';
+    spanContador.textContent = contadorAccionesNorte;
+  } else {
+    divContador.style.display = 'none';
+  }
+}
+
+// Sincronizar visibilidad del botón "Organizar en el Norte" con el botón "Organizar"
+const btnOrganizar = document.getElementById('btn-reorganizar');
+const btnNorteOrganizar = document.getElementById('btn-stark-reorganizar');
+
+if (btnOrganizar && btnNorteOrganizar) {
+  const estaVisible = btnOrganizar.style.display !== 'none';
+  btnNorteOrganizar.style.display = estaVisible ? 'inline-block' : 'none';
+}
 
 }
+
+function incrementarContadorNorte() {
+  contadorAccionesNorte++;
+  const spanContador = document.getElementById('valor-contador-stark');
+  if (spanContador) {
+    spanContador.textContent = contadorAccionesNorte;
+  }
+
+  // Ocultar los botones si el contador llega a 2
+  if (contadorAccionesNorte >= 2) {
+    document.getElementById('btn-stark-atacar')?.classList.add('oculto');
+    document.getElementById('btn-stark-mover')?.classList.add('oculto');
+    document.getElementById('btn-stark-reorganizar')?.classList.add('oculto');
+    document.getElementById('btn-stark-reclutar')?.classList.add('oculto');
+  }
+
+  
+}
+
+function ocultarBotonesStark() {
+  document.getElementById('btn-stark-atacar')?.classList.add('oculto');
+  document.getElementById('btn-stark-mover')?.classList.add('oculto');
+  document.getElementById('btn-stark-reorganizar')?.classList.add('oculto');
+  document.getElementById('btn-stark-reclutar')?.classList.add('oculto');
+}
+
+function mostrarBotonesStark() {
+  document.getElementById('btn-stark-atacar')?.classList.remove('oculto');
+  document.getElementById('btn-stark-mover')?.classList.remove('oculto');
+  document.getElementById('btn-stark-reorganizar')?.classList.remove('oculto');
+  document.getElementById('btn-stark-reclutar')?.classList.remove('oculto');
+}
+
+
+
+
+
+
 
 function actualizarInfoAdicional() {
     if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) return;
@@ -1437,6 +1520,22 @@ function finalizarFaseNeutralYEmitir() {
   socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
   terminarAccionEspecifica('Reorganizar');
 });
+
+setupListener('btn-stark-reorganizar', 'click', () => {
+  const turno = gameState?.turno || 1;
+  const accion = gameState?.accion || 1;
+  turnoReorganizarUsado = turno;
+  accionReorganizarUsado = accion;
+
+  const btnReorganizar = document.getElementById('btn-reorganizar');
+  const btnStarkReorganizar = document.getElementById('btn-stark-reorganizar');
+  if (btnReorganizar) btnReorganizar.style.display = 'none';
+  if (btnStarkReorganizar) btnStarkReorganizar.style.display = 'none';
+
+  socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
+});
+
+
 
         
         setupListener('btn-casarse-targaryen', 'click', () => {
@@ -2519,6 +2618,7 @@ socket.on('abrir-modal-perdidas-defensor', () => {
 
 
 
+
 socket.on('avanzar-accion', (nuevoEstado) => {
     console.log(`[${nombre}] Recibido 'avanzar-accion'`, nuevoEstado);
     if (gameState && nuevoEstado) {
@@ -2531,6 +2631,21 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         console.warn("Recibido 'avanzar-accion' pero gameState local es nulo. Esperando estado completo.");
         // Podríamos almacenar temporalmente nuevoEstado y aplicarlo cuando llegue gameState
     }
+    if (casa === "Stark") {
+  contadorAccionesNorte = 0;
+  if (casa === "Stark") {
+  document.getElementById('btn-stark-atacar')?.style.setProperty('display', 'inline-block');
+  document.getElementById('btn-stark-mover')?.style.setProperty('display', 'inline-block');
+  document.getElementById('btn-stark-reorganizar')?.style.setProperty('display', 'inline-block');
+  document.getElementById('btn-stark-reclutar')?.style.setProperty('display', 'inline-block');
+}
+
+  const spanContador = document.getElementById('valor-contador-stark');
+  if (spanContador) {
+    spanContador.textContent = contadorAccionesNorte;
+  }
+}
+
     // Actualizar UI y reactivar botones (si no es Fase Neutral)
     actualizarTurnoAccionUI();
     if (gameState?.fase === 'Neutral') {
@@ -2539,10 +2654,10 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         nuevoPropietarioPorTerritorio = {};
     
         // Reiniciar pasos del modal
-        document.getElementById('fase-neutral-paso1').style.display = 'block';
-        document.getElementById('fase-neutral-paso2').style.display = 'none';
-        document.getElementById('fase-neutral-paso3').style.display = 'none';
-        document.getElementById('fase-neutral-paso4').style.display = 'none';
+         document.getElementById('btn-stark-atacar')?.classList.remove('oculto');
+  document.getElementById('btn-stark-mover')?.classList.remove('oculto');
+  document.getElementById('btn-stark-reorganizar')?.classList.remove('oculto');
+  document.getElementById('btn-stark-reclutar')?.classList.remove('oculto');
     
         renderizarInputsPerdidas();
         abrirModal('modal-fase-neutral');
@@ -2551,6 +2666,8 @@ socket.on('avanzar-accion', (nuevoEstado) => {
     
     
     deshabilitarBotonesAccion(gameState?.fase === 'Neutral');
+    
+
     console.log(`[${nombre}] Avanzado localmente a T${gameState?.turno}, A${gameState?.accion}, F:${gameState?.fase}`);
 });
 
