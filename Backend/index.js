@@ -1767,7 +1767,8 @@ socket.on('arryn-ganar-caballero', ({ partida, nombre }) => {
 });
 
 
-socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades }) => {
+socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, reclutarNorte }) => {
+
   const room = rooms[partida];
   if (!room) return;
 
@@ -1856,6 +1857,18 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades }) 
     turno: room.turnoActual,
     accion: room.accionActual
   });
+
+  if (reclutarNorte) {
+  // No avanzar acción global, solo actualizamos el estado y salimos
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+  return;
+}
+
 
   if (!room.jugadoresAccionTerminada.includes(nombre)) {
     room.jugadoresAccionTerminada.push(nombre);

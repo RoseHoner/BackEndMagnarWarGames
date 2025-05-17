@@ -7,6 +7,9 @@ const BACKEND_URL = isLocalhost
 // =============================================
 // PARTE 1: INICIALIZACIÓN Y GLOBALES
 // =============================================
+let modoReclutarNorte = false; // false = reclutar normal, true = reclutar para el norte (Stark)
+
+
 let contadorAccionesNorte = 0;
 let tropasPerdidas = 0;
 let territoriosPerdidos = [];
@@ -427,7 +430,11 @@ const btnReorganizarStark = document.getElementById('btn-stark-reorganizar');
 if (btnReorganizar && btnReorganizarStark) {
   if (turnoReorganizarUsado === null || accionReorganizarUsado === null) {
     btnReorganizar.style.display = 'inline-block';
-    btnReorganizarStark.style.display = 'inline-block';
+    if (gameState.casaJugadorActual === "Stark") {
+      btnReorganizarStark.style.display = 'inline-block';
+    } else {
+      btnReorganizarStark.style.display = 'none';
+    }
   } else {
     const turnoDisponible = turnoReorganizarUsado + 2;
     const debeMostrar = (
@@ -436,7 +443,11 @@ if (btnReorganizar && btnReorganizarStark) {
 
     if (debeMostrar) {
       btnReorganizar.style.display = 'inline-block';
-      btnReorganizarStark.style.display = 'inline-block';
+      if (gameState.casaJugadorActual === "Stark") {
+        btnReorganizarStark.style.display = 'inline-block';
+      } else {
+        btnReorganizarStark.style.display = 'none';
+      }
       turnoReorganizarUsado = null;
       accionReorganizarUsado = null;
     } else {
@@ -445,6 +456,7 @@ if (btnReorganizar && btnReorganizarStark) {
     }
   }
 }
+
 
 
 
@@ -470,13 +482,18 @@ const btnStarkMover = document.getElementById('btn-stark-mover');
 const btnStarkReorganizar = document.getElementById('btn-stark-reorganizar');
 const btnStarkReclutar = document.getElementById('btn-stark-reclutar');
 
+btnStarkReclutar?.addEventListener('click', () => {
+  modoReclutarNorte = true;
+  abrirModal('modal-reclutar');
+});
+
+
 if (esStark) {
   mostrarBotonesStark(); // los mostramos por defecto si es Stark
 
   btnStarkAtacar?.addEventListener('click', incrementarContadorNorte);
   btnStarkMover?.addEventListener('click', incrementarContadorNorte);
   btnStarkReorganizar?.addEventListener('click', incrementarContadorNorte);
-  btnStarkReclutar?.addEventListener('click', incrementarContadorNorte);
 } else {
   ocultarBotonesStark(); // si no es Stark, asegurarse que no se vean
 }
@@ -512,29 +529,35 @@ function incrementarContadorNorte() {
     spanContador.textContent = contadorAccionesNorte;
   }
 
+  console.log(contadorAccionesNorte,contadorAccionesNorte,contadorAccionesNorte,contadorAccionesNorte,contadorAccionesNorte,contadorAccionesNorte,contadorAccionesNorte,contadorAccionesNorte)
   // Ocultar los botones si el contador llega a 2
   if (contadorAccionesNorte >= 2) {
-    document.getElementById('btn-stark-atacar')?.classList.add('oculto');
-    document.getElementById('btn-stark-mover')?.classList.add('oculto');
-    document.getElementById('btn-stark-reorganizar')?.classList.add('oculto');
-    document.getElementById('btn-stark-reclutar')?.classList.add('oculto');
+    document.getElementById('btn-stark-atacar').style.display = 'none'
+    document.getElementById('btn-stark-mover').style.display = 'none'
+    document.getElementById('btn-stark-reorganizar').style.display = 'none'
+    document.getElementById('btn-stark-reclutar').style.display = 'none'
+  } else{
+    mostrarBotonesStark()
   }
 
   
 }
 
 function ocultarBotonesStark() {
-  document.getElementById('btn-stark-atacar')?.classList.add('oculto');
-  document.getElementById('btn-stark-mover')?.classList.add('oculto');
-  document.getElementById('btn-stark-reorganizar')?.classList.add('oculto');
-  document.getElementById('btn-stark-reclutar')?.classList.add('oculto');
+  document.getElementById('btn-stark-atacar').style.display = 'none'
+  document.getElementById('btn-stark-mover').style.display = 'none'
+  document.getElementById('btn-stark-reorganizar').style.display = 'none'
+  document.getElementById('btn-stark-reclutar').style.display = 'none'
 }
 
 function mostrarBotonesStark() {
-  document.getElementById('btn-stark-atacar')?.classList.remove('oculto');
-  document.getElementById('btn-stark-mover')?.classList.remove('oculto');
-  document.getElementById('btn-stark-reorganizar')?.classList.remove('oculto');
-  document.getElementById('btn-stark-reclutar')?.classList.remove('oculto');
+  if ('Stark' == casa) {
+    document.getElementById('btn-stark-atacar').style.display = 'flex'
+  document.getElementById('btn-stark-mover').style.display = 'flex'
+  document.getElementById('btn-stark-reorganizar').style.display = 'flex'
+  document.getElementById('btn-stark-reclutar').style.display = 'flex'
+  }
+  
 }
 
 
@@ -1460,6 +1483,7 @@ function finalizarFaseNeutralYEmitir() {
 
         // Botones de Acción específica
         setupListener('btn-reclutar', 'click', () => {
+           modoReclutarNorte = false;
             if (!gameState || !gameState.jugadores?.[nombre]) {
               alert("⚠️ Esperando sincronización con el servidor. Intenta en unos segundos.");
               return;
@@ -2654,10 +2678,10 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         nuevoPropietarioPorTerritorio = {};
     
         // Reiniciar pasos del modal
-         document.getElementById('btn-stark-atacar')?.classList.remove('oculto');
-  document.getElementById('btn-stark-mover')?.classList.remove('oculto');
-  document.getElementById('btn-stark-reorganizar')?.classList.remove('oculto');
-  document.getElementById('btn-stark-reclutar')?.classList.remove('oculto');
+         document.getElementById('btn-stark-atacar').style.display = 'none'
+  document.getElementById('btn-stark-mover').style.display = 'none'
+  document.getElementById('btn-stark-reorganizar').style.display = 'none'
+  document.getElementById('btn-stark-reclutar').style.display = 'none'
     
         renderizarInputsPerdidas();
         abrirModal('modal-fase-neutral');
@@ -2808,10 +2832,9 @@ if (
 }
 
 
-
-
-
-
+// Si el contador del norte ya llegó a 2, asegúrate de ocultar el botón
+contadorAccionesNorte--
+incrementarContadorNorte();
 });
 
   
@@ -3068,13 +3091,15 @@ for (const tipo in unidadesValidas) {
       mensajeEl.textContent = '⚠️ Oro insuficiente';
       return;
     }
+
   
     // Emitimos reclutamiento por tipo de unidad
     socket.emit('reclutamiento-multiple', {
       partida,
       nombre,
       territorio: obtenerTerritorioConPuerto() || obtenerPrimerTerritorio(),
-      unidades: unidadesValidas
+      unidades: unidadesValidas,
+      reclutarNorte: modoReclutarNorte
     });
     
   
@@ -3087,6 +3112,24 @@ for (const tipo in unidadesValidas) {
   
     actualizarInfoJugador();
     cerrarModal('modal-reclutar');
+
+    if (modoReclutarNorte) {
+  incrementarContadorNorte();
+  document.getElementById('valor-contador-stark').textContent = contadorAccionesNorte;
+  cerrarModal('modal-reclutar');
+  modoReclutarNorte = false;
+
+  if (contadorAccionesNorte >= 2) {
+    if ('Stark' == casa){
+      document.getElementById('acciones-container2').style.display = 'flex';
+    }
+
+  }
+  
+
+  return; // Ya está todo hecho, salimos
+}
+
   }
 
   function poblarSelectPropietarios() {
