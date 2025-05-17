@@ -19,6 +19,8 @@ let perdidasPorUnidad = {};
 let inicialYaConfirmado = false;
 let modalInicialYaMostrado = false;
 
+window.esAtaqueNorteStark = false;
+
 
 
 
@@ -491,7 +493,7 @@ btnStarkReclutar?.addEventListener('click', () => {
 if (esStark) {
   mostrarBotonesStark(); // los mostramos por defecto si es Stark
 
-  btnStarkAtacar?.addEventListener('click', incrementarContadorNorte);
+
   btnStarkMover?.addEventListener('click', incrementarContadorNorte);
   btnStarkReorganizar?.addEventListener('click', incrementarContadorNorte);
 } else {
@@ -515,10 +517,16 @@ if (divContador && spanContador) {
 const btnOrganizar = document.getElementById('btn-reorganizar');
 const btnNorteOrganizar = document.getElementById('btn-stark-reorganizar');
 
+// Sincronizar visibilidad del botón "Organizar en el Norte" con el botón "Organizar", pero SOLO si eres Stark
 if (btnOrganizar && btnNorteOrganizar) {
   const estaVisible = btnOrganizar.style.display !== 'none';
-  btnNorteOrganizar.style.display = estaVisible ? 'inline-block' : 'none';
+  if (casa === "Stark") {
+    btnNorteOrganizar.style.display = estaVisible ? 'inline-block' : 'none';
+  } else {
+    btnNorteOrganizar.style.display = 'none';
+  }
 }
+
 
 }
 
@@ -1342,6 +1350,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
           cerrarModal('modal-perdidas-ataque');
         });
+
+        const btnStarkAtacar = document.getElementById("btn-stark-atacar");
+
+btnStarkAtacar?.addEventListener("click", () => {
+  window.esAtaqueNorteStark = true;
+  poblarSelectTerritorioAtaque();
+  abrirModal('modal-ataque-simple');
+});
         
         document.getElementById('btn-confirmar-asignacion-territorios').addEventListener('click', () => {
           const asignaciones = {};
@@ -1860,11 +1876,22 @@ if (territorio2 && territorio2 !== territorio1) {
   territorios.push({ nombre: territorio2, gano: resultado2 === "si", propietario: propietario2 });
 }
 
+
+
+
   socket.emit('ataque-simple-doble', {
-    partida, nombre, casa, territorios, perdidasPorUnidad
+    partida, nombre, casa, territorios, perdidasPorUnidad, esAtaqueNorteStark
   });
 
+  if (window.esAtaqueNorteStark) {
+  incrementarContadorNorte();
+  window.esAtaqueNorteStark = false;
+}
+
   cerrarModal('modal-ataque-simple');
+
+  
+
 
   if (casa === "Arryn") {
   abrirModal('modal-caballero-batalla-arryn');

@@ -583,7 +583,8 @@ room.casasAtacantesTurno = null;
   });
 
 
-  socket.on('ataque-simple-doble', ({ partida, nombre, casa, territorios, perdidasPorUnidad }) => {
+  socket.on("ataque-simple-doble", ({ partida, nombre, casa, territorios, perdidasPorUnidad, esAtaqueNorteStark }) => {
+
   const room = rooms[partida];
   if (!room || !room.estadoJugadores?.[nombre]) return;
   const jugador = room.estadoJugadores[nombre];
@@ -604,10 +605,13 @@ room.casasAtacantesTurno = null;
 
   }
 
-  // Marcar acción terminada
-  if (!room.jugadoresAccionTerminada.includes(nombre)) {
-    room.jugadoresAccionTerminada.push(nombre);
+  if (!esAtaqueNorteStark) {
+    if (!room.jugadoresAccionTerminada.includes(nombre)) {
+      room.jugadoresAccionTerminada.push(nombre);
+    } 
   }
+  // Marcar acción terminada
+  
 
   // Enviar a todos menos al atacante para que informen sus pérdidas
 room.players.forEach(jugador => {
