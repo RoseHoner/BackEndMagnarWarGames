@@ -165,6 +165,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   torre: 0,
   escorpion: 0,
   tropasBlindadas: 0,
+  kraken: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -193,9 +194,11 @@ io.on('connection', (socket) => {
     const socketId = room.playerSockets[nombre];
     if (socketId) {
       io.to(socketId).emit('abrir-modal-perdidas-ataque', {
-        jugador: nombre,
-        datosJugador: jugador
-      });
+  jugador: nombre,
+  datosJugador: jugador,
+  esSaqueoGreyjoy: true
+});
+
     }
   } else {
     if (!room.jugadoresAccionTerminada.includes(nombre)) {
@@ -301,7 +304,7 @@ for (const casaAliada of aliados) {
     }
   });
 
-  socket.on('perdidas-en-batalla', ({ partida, nombre, perdidas }) => {
+  socket.on('perdidas-en-batalla', ({ partida, nombre, perdidas, esSaqueoGreyjoy }) => {
     const room = rooms[partida];
     if (!room) return;
   
@@ -314,68 +317,11 @@ for (const casaAliada of aliados) {
         jugador[key] = Math.max(0, jugador[key] - perdidas[key]);
       }
     }
-  
-    // Marcar como listo
-    // ✅ Solo el atacante principal gasta acción
-    if (jugador?.casa === room.casaAtacantePrincipal && !room.jugadoresAccionTerminada.includes(nombre)) {
+
+    if (esSaqueoGreyjoy) {
+    if (!room.jugadoresAccionTerminada.includes(nombre)) {
       room.jugadoresAccionTerminada.push(nombre);
     }
-    
-
-  // Comprobamos si todos los implicados en la batalla ya terminaron
-const implicados = new Set();
-
-// Atacante principal
-implicados.add(room.atacantePrincipalTurno);
-
-// Aliados
-for (const casaAliada of room.casasAtacantesTurno) {
-  const jugadorAliado = Object.entries(room.estadoJugadores).find(([_, j]) => j.casa === casaAliada);
-  if (jugadorAliado) implicados.add(jugadorAliado[0]);
-}
-
-// Defensores
-for (const territorio of room.territoriosAtacadosPorTurno) {
-  const casaDefensora = room.estadoTerritorios[territorio]?.propietario;
-  const defensor = Object.entries(room.estadoJugadores).find(([_, j]) => j.casa === casaDefensora);
-  if (defensor) implicados.add(defensor[0]);
-}
-
-// Verificar si todos los implicados ya terminaron
-const todosListos = [...implicados].every(j => room.jugadoresAccionTerminada.includes(j));
-
-console.log(`[Modal 3] Atacante principal: ${room.atacantePrincipalTurno}`);
-console.log(`[Modal 3] playerSockets disponibles:`, room.playerSockets);
-
-if (
-  todosListos &&
-  room.atacantePrincipalTurno &&
-  room.territoriosAtacadosPorTurno &&
-  room.casasAtacantesTurno
-) {
-  
-  const atacanteCasa = room.casaAtacantePrincipal;
-const atacanteJugador = Object.entries(room.estadoJugadores).find(([_, j]) => j.casa === atacanteCasa);
-const socketAtacante = atacanteJugador ? room.playerSockets[atacanteJugador[0]] : null;
-
-
-if (!socketAtacante) {
-  console.warn(`[Modal 3] No se encontró socket del atacante principal (${atacante}) en partida ${partida}`);
-  return; // Evita fallos silenciosos
-}
-
-
-  if (socketAtacante) {
-    io.to(socketAtacante).emit('abrir-modal-asignar-territorios', {
-      territorios: room.territoriosAtacadosPorTurno,
-      posiblesCasas: room.casasAtacantesTurno
-    });
-  }
-
-  // ❌ NO borres aún los datos del ataque. Lo haremos cuando confirme el modal 3.
-}
-
-    
   
     // Emitimos estado actualizado (opcional)
     io.to(partida).emit('actualizar-estado-juego', {
@@ -384,9 +330,64 @@ if (!socketAtacante) {
       turno: room.turnoActual,
       accion: room.accionActual
     });
+
+    const total = room.players.length;
+    if (room.jugadoresAccionTerminada.length === total) {
+      room.jugadoresAccionTerminada = [];
+      room.accionActual += 1;
+      if (room.accionActual > 4) {
+        room.accionActual = 1;
+        room.turnoActual += 1;
+      }
+      io.to(partida).emit('avanzar-accion', {
+        turno: room.turnoActual,
+        accion: room.accionActual,
+        fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+      });
+    }
+    return;
+  }
+
+
   });
   
-  
+  socket.on('greyjoy-invocar-kraken', ({ partida, nombre }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+
+  jugador.kraken = (jugador.kraken || 0) + 1;
+
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  const listos = room.jugadoresAccionTerminada.length;
+  const total = room.players.length;
+
+  if (listos === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
 
 
 
@@ -1000,13 +1001,13 @@ if (casa === "Martell") {
     ingreso += 10;
   }
 }
-ingreso += minas * (casa === "Lannister" ? 20 : 10);
+const esGreyjoy = casa === "Greyjoy";
 
-        ingreso += aserraderos * 5;
-        ingreso += canteras * 5;
-        if (casa !== "Tyrell") {
-  ingreso += granjas * 5;
-}
+ingreso += minas * (esGreyjoy ? 15 : (casa === "Lannister" ? 20 : 10));
+ingreso += aserraderos * (esGreyjoy ? 8 : 5);
+ingreso += canteras * (esGreyjoy ? 8 : 5);
+if (casa !== "Tyrell") ingreso += granjas * (esGreyjoy ? 8 : 5);
+
       }
     }
 
@@ -1100,16 +1101,16 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
         const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
         const canteras = territorio.edificios.filter(e => e === "Cantera").length;
         const granjas = territorio.edificios.filter(e => e === "Granja").length;
-  
-        ingreso += minas * (casa === "Lannister" ? 20 : 10);
 
-        ingreso += aserraderos * 5;
-        ingreso += canteras * 5;
+        const esGreyjoy = casa === "Greyjoy";
+  
+        ingreso += minas * (esGreyjoy ? 15 : (casa === "Lannister" ? 20 : 10));
+
+        ingreso += aserraderos * (esGreyjoy ? 8 : 5);
+        ingreso += canteras * (esGreyjoy ? 8 : 5);
         if (casa === "Tully") {
           ingreso += granjas * 10;
-        } else if (casa !== "Tyrell") {
-          ingreso += granjas * 5;
-        }
+        } else if (casa !== "Tyrell") ingreso += granjas * (esGreyjoy ? 8 : 5);
 
         // 💰 Bonus Martell por Puerto inicial en Lanza del Sol
 
@@ -1510,13 +1511,11 @@ if (tienePuerto) {
   }
   ingreso += totalProduccion * 10;
 }
-ingreso += minas * (casa === "Lannister" ? 20 : 10);
-
-      ingreso += aserraderos * 5;
-      ingreso += canteras * 5;
-      if (casa !== "Tyrell") {
-  ingreso += granjas * 5;
-}
+const esGreyjoy = casa === "Greyjoy";
+ingreso += minas * (esGreyjoy ? 15 : (casa === "Lannister" ? 20 : 10));
+ingreso += aserraderos * (esGreyjoy ? 8 : 5);
+ingreso += canteras * (esGreyjoy ? 8 : 5);
+if (casa !== "Tyrell") ingreso += granjas * (esGreyjoy ? 8 : 5);
     }
 }
 
@@ -1758,13 +1757,11 @@ if (tienePuerto) {
   }
   ingreso += totalProduccion * 10;
 }
-ingreso += minas * (casa === "Lannister" ? 20 : 10);
-
-      ingreso += aserraderos * 5;
-      ingreso += canteras * 5;
-      if (casa !== "Tyrell") {
-  ingreso += granjas * 5;
-}
+const esGreyjoy = casa === "Greyjoy";
+ingreso += minas * (esGreyjoy ? 15 : (casa === "Lannister" ? 20 : 10));
+ingreso += aserraderos * (esGreyjoy ? 8 : 5);
+ingreso += canteras * (esGreyjoy ? 8 : 5);
+if (casa !== "Tyrell") ingreso += granjas * (esGreyjoy ? 8 : 5);
     }
 }
 
@@ -2082,15 +2079,14 @@ if (tienePuerto) {
   const oroPorEdificio = casa === "Martell" ? 15 : 10;
   ingreso += totalProduccion * oroPorEdificio;
 }
-ingreso += minas * (casa === "Lannister" ? 20 : 10);
+const esGreyjoy = casa === "Greyjoy";
+ingreso += minas * (esGreyjoy ? 15 : (casa === "Lannister" ? 20 : 10));
 
-      ingreso += aserraderos * 5;
-      ingreso += canteras * 5;
+ingreso += aserraderos * (esGreyjoy ? 8 : 5);
+ingreso += canteras * (esGreyjoy ? 8 : 5);
       if (casa === "Tully") {
         ingreso += granjas * 10;
-      } else if (casa !== "Tyrell") {
-        ingreso += granjas * 5;
-      }
+      } else if (casa !== "Tyrell") ingreso += granjas * (esGreyjoy ? 8 : 5);
       
     }
 }

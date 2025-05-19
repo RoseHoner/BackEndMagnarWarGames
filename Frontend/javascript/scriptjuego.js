@@ -95,6 +95,30 @@ const LIMITE_SOLDADOS_POR_CASA = {
     // Puedes ajustar estos valores por casa según quieras
   };
 
+  // Lista de capitales
+const CAPITALES = ["Invernalia", "Rocadragón", "Desembarco del Rey", "Aguasdulces", "Lanza del Sol", "El Nido de Águilas", "Altojardín", "Roca Casterly", "Pyke"];
+
+
+const territoriosOriginalesGreyjoy = ["Pyke", "Harlaw", "Monte Orca", "Gran Wyk"];
+
+// Función que calcula el límite de reclutamiento de Greyjoy
+function calcularLimiteGreyjoy(territoriosJugador) {
+  let limite = 7;
+  for (const t of territoriosJugador) {
+    if (!territoriosOriginalesGreyjoy.includes(t.nombre)) {
+      if (t.edificios.includes("Castillo")) {
+        limite += 2;
+      } else {
+        limite += 1;
+      }
+    }
+  }
+  return limite;
+}
+
+
+
+
   let turnoReorganizarUsado = null;
   let accionReorganizarUsado = null;
 
@@ -124,7 +148,8 @@ function renderizarModalPerdidasDefensor() {
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
-    { key: 'arquero', nombre: 'Arqueros' }
+    { key: 'arquero', nombre: 'Arqueros' },
+    { key: 'kraken', nombre: 'Kraken'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -161,7 +186,8 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
-    { key: 'arquero', nombre: 'Arqueros' }
+    { key: 'arquero', nombre: 'Arqueros' },
+    { key: 'kraken', nombre: 'Kraken'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -203,6 +229,7 @@ function renderizarInputsPerdidas() {
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'jinete', nombre: 'Jinetes' },
+    { key: 'kraken', nombre: 'Kraken'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -252,7 +279,7 @@ function actualizarUnidadesMilitares() {
       { tipo: 'militantesFe', nombre: 'Militante de la Fe', icono: 'soldado.png' },
       { tipo: 'arquero', nombre: 'Arquero', icono: 'soldado.png' },
       { tipo: 'jinete', nombre: 'Jinete', icono: 'soldado.png' }, 
-      { tipo: 'huevos', nombre: 'Huevo de Dragón', icono: 'dragon.png' }
+      { tipo: 'huevos', nombre: 'Huevo de Dragón', icono: 'dragon.png' },
 
     ];
     
@@ -278,6 +305,7 @@ unidadesBasicas.forEach(u => {
         { tipo: 'escorpion', nombre: 'Escorpión', icono: 'escorpion.png' },
         { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'sacerdote.png' },
         { tipo: 'caballero', nombre: 'Caballero', icono: 'caballero.png' },
+        { tipo: 'kraken', nombre: 'Kraken', icono: 'kraken.png' },
 
 
     ];
@@ -409,6 +437,19 @@ if (btnSaqueo) {
     btnSaqueo.style.display = 'none';
   }
 }
+
+const btnKraken = document.getElementById('btn-ritual-kraken-greyjoy');
+if (btnKraken) {
+  const jugador = gameState.jugadores?.[nombre];
+  if (casa === "Greyjoy" && (jugador?.kraken || 0) === 0) {
+    btnKraken.style.display = 'inline-block';
+  } else {
+    btnKraken.style.display = 'none';
+  }
+}
+
+
+
 
 
 
@@ -798,7 +839,16 @@ function ajustarCantidad(tipo, cambio) {
 
   const jugador = gameState.jugadores[nombre];
   const casaJugador = jugador.casa;
-  let limite = LIMITE_SOLDADOS_POR_CASA[casaJugador] ?? 5;
+  let limite;
+
+if (casaJugador === "Greyjoy") {
+  const territoriosJugador = Object.values(gameState.territorios).filter(t => t.propietario === casaJugador);
+  limite = calcularLimiteGreyjoy(territoriosJugador);
+} else {
+  limite = LIMITE_SOLDADOS_POR_CASA[casaJugador] ?? 5;
+}
+
+
 // Si está casado con Qoherys, subir el límite a 12
 if (casaJugador === "Targaryen" && jugador.casadoCon === "Qoherys") {
   limite = 12;
@@ -1140,12 +1190,16 @@ function abrirModalMisTerritorios() {
     // Contar barcos del jugador (suponemos que están en jugador.barcos)
     const jugador = gameState.jugadores[nombre];
 
+    const esGreyjoy = casa === "Greyjoy";
+
+
     // Calculamos minas
     let oroPorMinas = 0;
     misTerritorios.forEach(t => {
       const minas = t.edificios?.filter(ed => ed === "Mina").length || 0;
-      const oroPorMina = (casa === "Lannister") ? 20 : 10;
+      const oroPorMina = esGreyjoy ? 15 : (casa === "Lannister" ? 20 : 10);
       oroPorMinas += minas * oroPorMina;
+
   });
   
 
@@ -1153,14 +1207,15 @@ function abrirModalMisTerritorios() {
     let oroPorAserraderos = 0;
     misTerritorios.forEach(t => {
         const aserraderos = t.edificios?.filter(ed => ed === "Aserradero").length || 0;
-        oroPorAserraderos += aserraderos * 5;
+        oroPorAserraderos += aserraderos * (esGreyjoy ? 8 : 5);
     });
 
     // Calculamos canteras
 let oroPorCanteras = 0;
 misTerritorios.forEach(t => {
     const canteras = t.edificios?.filter(ed => ed === "Cantera").length || 0;
-    oroPorCanteras += canteras * 5;
+    oroPorCanteras += canteras * (esGreyjoy ? 8 : 5);
+
 });
 
 // Calculamos granjas
@@ -1174,7 +1229,7 @@ if (casa === "Tully") {
 } else if (casa !== "Tyrell") {
   misTerritorios.forEach(t => {
     const granjas = t.edificios?.filter(ed => ed === "Granja").length || 0;
-    oroPorGranjas += granjas * 5;
+    oroPorGranjas += granjas * (esGreyjoy ? 8 : 5);
   });
 }
 
@@ -1344,6 +1399,21 @@ if (btnLevasStark) {
   });
 }
 
+setupListener('btn-ritual-kraken-greyjoy', 'click', () => {
+  abrirModal('modal-ritual-kraken');
+});
+
+setupListener('btn-si-ritual-kraken', 'click', () => {
+  cerrarModal('modal-ritual-kraken');
+  socket.emit('greyjoy-invocar-kraken', { partida, nombre });
+});
+
+setupListener('btn-no-ritual-kraken', 'click', () => {
+  cerrarModal('modal-ritual-kraken');
+  terminarAccionEspecifica("Ritual de Sal (sin éxito)");
+});
+
+
 setupListener('btn-saquear-greyjoy', 'click', () => {
   document.getElementById('input-oro-saqueo').value = 10;
   abrirModal('modal-saqueo-greyjoy');
@@ -1396,7 +1466,8 @@ if (btnConfirmarLevas) {
           const unidades = [
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
-            'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+            'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
+            'kraken'
           ];
         
           for (const key of unidades) {
@@ -1409,7 +1480,13 @@ if (btnConfirmarLevas) {
             if (cantidad > 0) perdidas[key] = cantidad;
           }
         
-          socket.emit('perdidas-en-batalla', { partida, nombre, perdidas });
+          socket.emit('perdidas-en-batalla', {
+  partida,
+  nombre,
+  perdidas,
+  esSaqueoGreyjoy: true // ⚓ marcar que es saqueo
+});
+
         
           cerrarModal('modal-perdidas-ataque');
         });
@@ -1700,7 +1777,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'jinete'
+            'jinete','kraken'
           ];
         
           let total = 0;
@@ -1728,7 +1805,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
   const claves = [
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
-    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken'
   ];
 
   claves.forEach(key => {
@@ -1877,7 +1954,8 @@ validarOroSoborno();
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
-    { key: 'arquero', nombre: 'Arqueros' }
+    { key: 'arquero', nombre: 'Arqueros' },
+    { key: 'kraken', nombre: 'Kraken'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -1915,7 +1993,8 @@ function confirmarAtaqueSimple() {
   const unidades = [
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
-    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
+    'kraken'
   ];
 
   unidades.forEach(key => {
@@ -2534,7 +2613,8 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
   const unidades = [
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
-    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero'
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
+    'kraken'
   ];
 
   for (const key of unidades) {
@@ -2761,11 +2841,18 @@ socket.on('avanzar-accion', (nuevoEstado) => {
 }
 
     // Actualizar UI y reactivar botones (si no es Fase Neutral)
-    actualizarTurnoAccionUI();
     if (gameState?.fase === 'Neutral') {
         tropasPerdidas = 0;
+        perdidasPorUnidad = {};
         territoriosPerdidos = [];
         nuevoPropietarioPorTerritorio = {};
+
+        
+        // Reiniciar pasos visuales del modal
+  document.getElementById('fase-neutral-paso1').style.display = 'block';
+  document.getElementById('fase-neutral-paso2').style.display = 'none';
+  document.getElementById('fase-neutral-paso3').style.display = 'none';
+  document.getElementById('fase-neutral-paso4').style.display = 'none';
     
         // Reiniciar pasos del modal
          document.getElementById('btn-stark-atacar').style.display = 'none'
@@ -2777,6 +2864,7 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         abrirModal('modal-fase-neutral');
 
     }
+       actualizarTurnoAccionUI();
     
     
     deshabilitarBotonesAccion(gameState?.fase === 'Neutral');
@@ -3055,7 +3143,8 @@ for (const t of Object.values(gameState.territorios)) {
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
-    { key: 'arquero', nombre: 'Arqueros' }
+    { key: 'arquero', nombre: 'Arqueros' },
+    { key: 'kraken', nombre: 'Kraken'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
