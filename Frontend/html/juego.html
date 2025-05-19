@@ -163,6 +163,7 @@
   <button id="btn-organizar-torneo" class="btn-accion-juego" style="display: none;">🏇 Organizar Torneo</button>
   <button id="btn-doble-impuestos" class="btn-accion-juego" style="display: none;">💰 Doble Impuestos</button>
   <button id="btn-sobornar-soldados" class="btn-accion-juego" style="display: none;">🪙 Sobornar Soldados</button>
+  <button id="btn-saquear-greyjoy" class="btn-accion-juego" style="display: none;">⚓ Saquear</button>
 
 
     <!-- Modal Organizar Torneo -->
@@ -595,6 +596,16 @@
   <div class="botones-modal" style="margin-top: 20px;">
     <button id="btn-confirmar-levas-stark" class="btn-confirmar">✔️ Confirmar</button>
     <button class="btn-cancelar" onclick="cerrarModal('modal-levas-stark')">✖️ Cancelar</button>
+  </div>
+</div>
+
+<div id="modal-saqueo-greyjoy" class="modal-juego" style="display: none;">
+  <h2>⚓ Saqueo</h2>
+  <p>¿Cuánto oro ganaste al saquear?</p>
+  <input type="number" id="input-oro-saqueo" min="1" value="10" style="width: 100%; margin-top: 10px;">
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button id="btn-confirmar-saqueo" class="btn-confirmar">✔️ Confirmar</button>
+    <button class="btn-cancelar" onclick="cerrarModal('modal-saqueo-greyjoy')">✖️ Cancelar</button>
   </div>
 </div>
 

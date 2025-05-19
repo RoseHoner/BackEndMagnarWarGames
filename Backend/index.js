@@ -180,6 +180,57 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
 io.on('connection', (socket) => {
   console.log(`🔌 Connect: ${socket.id}`);
 
+  socket.on('greyjoy-saquear', ({ partida, nombre, oro }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Greyjoy") return;
+
+  jugador.oro = (jugador.oro || 0) + oro;
+
+  // Si es más de 50, abre modal de pérdidas
+  if (oro > 50) {
+    const socketId = room.playerSockets[nombre];
+    if (socketId) {
+      io.to(socketId).emit('abrir-modal-perdidas-ataque', {
+        jugador: nombre,
+        datosJugador: jugador
+      });
+    }
+  } else {
+    if (!room.jugadoresAccionTerminada.includes(nombre)) {
+      room.jugadoresAccionTerminada.push(nombre);
+    }
+  }
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  // Avanzar acción si todos listos
+  const listos = room.jugadoresAccionTerminada.length;
+  const total = room.players.length;
+
+  if (listos === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
+
   socket.on('targaryen-ganar-hijo', ({ partida, nombre }) => {
   const room = rooms[partida];
   if (!room) return;

@@ -401,6 +401,18 @@ if (btnDoble && btnSobornar) {
   }
 }
 
+const btnSaqueo = document.getElementById('btn-saquear-greyjoy');
+if (btnSaqueo) {
+  if (casa === "Greyjoy") {
+    btnSaqueo.style.display = 'inline-block';
+  } else {
+    btnSaqueo.style.display = 'none';
+  }
+}
+
+
+
+
 const btnCasarse = document.getElementById('btn-casarse-targaryen');
 if (btnCasarse) {
   const jugador = gameState.jugadores?.[nombre];
@@ -1331,6 +1343,21 @@ if (btnLevasStark) {
     abrirModal('modal-levas-stark');
   });
 }
+
+setupListener('btn-saquear-greyjoy', 'click', () => {
+  document.getElementById('input-oro-saqueo').value = 10;
+  abrirModal('modal-saqueo-greyjoy');
+});
+
+setupListener('btn-confirmar-saqueo', 'click', () => {
+  const oro = parseInt(document.getElementById('input-oro-saqueo').value);
+  if (isNaN(oro) || oro <= 0) return alert("Cantidad inválida.");
+
+  socket.emit('greyjoy-saquear', { partida, nombre, oro });
+  cerrarModal('modal-saqueo-greyjoy');
+});
+
+
 
 
         const btnConfirmarLevas = document.getElementById('btn-confirmar-levas-stark');
