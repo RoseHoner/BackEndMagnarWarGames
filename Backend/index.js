@@ -97,6 +97,7 @@ const ORO_INICIAL_POR_DEFECTO = 0;
 const TROPAS_INICIALES_POR_DEFECTO = 0;
 
 
+
 // Función que genera el estado inicial de los territorios al comenzar la partida
 function inicializarEstadoTerritorios() {
     const CAPITALES = [
@@ -167,6 +168,8 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
+  levasStarkUsadas: false,
+
 };
 
   });
@@ -1768,6 +1771,45 @@ socket.on('arryn-ganar-caballero', ({ partida, nombre }) => {
     turno: room.turnoActual,
     accion: room.accionActual
   });
+});
+
+socket.on('levas-stark', ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Stark" || jugador.levasStarkUsadas) return;
+
+  jugador.levasStarkUsadas = true;
+  jugador.tropas = (jugador.tropas || 0) + cantidad;
+
+  // Marcar acción completada
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  const total = room.players.length;
+  if (room.jugadoresAccionTerminada.length === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual++;
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual++;
+    }
+
+    io.to(partida).emit('avanzar-accion', {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
 });
 
 

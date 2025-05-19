@@ -430,13 +430,15 @@ if (btnCasarse) {
 }
 
 const btnLevas = document.getElementById('btn-levas-stark');
+const jugador = gameState?.jugadores?.[nombre];
 if (btnLevas) {
-  if (casa === "Stark" && !levasStarkUsadas) {
+  if (casa === "Stark" && !jugador?.levasStarkUsadas) {
     btnLevas.style.display = 'inline-block';
   } else {
     btnLevas.style.display = 'none';
   }
 }
+
 
 
 const btnReorganizar = document.getElementById('btn-reorganizar');
@@ -1322,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        const btnLevasStark = document.getElementById('btn-levas-stark');
+const btnLevasStark = document.getElementById('btn-levas-stark');
 if (btnLevasStark) {
   btnLevasStark.addEventListener('click', () => {
     document.getElementById('input-levas-stark').value = 1;
@@ -1330,20 +1332,15 @@ if (btnLevasStark) {
   });
 }
 
-const btnConfirmarLevas = document.getElementById('btn-confirmar-levas-stark');
+
+        const btnConfirmarLevas = document.getElementById('btn-confirmar-levas-stark');
 if (btnConfirmarLevas) {
   btnConfirmarLevas.addEventListener('click', () => {
     const cantidad = parseInt(document.getElementById('input-levas-stark').value);
     if (isNaN(cantidad) || cantidad <= 0) return alert("Cantidad inválida");
 
-    // Añadir tropas localmente
-    if (!gameState.jugadores[nombre].tropas) gameState.jugadores[nombre].tropas = 0;
-    gameState.jugadores[nombre].tropas += cantidad;
-
-    levasStarkUsadas = true;
+    socket.emit('levas-stark', { partida, nombre, cantidad });
     cerrarModal('modal-levas-stark');
-    actualizarUnidadesMilitares();
-    terminarAccionEspecifica("Levantamiento de Levas");
   });
 }
 
