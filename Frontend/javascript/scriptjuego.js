@@ -8,6 +8,8 @@ const BACKEND_URL = isLocalhost
 // PARTE 1: INICIALIZACIÓN Y GLOBALES
 // =============================================
 let modoReclutarNorte = false; // false = reclutar normal, true = reclutar para el norte (Stark)
+let levasStarkUsadas = false;
+
 
 
 let contadorAccionesNorte = 0;
@@ -426,6 +428,17 @@ if (btnCasarse) {
     }
   }
 }
+
+const btnLevas = document.getElementById('btn-levas-stark');
+if (btnLevas) {
+  if (casa === "Stark" && !levasStarkUsadas) {
+    btnLevas.style.display = 'inline-block';
+  } else {
+    btnLevas.style.display = 'none';
+  }
+}
+
+
 const btnReorganizar = document.getElementById('btn-reorganizar');
 const btnReorganizarStark = document.getElementById('btn-stark-reorganizar');
 
@@ -1308,6 +1321,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 listenersOk = false; // Marcar que algo falló, pero continuar
             }
         };
+
+        const btnLevasStark = document.getElementById('btn-levas-stark');
+if (btnLevasStark) {
+  btnLevasStark.addEventListener('click', () => {
+    document.getElementById('input-levas-stark').value = 1;
+    abrirModal('modal-levas-stark');
+  });
+}
+
+const btnConfirmarLevas = document.getElementById('btn-confirmar-levas-stark');
+if (btnConfirmarLevas) {
+  btnConfirmarLevas.addEventListener('click', () => {
+    const cantidad = parseInt(document.getElementById('input-levas-stark').value);
+    if (isNaN(cantidad) || cantidad <= 0) return alert("Cantidad inválida");
+
+    // Añadir tropas localmente
+    if (!gameState.jugadores[nombre].tropas) gameState.jugadores[nombre].tropas = 0;
+    gameState.jugadores[nombre].tropas += cantidad;
+
+    levasStarkUsadas = true;
+    cerrarModal('modal-levas-stark');
+    actualizarUnidadesMilitares();
+    terminarAccionEspecifica("Levantamiento de Levas");
+  });
+}
+
 
 
         setupListener('btn-obtener-tecnologia', 'click', () => {

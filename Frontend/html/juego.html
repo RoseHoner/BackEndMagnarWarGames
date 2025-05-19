@@ -159,12 +159,10 @@
   </div>
 </div>
 
-
-
-    <button id="btn-organizar-torneo" class="btn-accion-juego" style="display: none;">🏇 Organizar Torneo</button>
-
-    <button id="btn-doble-impuestos" class="btn-accion-juego" style="display: none;">💰 Doble Impuestos</button>
-<button id="btn-sobornar-soldados" class="btn-accion-juego" style="display: none;">🪙 Sobornar Soldados</button>
+  <button id="btn-levas-stark" class="btn-accion-juego" style="display: none;">🛡️ Levantamiento de Levas</button>
+  <button id="btn-organizar-torneo" class="btn-accion-juego" style="display: none;">🏇 Organizar Torneo</button>
+  <button id="btn-doble-impuestos" class="btn-accion-juego" style="display: none;">💰 Doble Impuestos</button>
+  <button id="btn-sobornar-soldados" class="btn-accion-juego" style="display: none;">🪙 Sobornar Soldados</button>
 
 
     <!-- Modal Organizar Torneo -->
@@ -186,6 +184,8 @@
     <button onclick="confirmarCaballeroArryn(false)" class="btn-cancelar">✖️ No</button>
   </div>
 </div>
+
+
 
 
     <!-- Modal Reclutar (NUEVO) -->
@@ -587,6 +587,17 @@
     <button id="btn-eclosion-no" class="btn-cancelar">✖️ No</button>
   </div>
 </div>
+
+<div id="modal-levas-stark" class="modal-juego" style="display: none;">
+  <h2>🛡️ Levantamiento de Levas</h2>
+  <p>¿Cuántas tropas (soldados normales) ganas?</p>
+  <input type="number" id="input-levas-stark" min="1" value="1" style="width: 100%; margin-top: 10px;">
+  <div class="botones-modal" style="margin-top: 20px;">
+    <button id="btn-confirmar-levas-stark" class="btn-confirmar">✔️ Confirmar</button>
+    <button class="btn-cancelar" onclick="cerrarModal('modal-levas-stark')">✖️ Cancelar</button>
+  </div>
+</div>
+
 
 
   
