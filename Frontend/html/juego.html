@@ -332,13 +332,60 @@
     </div>
     <!-- Fin Modal Mis Territorios -->
 
-    <!-- Info Adicional (Sin cambios) -->
-    <div id="info-adicional" style="position: fixed; bottom: 10px; left: 10px; background-color: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; max-width: 250px; z-index: 5;">
-        <h4>Rumores Desbloqueados:</h4>
-        <ul id="lista-rumores" style="list-style: none; padding: 0; margin: 0; font-size: 0.9em;">
-            <li>(Ninguno)</li>
-        </ul>
-    </div>
+    <div id="cuadro-rumores" style="
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background-color: #111;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  max-width: 250px;
+  z-index: 999;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+">
+  <strong>🕵️ Rumores</strong>
+  <p id="lista-rumores" style="padding-left: 15px; margin-top: 5px;"></p>
+</div>
+
+<!-- Modal: ¿Has conseguido un rumor? -->
+<div id="modal-ganar-rumor" class="modal-juego" style="display: none;">
+  <h2>🕵️ ¿Has conseguido un rumor?</h2>
+  <div class="botones-modal">
+    <button class="btn-confirmar" onclick="confirmarGanarRumor(true)">✔️ Sí</button>
+    <button class="btn-cancelar" onclick="confirmarGanarRumor(false)">✖️ No</button>
+  </div>
+</div>
+
+<!-- Modal: Elegir rumor -->
+<div id="modal-elegir-rumor" class="modal-juego" style="display: none;">
+  <h2>📜 ¿Qué rumor conseguiste?</h2>
+  <div class="campo-formulario">
+    <label for="select-rumor">Selecciona uno:</label>
+    <select id="select-rumor"></select>
+  </div>
+  <div class="botones-modal">
+    <button class="btn-confirmar" onclick="confirmarRumorElegido()">✔️ Confirmar</button>
+  </div>
+</div>
+
+<!-- Modal Reclutar Huargos -->
+<div id="modal-reclutar-huargos" class="modal-juego" style="display: none;">
+  <h2>🐺 Reclutar Huargos</h2>
+  <div class="campo-formulario">
+    <label for="cantidad-huargos">¿Cuántos Huargos quieres reclutar?</label>
+    <input type="number" id="cantidad-huargos" min="1" value="1" />
+  </div>
+  <div class="botones-modal">
+    <button class="btn-confirmar" onclick="confirmarReclutarHuargos()">✔️ Confirmar</button>
+  </div>
+</div>
+
+
+
+
+
 
     <!-- Modal para elegir recursos iniciales -->
 <div id="modal-inicial" class="modal-juego" style="display: none; z-index: 9999; backdrop-filter: blur(2px);">

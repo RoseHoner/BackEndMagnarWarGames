@@ -24,6 +24,19 @@ let modalInicialYaMostrado = false;
 window.esAtaqueNorteStark = false;
 
 
+const RUMORES_POR_CASA = {
+  Stark: ["Camino del Silencio", "Aliento de los Antiguos", "Cornamenta de Skagos"],
+  Tully: ["Juramento sin Estandartes", "Lluvia de Roble", "Ecos de Harren el Negro"],
+  Targaryen: ["Acero y Juramento", "Fuego Heredado", "Alianza de Sangre"],
+  Greyjoy: ["Madera del Abismo", "Rey de los Mares", "Trono de Viejo Wyck"],
+  Martell: ["Corsarios del Mediodía", "Mercancía de Sombras", "El Portador del Alba"],
+  Tyrell: ["Diezmo de la Abundancia", "Caballeros de la Rosa", "Levantamiento del Pueblo"],
+  Baratheon: ["Caza del Venado Blanco", "Martillos de Tormenta", "Llama de R'hllor"],
+  Lannister: ["Renacer de Reyne", "Sombras Doradas", "Cetro del León"],
+  Arryn: ["Tributo de la Luna", "Alas del Valle", "Roca de los Titanes"]
+};
+
+
 
 
 // --- Conexión Socket.IO ---
@@ -117,6 +130,47 @@ function calcularLimiteGreyjoy(territoriosJugador) {
 }
 
 
+function mostrarModalRumoresCasa() {
+  const lista = document.getElementById('lista-rumores-casa');
+  lista.innerHTML = '';
+
+  const rumores = RUMORES_POR_CASA[casa] || [];
+  rumores.forEach(rumor => {
+    const li = document.createElement('p');
+    li.textContent = `• ${rumor}`;
+    li.style.marginBottom = '6px';
+    lista.appendChild(p);
+  });
+
+  abrirModal('modal-rumores-casa');
+}
+
+function renderizarRumoresDesbloqueados() {
+  const contenedor = document.getElementById("lista-rumores");
+  contenedor.innerHTML = "";
+
+  if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) return;
+
+  const jugador = gameState.jugadores[nombre];
+  const casaJugador = jugador.casa;
+  const desbloqueados = jugador.rumoresDesbloqueados || [];
+  const rumoresCasa = RUMORES_POR_CASA[casaJugador] || [];
+
+  desbloqueados.forEach(r => {
+    if (rumoresCasa.includes(r)) {
+      const li = document.createElement("li");
+      li.textContent = `${r} ✅`;
+      contenedor.appendChild(li);
+    }
+  });
+}
+
+
+
+
+
+
+
 
 
   let turnoReorganizarUsado = null;
@@ -149,7 +203,8 @@ function renderizarModalPerdidasDefensor() {
     { key: 'dragones', nombre: 'Dragones' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
-    { key: 'kraken', nombre: 'Kraken'}
+    { key: 'kraken', nombre: 'Kraken'},
+    { key: 'huargos', nombre: 'Huargos'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -187,7 +242,8 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'dragones', nombre: 'Dragones' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
-    { key: 'kraken', nombre: 'Kraken'}
+    { key: 'kraken', nombre: 'Kraken'},
+    { key: 'huargos', nombre: 'Huargos'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -229,7 +285,8 @@ function renderizarInputsPerdidas() {
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'jinete', nombre: 'Jinetes' },
-    { key: 'kraken', nombre: 'Kraken'}
+    { key: 'kraken', nombre: 'Kraken'},
+    { key: 'huargos', nombre: 'Huargos'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -306,8 +363,7 @@ unidadesBasicas.forEach(u => {
         { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'sacerdote.png' },
         { tipo: 'caballero', nombre: 'Caballero', icono: 'caballero.png' },
         { tipo: 'kraken', nombre: 'Kraken', icono: 'kraken.png' },
-
-
+        { tipo: 'huargos', nombre: 'Huargos', icono: 'huargo.png'}
     ];
 
     unidades.forEach(u => {
@@ -634,42 +690,6 @@ function mostrarBotonesStark() {
   document.getElementById('btn-stark-reclutar').style.display = 'flex'
   }
   
-}
-
-
-
-
-
-
-
-function actualizarInfoAdicional() {
-    if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) return;
-    const jugador = gameState.jugadores[nombre];
-    const listaRumoresEl = document.getElementById('lista-rumores');
-
-    if (listaRumoresEl) {
-        listaRumoresEl.innerHTML = ''; // Limpiar
-        if (jugador.rumoresDesbloqueados && jugador.rumoresDesbloqueados.length > 0) {
-            jugador.rumoresDesbloqueados.forEach(rumor => {
-                const li = document.createElement('li');
-                // Podrías tener un mapeo para mostrar descripciones cortas
-                const RUMOR_DESC = { // Ejemplo
-                    "Rutas Alternativas": "Atacar detrás líneas enemigas",
-                    "Camada Huargos": "+1d4+1 Huargos",
-                    "Unicornios Skagos": "+1d3 Unicornios (+2 Montaña)",
-                    // ... añadir TODOS los rumores con nombre exacto del backend
-                };
-                li.textContent = `✓ ${rumor}`;
-                li.title = RUMOR_DESC[rumor] || "Rumor desbloqueado"; // Tooltip
-                listaRumoresEl.appendChild(li);
-            });
-        } else {
-            listaRumoresEl.innerHTML = '<li>(Ninguno)</li>';
-        }
-    }
-    // Aquí se actualizaría más info: estado invierno, préstamos, etc.
-    // Ejemplo: const inviernoStatusEl = document.getElementById('invierno-status');
-    // if(inviernoStatusEl) inviernoStatusEl.textContent = gameState.estadoGlobal?.invierno ? "Sí" : "No";
 }
 
 function actualizarEdificiosJugador() {
@@ -1265,8 +1285,10 @@ misTerritorios.forEach(t => {
     const mantenimientoDragones = (jugador.dragones || 0) * 5;
     const mantenimientoSacerdotes = (jugador.sacerdotes || 0) * 1;
     const mantenimientoCaballeros = jugador.caballero || 0;
+    const mantenimientoHuargos = jugador.huargos || 0;
 
-    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros;
+
+    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1467,7 +1489,7 @@ if (btnConfirmarLevas) {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'kraken'
+            'kraken','huargos'
           ];
         
           for (const key of unidades) {
@@ -1777,7 +1799,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'jinete','kraken'
+            'jinete','kraken','huargos'
           ];
         
           let total = 0;
@@ -1805,7 +1827,8 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
   const claves = [
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
-    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken'
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
+    'huargos'
   ];
 
   claves.forEach(key => {
@@ -1956,6 +1979,7 @@ validarOroSoborno();
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
+    { key: 'huargos', nombre: 'Huargos'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -1994,7 +2018,7 @@ function confirmarAtaqueSimple() {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken'
+    'kraken','huargos'
   ];
 
   unidades.forEach(key => {
@@ -2241,6 +2265,7 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
 
         // Paso 2 - NO perdió territorios
         document.getElementById('btn-no-perdi-territorios').addEventListener('click', () => {
+          abrirModalGanarRumor(); // ← Aquí se lanza la pregunta del rumor
   gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
 
   const jugador = gameState.jugadores[nombre];
@@ -2318,6 +2343,8 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
           
 
         document.getElementById('btn-confirmar-territorios-perdidos').addEventListener('click', () => {
+          abrirModalGanarRumor(); // ← Aquí también
+
             const checkboxes = document.querySelectorAll('#lista-territorios-perdidos input[type="checkbox"]:checked');
             territoriosPerdidos = Array.from(checkboxes).map(cb => cb.value);
 
@@ -2614,7 +2641,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken'
+    'kraken','huargos'
   ];
 
   for (const key of unidades) {
@@ -2741,6 +2768,7 @@ document.querySelectorAll('input[name="resultado-ataque2"]').forEach(radio => {
 
 
 
+
 // Se ejecuta cuando el cliente se conecta al servidor
     // 5. Esperar conexión y solicitar estado inicial (manejado por socket.on('connect'))
     console.log("Esperando conexión al servidor para unirse a la sala y recibir estado...");
@@ -2763,6 +2791,7 @@ socket.on('connect', () => {
     if (partida && nombre) {
         console.log(`[${nombre}] Conectado. Emitiendo 'unirse-sala-juego' a ${partida}`);
         socket.emit('unirse-sala-juego', { partida, nombre });
+        nombreJugador = nombre;
         // El servidor responderá con 'actualizar-estado-juego' si la unión es exitosa
     } else {
         console.error("Error crítico: Falta 'partida' o 'nombre' al conectar.");
@@ -2842,6 +2871,7 @@ socket.on('avanzar-accion', (nuevoEstado) => {
 
     // Actualizar UI y reactivar botones (si no es Fase Neutral)
     if (gameState?.fase === 'Neutral') {
+
         tropasPerdidas = 0;
         perdidasPorUnidad = {};
         territoriosPerdidos = [];
@@ -2946,8 +2976,11 @@ window.toggleSelectPropietario = function(nombreTerritorio) {
 // Listener PRINCIPAL para recibir y aplicar el estado del juego
 // Recibe y actualiza el estado del juego completo desde el servidor
 socket.on('actualizar-estado-juego', (estadoRecibido) => {
+
     console.log("[Cliente] Recibido 'actualizar-estado-juego'");
     // console.log(estadoRecibido); // Descomentar para depurar el estado recibido
+
+
 
     if (!estadoRecibido || typeof estadoRecibido !== 'object') {
         console.error("Estado recibido inválido o vacío.");
@@ -2960,7 +2993,7 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
     gameState = estadoRecibido;
     console.log("   -> GameState local actualizado completamente.");
 
-    
+    renderizarRumoresDesbloqueados();
 
     // Validar que el gameState recibido es usable
     if (!gameState.jugadores || !gameState.territorios || !gameState.jugadores[nombre]) {
@@ -2974,7 +3007,6 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
     try {
         actualizarInfoJugador();
         actualizarTurnoAccionUI();
-        actualizarInfoAdicional();
         actualizarEdificiosJugador();
         actualizarUnidadesMilitares();
 
@@ -3063,13 +3095,99 @@ const preciosReclutas = {
 
   };
   
-  
+  function abrirModalGanarRumor() {
+  const jugador = gameState.jugadores[nombre];
+  const casaJugador = jugador?.casa;
+  const rumoresCasa = RUMORES_POR_CASA[casaJugador] || [];
+  const desbloqueados = jugador?.rumoresDesbloqueados || [];
+
+  // Si ya tiene los 3 rumores desbloqueados, no hacer nada
+  if (desbloqueados.length >= rumoresCasa.length) {
+    console.log("Todos los rumores ya están desbloqueados, no se pregunta.");
+    return;
+  }
+
+  // Si aún puede ganar rumor, mostramos el modal
+  document.getElementById("modal-ganar-rumor").style.display = "block";
+}
+
+
+function confirmarGanarRumor(haGanado) {
+  document.getElementById("modal-ganar-rumor").style.display = "none";
+  if (haGanado) {
+    abrirModalElegirRumor();
+  } else {
+    socket.emit("rumor-cancelado", { partida, nombre });
+  }
+}
+
+function abrirModalElegirRumor() {
+  const select = document.getElementById("select-rumor");
+  select.innerHTML = "";
+
+  const jugador = gameState.jugadores[nombre];
+  const casaJugador = jugador?.casa;
+  const desbloqueados = jugador?.rumoresDesbloqueados || [];
+
+  const lista = RUMORES_POR_CASA[casaJugador] || [];
+
+  // Solo mostramos los rumores que aún NO están desbloqueados
+  const rumoresDisponibles = lista.filter(r => !desbloqueados.includes(r));
+
+  rumoresDisponibles.forEach(r => {
+    const option = document.createElement("option");
+    option.value = r;
+    option.innerText = r;
+    select.appendChild(option);
+  });
+
+  document.getElementById("modal-elegir-rumor").style.display = "block";
+}
+
+
+
+function confirmarRumorElegido() {
+  const select = document.getElementById("select-rumor");
+  const rumorSeleccionado = select.value;
+
+  document.getElementById("modal-elegir-rumor").style.display = "none";
+
+  socket.emit("rumor-desbloqueado", {
+    partida,
+    nombre,
+    rumor: rumorSeleccionado
+  });
+
+  // Mostrar modal de Huargos si es el rumor especial de Stark
+  if (rumorSeleccionado === "Aliento de los Antiguos" && casa === "Stark") {
+        document.getElementById("modal-reclutar-huargos").style.display = "block"
+  }
+}
+
+
+function confirmarReclutarHuargos() {
+  const cantidad = parseInt(document.getElementById("cantidad-huargos").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("stark-reclutar-huargos", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-huargos").style.display = "none";
+}
+
+
   
   function confirmarMilitantesFe() {
     const cantidad = parseInt(document.getElementById("input-militantes-fe").value) || 0;
     if (cantidad <= 0) return;
     cerrarModal("modal-militantes-fe");
     socket.emit("confirmar-militantes-fe", { partida, nombre, cantidad });
+
+    renderizarRumoresDesbloqueados();
+
   }
   
   
@@ -3145,6 +3263,7 @@ for (const t of Object.values(gameState.territorios)) {
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
+    { key: 'huargos', nombre: 'Huargos'},
   ];
 
   unidades.forEach(({ key, nombre }) => {

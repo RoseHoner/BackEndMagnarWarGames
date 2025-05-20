@@ -166,6 +166,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   escorpion: 0,
   tropasBlindadas: 0,
   kraken: 0,
+  huargos: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -1025,12 +1026,14 @@ const costoDragones = dragones * 5;
 const costoSacerdotes = j.sacerdotes || 0;
 const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
+const costoHuargos = jugador.huargos || 0;
+
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos);
 
 
 
@@ -1533,12 +1536,14 @@ const costoDragones = dragones * 5;
 const costoSacerdotes = j.sacerdotes || 0;
 const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
+const costoHuargos = jugador.huargos || 0;
+
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos);
 
 
         }
@@ -1779,11 +1784,13 @@ const costoDragones = dragones * 5;
 const costoSacerdotes = j.sacerdotes || 0;
 const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
+const costoHuargos = jugador.huargos || 0;
+
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos);
 
 
       }
@@ -1803,6 +1810,44 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     });
   }
 });
+
+socket.on("rumor-desbloqueado", ({ partida, nombre, rumor }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador) return;
+
+  jugador.rumoresDesbloqueados ||= [];
+  if (!jugador.rumoresDesbloqueados.includes(rumor)) {
+    jugador.rumoresDesbloqueados.push(rumor);
+  }
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on('stark-reclutar-huargos', ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Stark") return;
+
+  jugador.huargos = (jugador.huargos || 0) + cantidad;
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
 
 socket.on('arryn-ganar-caballero', ({ partida, nombre }) => {
   const room = rooms[partida];
