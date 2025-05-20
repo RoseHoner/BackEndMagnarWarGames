@@ -10,7 +10,7 @@ const BACKEND_URL = isLocalhost
 let modoReclutarNorte = false; // false = reclutar normal, true = reclutar para el norte (Stark)
 let levasStarkUsadas = false;
 
-
+window.refuerzoTullyConfirmado = false;
 
 let contadorAccionesNorte = 0;
 let tropasPerdidas = 0;
@@ -221,7 +221,29 @@ function renderizarModalPerdidasDefensor() {
     }
   });
 
+  if (casa === "Tully" && !window.refuerzoTullyConfirmado) {
+  abrirModal('modal-refuerzos-tully');
+  return;
+}
+
+
   abrirModal('modal-perdidas-defensor');
+}
+
+function confirmarRefuerzosTully(acepta) {
+  cerrarModal('modal-refuerzos-tully');
+  window.refuerzoTullyConfirmado = true;
+
+  if (acepta) {
+    const jugador = gameState.jugadores?.[nombre];
+    if (jugador) {
+      jugador.caballero = (jugador.caballero || 0) + 3;
+      jugador.arquero = (jugador.arquero || 0) + 1;
+      actualizarUnidadesMilitares();
+    }
+  }
+
+  renderizarModalPerdidasDefensor();
 }
 
 
@@ -2669,6 +2691,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     abrirModal('modal-caballero-batalla-arryn');
   }
   socket.emit('perdidas-defensor', { partida, nombre, perdidas });
+  window.refuerzoTullyConfirmado = false;
 });
 
 
