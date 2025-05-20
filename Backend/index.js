@@ -170,6 +170,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   kraken: 0,
   huargos: 0,
   unircornios: 0,
+  murcielagos: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -1035,13 +1036,15 @@ const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
+const costomurcielagos = jugador.murcielagos || 0;
 
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
+  - costomurcielagos);
 
 
 
@@ -1070,6 +1073,10 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     socket.emit("forzar-reclutar-huargos");
     //unicornios:
     socket.emit("forzar-reclutar-unicornios");
+    //Murcielagos:
+    socket.emit("forzar-reclutar-murcielagos");
+    //Caballeros Tully:
+    socket.emit("forzar-reclutar-caballeros-tully");
 
 
 
@@ -1558,13 +1565,15 @@ const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
+const costomurcielagos = jugador.murcielagos || 0;
 
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
+  - costomurcielagos);
 
 
         }
@@ -1807,12 +1816,15 @@ const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
+const costomurcielagos = jugador.murcielagos || 0;
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
+  - costomurcielagos
+);
 
 
       }
@@ -1885,6 +1897,46 @@ socket.on("stark-reclutar-unicornios", ({ partida, nombre, cantidad }) => {
     accion: room.accionActual
   });
 });
+
+socket.on("tully-reclutar-murcielagos", ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Tully") return;
+
+  jugador.murcielagos = (jugador.murcielagos || 0) + cantidad;
+
+  if (!room.estadoTerritorios["Harrenhal"].edificios.includes("Castillo")) {
+  room.estadoTerritorios["Harrenhal"].edificios.push("Castillo");
+}
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on("tully-reclutar-caballeros", ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Tully") return;
+
+  jugador.caballero = (jugador.caballero || 0) + cantidad;
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
 
 socket.on('refuerzos-tully', ({ partida, nombre }) => {
   const room = rooms[partida];

@@ -165,6 +165,34 @@ function renderizarRumoresDesbloqueados() {
   });
 }
 
+function confirmarReclutarMurcielagos() {
+  const cantidad = parseInt(document.getElementById("cantidad-murcielagos").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("tully-reclutar-murcielagos", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-murcielagos").style.display = "none";
+}
+
+function confirmarReclutarCaballerosTully() {
+  const cantidad = parseInt(document.getElementById("cantidad-caballeros-tully").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("tully-reclutar-caballeros", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-caballeros-tully").style.display = "none";
+}
+
+
+
 
 
 
@@ -205,7 +233,9 @@ function renderizarModalPerdidasDefensor() {
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
-    { key: 'unicornios', nombre: 'Unicornios'}
+    { key: 'unicornios', nombre: 'Unicornios'},
+    { key: 'murcielagos', nombre: 'Murciélagos' }
+
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -274,7 +304,9 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
-    { key: 'unicornios', nombre: 'Unicornios'}
+    { key: 'unicornios', nombre: 'Unicornios'},
+    { key: 'murcielagos', nombre: 'Murciélagos' }
+
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -318,7 +350,9 @@ function renderizarInputsPerdidas() {
     { key: 'jinete', nombre: 'Jinetes' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
-    { key: 'unicornios', nombre: 'Unicornios'}
+    { key: 'unicornios', nombre: 'Unicornios'},
+    { key: 'murcielagos', nombre: 'Murciélagos' }
+
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -399,7 +433,8 @@ unidadesBasicas.forEach(u => {
         { tipo: 'caballero', nombre: 'Caballero', icono: 'caballero.png' },
         { tipo: 'kraken', nombre: 'Kraken', icono: 'kraken.png' },
         { tipo: 'huargos', nombre: 'Huargos', icono: 'huargo.png'},
-        { tipo: 'unicornios', nombre: 'unicornios', icono: 'unicornios.png'}
+        { tipo: 'unicornios', nombre: 'unicornios', icono: 'unicornios.png'},
+        { tipo: 'murcielagos', nombre: 'murcielagos', icono: 'murcielagos.png'}
     ];
 
     unidades.forEach(u => {
@@ -1323,11 +1358,12 @@ misTerritorios.forEach(t => {
     const mantenimientoCaballeros = jugador.caballero || 0;
     const mantenimientoHuargos = jugador.huargos || 0;
     const mantenimientoUnicornios = jugador.unicornios || 0;
+    const mantenimientomurcielagos = jugador.murcielagos || 0;
 
 
     const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + 
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
-    + mantenimientoUnicornios;
+    + mantenimientoUnicornios + mantenimientomurcielagos;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1528,7 +1564,7 @@ if (btnConfirmarLevas) {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'kraken','huargos','unicornios'
+            'kraken','huargos','unicornios','murcielagos'
           ];
         
           for (const key of unidades) {
@@ -1838,7 +1874,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'jinete','kraken','huargos','unicornios'
+            'jinete','kraken','huargos','unicornios','murcielagos'
           ];
         
           let total = 0;
@@ -1867,7 +1903,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
-    'huargos','unicornios'
+    'huargos','unicornios','murcielagos'
   ];
 
   claves.forEach(key => {
@@ -2019,7 +2055,9 @@ validarOroSoborno();
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
-    { key: 'unicornios', nombre: 'Unicornios'}
+    { key: 'unicornios', nombre: 'Unicornios'},
+    { key: 'murcielagos', nombre: 'Murciélagos' }
+
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -2058,7 +2096,7 @@ function confirmarAtaqueSimple() {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken','huargos','unicornios'
+    'kraken','huargos','unicornios','murcielagos'
   ];
 
   unidades.forEach(key => {
@@ -2683,7 +2721,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken','huargos','unicornios'
+    'kraken','huargos','unicornios','murcielagos'
   ];
 
   for (const key of unidades) {
@@ -2871,6 +2909,16 @@ socket.on('error-accion', (mensaje) => {
 socket.on("forzar-reclutar-huargos", () => {
   verificarHuargosStark();
 });
+
+socket.on("forzar-reclutar-murcielagos", () => {
+  verificarMurcielagosTully();
+});
+
+socket.on("forzar-reclutar-caballeros-tully", () => {
+  verificarCaballerosTully();
+});
+
+
 
 socket.on("forzar-reclutar-unicornios", () => {
   verificarUnicorniosStark();
@@ -3174,6 +3222,7 @@ function confirmarGanarRumor(haGanado) {
     socket.emit("rumor-cancelado", { partida, nombre });
     verificarHuargosStark();
     verificarUnicorniosStark();
+    verificarMurcielagosTully();
   }
 }
 
@@ -3223,8 +3272,17 @@ function confirmarRumorElegido() {
         document.getElementById("modal-reclutar-unicornios").style.display = "block";
   }
 
+  if (rumorSeleccionado === "Ecos de Harren el Negro" && casa === "Tully") {
+        document.getElementById("modal-reclutar-murcielagos").style.display = "block";
+  }
+
+  if (rumorSeleccionado === "Juramento sin Estandartes" && casa === "Tully") {
+        document.getElementById("modal-reclutar-caballeros-tully").style.display = "block";
+  }
+
   verificarHuargosStark();
   verificarUnicorniosStark();
+  verificarMurcielagosTully();
 }
 
 function verificarHuargosStark() {
@@ -3246,6 +3304,28 @@ function verificarUnicorniosStark() {
     (!jugador.unicornios || jugador.unicornios === 0)
   ) {
       document.getElementById("modal-reclutar-unicornios").style.display = "block";
+  }
+}
+
+function verificarMurcielagosTully() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Tully" &&
+    jugador.rumoresDesbloqueados?.includes("Ecos de Harren el Negro") &&
+    (!jugador.murcielagos || jugador.murcielagos === 0)
+  ) {
+      document.getElementById("modal-reclutar-murcielagos").style.display = "block";
+  }
+}
+
+function verificarCaballerosTully() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Tully" &&
+    jugador.rumoresDesbloqueados?.includes("Juramento sin Estandartes") &&
+    (!jugador.caballeros || jugador.caballeros === 0)
+  ) {
+      document.getElementById("modal-reclutar-caballeros-tully").style.display = "block";
   }
 }
 
@@ -3363,7 +3443,9 @@ for (const t of Object.values(gameState.territorios)) {
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
-    { key: 'unicornios', nombre: 'Unicornios'}
+    { key: 'unicornios', nombre: 'Unicornios'},
+    { key: 'murcielagos', nombre: 'Murciélagos' }
+
   ];
 
   unidades.forEach(({ key, nombre }) => {
