@@ -167,6 +167,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   tropasBlindadas: 0,
   kraken: 0,
   huargos: 0,
+  unircornios: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -1027,13 +1028,14 @@ const costoSacerdotes = j.sacerdotes || 0;
 const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
+const costounicornios = jugador.unicornios || 0;
 
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios);
 
 
 
@@ -1053,7 +1055,19 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+
+
+
     }
+    //Aqui se comprueba si justo al perder tropas en fase neutral se manda el emit para combrobar si quedan tropas de ese indole:
+    //Huargos:
+    socket.emit("forzar-reclutar-huargos");
+    //unicornios:
+    socket.emit("forzar-reclutar-unicornios");
+
+
+
+
   });
   
 
@@ -1537,13 +1551,14 @@ const costoSacerdotes = j.sacerdotes || 0;
 const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
+const costounicornios = jugador.unicornios || 0;
 
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios);
 
 
         }
@@ -1785,12 +1800,13 @@ const costoSacerdotes = j.sacerdotes || 0;
 const caballeros = j.caballero || 0;
 const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
+const costounicornios = jugador.unicornios || 0;
 
 
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos);
+j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios);
 
 
       }
@@ -1846,6 +1862,24 @@ socket.on('stark-reclutar-huargos', ({ partida, nombre, cantidad }) => {
     accion: room.accionActual
   });
 });
+
+socket.on("stark-reclutar-unicornios", ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Stark") return;
+
+  jugador.unicornios = (jugador.unicornios || 0) + cantidad;
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
 
 
 

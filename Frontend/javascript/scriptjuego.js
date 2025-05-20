@@ -204,7 +204,8 @@ function renderizarModalPerdidasDefensor() {
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
-    { key: 'huargos', nombre: 'Huargos'}
+    { key: 'huargos', nombre: 'Huargos'},
+    { key: 'unicornios', nombre: 'Unicornios'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -243,7 +244,8 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
-    { key: 'huargos', nombre: 'Huargos'}
+    { key: 'huargos', nombre: 'Huargos'},
+    { key: 'unicornios', nombre: 'Unicornios'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -286,7 +288,8 @@ function renderizarInputsPerdidas() {
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'jinete', nombre: 'Jinetes' },
     { key: 'kraken', nombre: 'Kraken'},
-    { key: 'huargos', nombre: 'Huargos'}
+    { key: 'huargos', nombre: 'Huargos'},
+    { key: 'unicornios', nombre: 'Unicornios'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -301,6 +304,9 @@ function renderizarInputsPerdidas() {
     `;
     contenedor.appendChild(div);
   });
+
+
+
 }
 
 
@@ -363,7 +369,8 @@ unidadesBasicas.forEach(u => {
         { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'sacerdote.png' },
         { tipo: 'caballero', nombre: 'Caballero', icono: 'caballero.png' },
         { tipo: 'kraken', nombre: 'Kraken', icono: 'kraken.png' },
-        { tipo: 'huargos', nombre: 'Huargos', icono: 'huargo.png'}
+        { tipo: 'huargos', nombre: 'Huargos', icono: 'huargo.png'},
+        { tipo: 'unicornios', nombre: 'unicornios', icono: 'unicornios.png'}
     ];
 
     unidades.forEach(u => {
@@ -1286,9 +1293,12 @@ misTerritorios.forEach(t => {
     const mantenimientoSacerdotes = (jugador.sacerdotes || 0) * 1;
     const mantenimientoCaballeros = jugador.caballero || 0;
     const mantenimientoHuargos = jugador.huargos || 0;
+    const mantenimientoUnicornios = jugador.unicornios || 0;
 
 
-    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos;
+    const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + 
+    mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
+    + mantenimientoUnicornios;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1489,7 +1499,7 @@ if (btnConfirmarLevas) {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'kraken','huargos'
+            'kraken','huargos','unicornios'
           ];
         
           for (const key of unidades) {
@@ -1799,7 +1809,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'jinete','kraken','huargos'
+            'jinete','kraken','huargos','unicornios'
           ];
         
           let total = 0;
@@ -1828,7 +1838,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
-    'huargos'
+    'huargos','unicornios'
   ];
 
   claves.forEach(key => {
@@ -1979,7 +1989,8 @@ validarOroSoborno();
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
-    { key: 'huargos', nombre: 'Huargos'}
+    { key: 'huargos', nombre: 'Huargos'},
+    { key: 'unicornios', nombre: 'Unicornios'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -2018,7 +2029,7 @@ function confirmarAtaqueSimple() {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken','huargos'
+    'kraken','huargos','unicornios'
   ];
 
   unidades.forEach(key => {
@@ -2265,7 +2276,7 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
 
         // Paso 2 - NO perdió territorios
         document.getElementById('btn-no-perdi-territorios').addEventListener('click', () => {
-          abrirModalGanarRumor(); // ← Aquí se lanza la pregunta del rumor
+          
   gameState.jugadores[nombre].tropas = Math.max(0, gameState.jugadores[nombre].tropas - tropasPerdidas);
 
   const jugador = gameState.jugadores[nombre];
@@ -2282,6 +2293,7 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
     });
     cerrarModal('modal-fase-neutral');
   }
+  abrirModalGanarRumor(); // ← Aquí se lanza la pregunta del rumor
 });
 
         
@@ -2343,7 +2355,7 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
           
 
         document.getElementById('btn-confirmar-territorios-perdidos').addEventListener('click', () => {
-          abrirModalGanarRumor(); // ← Aquí también
+           // ← Aquí también
 
             const checkboxes = document.querySelectorAll('#lista-territorios-perdidos input[type="checkbox"]:checked');
             territoriosPerdidos = Array.from(checkboxes).map(cb => cb.value);
@@ -2377,6 +2389,7 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
           
             document.getElementById('fase-neutral-paso3').style.display = 'none';
             document.getElementById('fase-neutral-paso4').style.display = 'block';
+            abrirModalGanarRumor();
           });
         
   
@@ -2641,7 +2654,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken','huargos'
+    'kraken','huargos','unicornios'
   ];
 
   for (const key of unidades) {
@@ -2825,6 +2838,15 @@ socket.on('error-accion', (mensaje) => {
     }
 });
 
+socket.on("forzar-reclutar-huargos", () => {
+  verificarHuargosStark();
+});
+
+socket.on("forzar-reclutar-unicornios", () => {
+  verificarUnicorniosStark();
+});
+
+
 socket.on("abrir-modal-militantes-fe", () => {
   document.getElementById("input-militantes-fe").value = 1;
   abrirModal("modal-militantes-fe");
@@ -2976,6 +2998,7 @@ window.toggleSelectPropietario = function(nombreTerritorio) {
 // Listener PRINCIPAL para recibir y aplicar el estado del juego
 // Recibe y actualiza el estado del juego completo desde el servidor
 socket.on('actualizar-estado-juego', (estadoRecibido) => {
+  
 
     console.log("[Cliente] Recibido 'actualizar-estado-juego'");
     // console.log(estadoRecibido); // Descomentar para depurar el estado recibido
@@ -3101,6 +3124,7 @@ const preciosReclutas = {
   const rumoresCasa = RUMORES_POR_CASA[casaJugador] || [];
   const desbloqueados = jugador?.rumoresDesbloqueados || [];
 
+
   // Si ya tiene los 3 rumores desbloqueados, no hacer nada
   if (desbloqueados.length >= rumoresCasa.length) {
     console.log("Todos los rumores ya están desbloqueados, no se pregunta.");
@@ -3118,6 +3142,8 @@ function confirmarGanarRumor(haGanado) {
     abrirModalElegirRumor();
   } else {
     socket.emit("rumor-cancelado", { partida, nombre });
+    verificarHuargosStark();
+    verificarUnicorniosStark();
   }
 }
 
@@ -3162,6 +3188,49 @@ function confirmarRumorElegido() {
   if (rumorSeleccionado === "Aliento de los Antiguos" && casa === "Stark") {
         document.getElementById("modal-reclutar-huargos").style.display = "block"
   }
+
+  if (rumorSeleccionado === "Cornamenta de Skagos" && casa === "Stark") {
+        document.getElementById("modal-reclutar-unicornios").style.display = "block";
+  }
+
+  verificarHuargosStark();
+  verificarUnicorniosStark();
+}
+
+function verificarHuargosStark() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Stark" &&
+    jugador.rumoresDesbloqueados?.includes("Aliento de los Antiguos") &&
+    (!jugador.huargos || jugador.huargos === 0)
+  ) {
+      document.getElementById("modal-reclutar-huargos").style.display = "block";
+  }
+}
+
+function verificarUnicorniosStark() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Stark" &&
+    jugador.rumoresDesbloqueados?.includes("Cornamenta de Skagos") &&
+    (!jugador.unicornios || jugador.unicornios === 0)
+  ) {
+      document.getElementById("modal-reclutar-unicornios").style.display = "block";
+  }
+}
+
+
+function confirmarReclutarUnicornios() {
+  const cantidad = parseInt(document.getElementById("cantidad-unicornios").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("stark-reclutar-unicornios", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-unicornios").style.display = "none";
 }
 
 
@@ -3264,6 +3333,7 @@ for (const t of Object.values(gameState.territorios)) {
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
+    { key: 'unicornios', nombre: 'Unicornios'}
   ];
 
   unidades.forEach(({ key, nombre }) => {
