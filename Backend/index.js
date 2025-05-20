@@ -98,6 +98,8 @@ const TROPAS_INICIALES_POR_DEFECTO = 0;
 
 
 
+
+
 // Función que genera el estado inicial de los territorios al comenzar la partida
 function inicializarEstadoTerritorios() {
     const CAPITALES = [
@@ -172,6 +174,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
   levasStarkUsadas: false,
+  refuerzoTullyUsadoEsteTurno: false,
 
 };
 
@@ -492,7 +495,7 @@ for (const casaAliada of aliados) {
     
       // ⚠️ RESETEO de torneo: al empezar nueva acción (aunque no cambie el turno)
       for (const j of Object.values(room.estadoJugadores)) {
-        j.torneoUsadoEsteTurno = false;
+        
       }
     
       if (room.accionActual > 4) {
@@ -896,6 +899,9 @@ socket.on('actualizar-perdidas-neutral', ({ partida, nombre, perdidas, perdidasP
   
     const jugador = room.estadoJugadores[nombre];
     if (!jugador) return;
+
+    jugador.torneoUsadoEsteTurno = false
+    jugador.refuerzoTullyUsadoEsteTurno = false
   
     jugador.tropas = Math.max(0, jugador.tropas - perdidas);
 
@@ -1880,6 +1886,28 @@ socket.on("stark-reclutar-unicornios", ({ partida, nombre, cantidad }) => {
   });
 });
 
+socket.on('refuerzos-tully', ({ partida, nombre }) => {
+  const room = rooms[partida];
+  if (!room || !room.estadoJugadores?.[nombre]) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (jugador.casa !== "Tully") return;
+  if (jugador.refuerzoTullyUsadoEsteTurno) return;
+
+  jugador.caballero = (jugador.caballero || 0) + 3;
+  jugador.arquero = (jugador.arquero || 0) + 1;
+  jugador.refuerzoTullyUsadoEsteTurno = true;
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
+
 
 
 
@@ -2097,6 +2125,8 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
       
         // 👉 Si se acaba de terminar la acción 4 (fase neutral), avanzamos de turno
         if (room.accionActual > 4) {
+          torneoUsadoEsteTurno = false;
+          refuerzoTullyUsadoEsteTurno = false;
           room.accionActual = 1;
           room.turnoActual += 1;
 
@@ -2108,6 +2138,8 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
           for (const jugadorNombre in jugadores) {
             const jugador = jugadores[jugadorNombre];
             const casa = jugador.casa;
+
+            
             
             let ingreso = 0;
 

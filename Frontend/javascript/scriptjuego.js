@@ -221,7 +221,8 @@ function renderizarModalPerdidasDefensor() {
     }
   });
 
-  if (casa === "Tully" && !window.refuerzoTullyConfirmado) {
+if (casa === "Tully" && gameState.jugadores?.[nombre] && !gameState.jugadores?.[nombre].refuerzoTullyUsadoEsteTurno && !window.refuerzoTullyConfirmado) {
+
   abrirModal('modal-refuerzos-tully');
   return;
 }
@@ -240,8 +241,14 @@ function confirmarRefuerzosTully(acepta) {
       jugador.caballero = (jugador.caballero || 0) + 3;
       jugador.arquero = (jugador.arquero || 0) + 1;
       actualizarUnidadesMilitares();
+      socket.emit('refuerzos-tully', {
+  partida,
+  nombre
+});
     }
   }
+
+
 
   renderizarModalPerdidasDefensor();
 }
