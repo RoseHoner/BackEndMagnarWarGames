@@ -188,6 +188,8 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   guardiareal: 0,
   barcolegendario: 0,
   tritones: 0,
+  venadosblancos: 0,
+  martilladores:0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -1102,12 +1104,10 @@ if (tienePuerto) {
   ingreso += totalProduccion * oroPorEdificio;
 }
 
-if (casa === "Martell") {
-  const puertoInicial = territorios["Lanza del Sol"];
-  if (puertoInicial && puertoInicial.propietario === "Martell" && puertoInicial.edificios.includes("Puerto")) {
-    ingreso += 10;
-  }
-}
+
+
+
+
 
 const esGreyjoy = casa === "Greyjoy";
 
@@ -1118,6 +1118,26 @@ if (casa !== "Tyrell") ingreso += granjas * (esGreyjoy ? 8 : 5);
 
       }
     }
+
+if (casa === "Martell") {
+  const puertoInicial = territorios["Lanza del Sol"];
+  if (puertoInicial && puertoInicial.propietario === "Martell" && puertoInicial.edificios.includes("Puerto")) {
+    ingreso += 10;
+  }
+}
+
+
+// 💰 Martell con "Mercancía de Sombras": +10 por edificio de producción
+if (j.casa === "Martell" && j.rumoresDesbloqueados?.includes("Mercancía de Sombras")) {
+  let edificiosProduccion = 0;
+  for (const t of Object.values(territorios)) {
+    if (t.propietario === j.casa) {
+      edificiosProduccion += t.edificios.filter(e => ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)).length;
+    }
+  }
+  console.log(edificiosProduccion)
+  ingreso += edificiosProduccion * 10;
+}
 
           const barcos = j.barcos || 0;
 const catapultas = j.catapulta || 0;
@@ -1139,16 +1159,13 @@ const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
 const costoBarcoLegendario = jugador.barcolegendario * 2;
 const costobarcocorsario = jugador.barcocorsario * 2;
+const costovenadosblancos = jugador.venadosblancos || 0;
+const costomartilladores = jugador.martilladores || 0;
 
-
-
-if (casa === "Martell"){
-  ingreso -= 50
-}
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario);
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores);
 
 
 
@@ -1187,6 +1204,10 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     socket.emit("forzar-reclutar-barcolegendario");
     //tritones:
     socket.emit("forzar-reclutar-tritones");
+    //venados blancos:
+    socket.emit("forzar-reclutar-venadosblancos");
+    //martilladores:
+    socket.emit("forzar-reclutar-martilladores");
 
 
 
@@ -1713,6 +1734,8 @@ const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
 const costoBarcoLegendario = jugador.barcolegendario * 2;
 const costobarcocorsario = jugador.barcocorsario * 2;
+const costovenadosblancos = jugador.venadosblancos || 0;
+const costomartilladores = jugador.martilladores || 0;
 
 
 
@@ -1721,7 +1744,7 @@ const costobarcocorsario = jugador.barcocorsario * 2;
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario);
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores);
 
 
         }
@@ -1982,13 +2005,15 @@ const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
 const costoBarcoLegendario = jugador.barcolegendario * 2;
 const costobarcocorsario = jugador.barcocorsario * 2;
+const costovenadosblancos = jugador.venadosblancos || 0;
+const costomartilladores = jugador.martilladores || 0;
 
 
 
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores
 );
 
 
@@ -2163,9 +2188,45 @@ socket.on("greyjoy-reclutar-tritones", ({ partida, nombre, cantidad }) => {
   });
 });
 
+socket.on('baratheon-reclutar-venadosblancos', ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  
 
+  const costo = cantidad;
+  const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
+  if (!jugador || jugador.casa !== "Baratheon") return;
 
+  jugador.venadosblancos = (jugador.venadosblancos || 0) + cantidad;
 
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on('baratheon-reclutar-martilladores', ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  
+
+  const costo = cantidad;
+  const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
+  if (!jugador || jugador.casa !== "Baratheon") return;
+
+  jugador.martilladores = (jugador.martilladores || 0) + cantidad;
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
 
 socket.on('refuerzos-tully', ({ partida, nombre }) => {
   const room = rooms[partida];
@@ -2186,11 +2247,6 @@ socket.on('refuerzos-tully', ({ partida, nombre }) => {
     accion: room.accionActual
   });
 });
-
-
-
-
-
 
 socket.on('arryn-ganar-caballero', ({ partida, nombre }) => {
   const room = rooms[partida];

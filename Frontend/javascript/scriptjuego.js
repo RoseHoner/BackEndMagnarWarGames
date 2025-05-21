@@ -328,6 +328,8 @@ function renderizarModalPerdidasDefensor() {
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
     { key: 'barcocorsario', nombre: 'Barco Corsario'},
+    { key: 'venadosblancos', nombre: 'Venados Blancos'},
+    { key: 'martilladores', nombre: 'Martilladores'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -403,6 +405,8 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
     { key: 'barcocorsario', nombre: 'Barco Corsario'},
+    { key: 'venadosblancos', nombre: 'Venados Blancos'},
+    { key: 'martilladores', nombre: 'Martilladores'},
 
 
   ];
@@ -454,6 +458,8 @@ function renderizarInputsPerdidas() {
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
     { key: 'barcocorsario', nombre: 'Barco Corsario'},
+    { key: 'venadosblancos', nombre: 'Venados Blancos'},
+    { key: 'martilladores', nombre: 'Martilladores'},
 
 
   ];
@@ -543,6 +549,8 @@ unidadesBasicas.forEach(u => {
         { tipo: 'barcolegendario', nombre: 'Barco Legendario', icono: 'barcolegendario.png'},
         { tipo: 'tritones', nombre: 'Tritones', icono:'tritones.png'},
         { tipo: 'barcocorsario', nombre: 'Barco Corsario', icono:'barcocorsario.png'},
+        { tipo: 'venadosblancos', nombre: 'Venados Blancos', icono:'venadosblancos.png'},
+        { tipo: 'martilladores', nombre: 'Martilladores', icono:'martilladores.png'},
 
     ];
 
@@ -1498,7 +1506,6 @@ misTerritorios.forEach(t => {
 });
 
 // Calculamos granjas
-// Calculamos granjas
 let oroPorGranjas = 0;
 if (casa === "Tully") {
   misTerritorios.forEach(t => {
@@ -1511,6 +1518,9 @@ if (casa === "Tully") {
     oroPorGranjas += granjas * (esGreyjoy ? 8 : 5);
   });
 }
+
+
+
 
 
 
@@ -1550,12 +1560,15 @@ misTerritorios.forEach(t => {
     const mantenimientoguardiareal = jugador.guardiareal || 0;
     const mantenimientobarcolegendario = jugador.barcolegendario  * 2;
     const mantenimientobarcocorsario = jugador.barcocorsario  * 2;
+    const mantenimientovenadosblancos = jugador.venadosblancos || 0;
+    const mantenimientomartilladores = jugador.martilladores || 0;
+    
 
 
     const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + 
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
     + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal + mantenimientobarcolegendario
-    + mantenimientobarcocorsario;
+    + mantenimientobarcocorsario + mantenimientovenadosblancos + mantenimientomartilladores;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1563,6 +1576,14 @@ misTerritorios.forEach(t => {
     //oro 20 de los tully
 if (casa === "Tully") {
   oroEstimado += 20;
+}
+
+// 💰 Bonus Martell por "Mercancía de Sombras"
+if (casa === "Martell" && jugador?.rumoresDesbloqueados?.includes("Mercancía de Sombras")) {
+  const edificiosProduccion = misTerritorios.reduce((acc, t) => {
+    return acc + (t.edificios?.filter(ed => EDIFICIOS_PRODUCCION.includes(ed)).length || 0);
+  }, 0);
+  oroEstimado += edificiosProduccion * 10;
 }
 
 
@@ -1758,7 +1779,7 @@ if (btnConfirmarLevas) {
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
-            'barcolegendario', 'tritones','barcocorsario'
+            'barcolegendario', 'tritones','barcocorsario','venadosblancos','martilladores'
           ];
         
           for (const key of unidades) {
@@ -2104,7 +2125,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
-            'barcolegendario','tritones','barcocorsario'
+            'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores'
           ];
         
           let total = 0;
@@ -2155,7 +2176,7 @@ if (
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
     'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario','tritones',
-    'barcocorsario'
+    'barcocorsario','venadosblancos','martilladores'
   ];
 
   claves.forEach(key => {
@@ -2314,6 +2335,8 @@ validarOroSoborno();
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
     { key: 'barcocorsario', nombre: 'Barco Corsario'},
+    { key: 'venadosblancos', nombre: 'Venados Blancos'},
+    { key: 'martilladores', nombre: 'Martilladores'},
     
 
 
@@ -2356,7 +2379,7 @@ function confirmarAtaqueSimple() {
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete',
-    'barcolegendario','tritones','barcocorsario'
+    'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores'
   ];
 
   unidades.forEach(key => {
@@ -3054,7 +3077,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete',
-    'barcolegendario','tritones','barcocorsario'
+    'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores'
   ];
 
   for (const key of unidades) {
@@ -3293,10 +3316,16 @@ socket.on("forzar-reclutar-caballeros-tully", () => {
   verificarCaballerosTully();
 });
 
-
-
 socket.on("forzar-reclutar-unicornios", () => {
   verificarUnicorniosStark();
+});
+
+socket.on("forzar-reclutar-venadosblancos", () => {
+  verificarVenadosBlancosBaratheon();
+});
+
+socket.on("forzar-reclutar-martilladores", () => {
+  verificarMartilladoresBaratheon();
 });
 
 
@@ -3482,6 +3511,8 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
   verificarCaballerosTully();
   verificarbarcolegendarioGreyjoy();
   verificartritonesGreyjoy();
+  verificarVenadosBlancosBaratheon();
+  verificarMartilladoresBaratheon();
   if (contadorVerificarRumoresInciales === 2){
     inicialYaConfirmado = true;
   }
@@ -3637,6 +3668,8 @@ function confirmarGanarRumor(haGanado) {
     verificarGuardiarealTargaryen();
     verificarbarcolegendarioGreyjoy();
     verificartritonesGreyjoy();
+    verificarVenadosBlancosBaratheon();
+    verificarMartilladoresBaratheon();
   }
 }
 
@@ -3706,6 +3739,14 @@ function confirmarRumorElegido() {
         document.getElementById("modal-reclutar-tritones").style.display = "block";
   }
 
+  if (rumorSeleccionado === "Caza del Venado Blanco" && casa === "Baratheon") {
+        document.getElementById("modal-reclutar-venadosblancos").style.display = "block"
+  }
+
+  if (rumorSeleccionado === "Martillos de Tormenta" && casa === "Baratheon") {
+        document.getElementById("modal-reclutar-martilladores").style.display = "block"
+  }
+
   if (rumorSeleccionado === "Alianza de Sangre" && casa === "Targaryen") {
   const jineteCount = (gameState.jugadores[nombre]?.jinete || 0);
 
@@ -3726,6 +3767,8 @@ function confirmarRumorElegido() {
   verificarGuardiarealTargaryen();
   verificarbarcolegendarioGreyjoy();
   verificartritonesGreyjoy();
+  verificarVenadosBlancosBaratheon();
+  verificarMartilladoresBaratheon();
 }
 
 function verificarHuargosStark() {
@@ -3805,6 +3848,28 @@ function verificartritonesGreyjoy() {
   }
 }
 
+function verificarVenadosBlancosBaratheon() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Baratheon" &&
+    jugador.rumoresDesbloqueados?.includes("Caza del Venado Blanco") &&
+    (!jugador.venadosblancos || jugador.venadosblancos === 0)
+  ) {
+      document.getElementById("modal-reclutar-venadosblancos").style.display = "block";
+  }
+}
+
+function verificarMartilladoresBaratheon() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Baratheon" &&
+    jugador.rumoresDesbloqueados?.includes("Martillos de Tormenta") &&
+    (!jugador.martilladores || jugador.martilladores === 0)
+  ) {
+      document.getElementById("modal-reclutar-martilladores").style.display = "block";
+  }
+}
+
 
 function confirmarReclutarUnicornios() {
   const cantidad = parseInt(document.getElementById("cantidad-unicornios").value);
@@ -3870,6 +3935,32 @@ function confirmarReclutarTritones() {
   });
 
   document.getElementById("modal-reclutar-tritones").style.display = "none";
+}
+
+function confirmarReclutarVenadosBlancos() {
+  const cantidad = parseInt(document.getElementById("cantidad-venadosblancos").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("baratheon-reclutar-venadosblancos", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-venadosblancos").style.display = "none";
+}
+
+function confirmarReclutarMartilladores() {
+  const cantidad = parseInt(document.getElementById("cantidad-martilladores").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("baratheon-reclutar-martilladores", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-martilladores").style.display = "none";
 }
 
 
@@ -3983,6 +4074,8 @@ function confirmarReclutarTritones() {
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
+    { key: 'venadosblancos', nombre: 'Venados Blancos'},
+    { key: 'martilladores', nombre: 'Martilladores'},
 
 
   ];
