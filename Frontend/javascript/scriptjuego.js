@@ -2802,6 +2802,32 @@ function agregarReclutaBarcoSiAplica() {
     `;
     contenedor.appendChild(div);
 
+    // ======== Barco Corsario (solo Martell con el rumor) ========
+const jugador = gameState.jugadores?.[nombre];
+const tieneRumorCorsarios = jugador?.rumoresDesbloqueados?.includes("Corsarios del Mediodía");
+
+if (casa === "Martell" && tienePuerto && tieneRumorCorsarios) {
+  const existenteCorsario = contenedor.querySelector('.recluta-box[data-tipo="barcocorsario"]');
+  if (existenteCorsario) existenteCorsario.remove();
+
+  const divCorsario = document.createElement('div');
+  divCorsario.className = 'recluta-box';
+  divCorsario.dataset.tipo = 'barcocorsario';
+  divCorsario.dataset.costo = '25';
+  divCorsario.innerHTML = `
+    <h3>Barco Corsario</h3>
+    <img src="../imgs/reclutas/barco.png" alt="Barco Corsario" style="width: 80px;">
+    <div class="control-numero">
+      <button onclick="ajustarCantidad('barcocorsario', -1)">-</button>
+      <span id="cantidad-barcocorsario">0</span>
+      <button onclick="ajustarCantidad('barcocorsario', 1)">+</button>
+    </div>
+    <p>Coste: 25 oro</p>
+  `;
+  contenedor.appendChild(divCorsario);
+}
+
+
     // ======== UNIDADES DE ASEDIO (si hay taller) ========
 const tieneTaller = Object.values(gameState.territorios).some(
     t => t.propietario === casa && t.edificios.includes("Taller de maquinaria de asedio")
@@ -3559,6 +3585,7 @@ const preciosReclutas = {
     soldadoBlindado: 10,
     armadura: 6,
     arquero: 6,
+    barcocorsario: 25,
 
 
 };
@@ -3881,6 +3908,7 @@ function confirmarReclutarTritones() {
   for (const tipo in cantidadesReclutas) {
     const cantidad = cantidadesReclutas[tipo];
     const precioBase = preciosReclutas[tipo];
+  
     let precioFinal = precioBase;
 
     if (tipo === "soldado" || tipo === "regulares") {

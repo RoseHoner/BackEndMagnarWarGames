@@ -2297,7 +2297,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
     precioUnitario = Math.max(0, precioUnitario - descuentoGranja);
   }
 
-  if (tipo === "barco") {
+  if (tipo === "barco" || tipo === "barcocorsario") {
     let base = COSTOS[tipo];
 
     // Descuento por rumor Greyjoy
