@@ -73,6 +73,7 @@ let gameState = null;
 const COSTOS_BASE_UI = {
     regulares: 4,
     barco: 20,
+    barcocorsario: 25,
     torre: 20,
     catapulta: 20,
     escorpion: 20,
@@ -326,6 +327,7 @@ function renderizarModalPerdidasDefensor() {
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
+    { key: 'barcocorsario', nombre: 'Barco Corsario'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -400,6 +402,7 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
+    { key: 'barcocorsario', nombre: 'Barco Corsario'},
 
 
   ];
@@ -450,6 +453,7 @@ function renderizarInputsPerdidas() {
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
+    { key: 'barcocorsario', nombre: 'Barco Corsario'},
 
 
   ];
@@ -538,6 +542,7 @@ unidadesBasicas.forEach(u => {
         { tipo: 'guardiareal', nombre: 'Guardia Real', icono: 'guardiareal.png' },
         { tipo: 'barcolegendario', nombre: 'Barco Legendario', icono: 'barcolegendario.png'},
         { tipo: 'tritones', nombre: 'Tritones', icono:'tritones.png'},
+        { tipo: 'barcocorsario', nombre: 'Barco Corsario', icono:'barcocorsario.png'},
 
     ];
 
@@ -786,6 +791,18 @@ if (btnTecnologia) {
     btnTecnologia.style.display = 'none';
   }
 }
+
+// Mostrar Barco Corsario si es Martell con el rumor
+const boxCorsario = document.getElementById('box-barcocorsario');
+
+if (boxCorsario) {
+  if (casa === "Martell" && jugador?.rumoresDesbloqueados?.includes("Corsarios del Mediodía")) {
+    boxCorsario.style.display = 'flex';
+  } else {
+    boxCorsario.style.display = 'none';
+  }
+}
+
 
 // Mostrar botones especiales de Stark
 const esStark = casa === "Stark";
@@ -1532,11 +1549,13 @@ misTerritorios.forEach(t => {
     const mantenimientomurcielagos = jugador.murcielagos || 0;
     const mantenimientoguardiareal = jugador.guardiareal || 0;
     const mantenimientobarcolegendario = jugador.barcolegendario  * 2;
+    const mantenimientobarcocorsario = jugador.barcocorsario  * 2;
 
 
     const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + 
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
-    + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal + mantenimientobarcolegendario;
+    + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal + mantenimientobarcolegendario
+    + mantenimientobarcocorsario;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1739,7 +1758,7 @@ if (btnConfirmarLevas) {
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
-            'barcolegendario', 'tritones'
+            'barcolegendario', 'tritones','barcocorsario'
           ];
         
           for (const key of unidades) {
@@ -2085,7 +2104,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
-            'barcolegendario','tritones'
+            'barcolegendario','tritones','barcocorsario'
           ];
         
           let total = 0;
@@ -2135,7 +2154,8 @@ if (
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
-    'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario','tritones'
+    'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario','tritones',
+    'barcocorsario'
   ];
 
   claves.forEach(key => {
@@ -2293,6 +2313,8 @@ validarOroSoborno();
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
     { key: 'tritones', nombre: 'Tritones'},
+    { key: 'barcocorsario', nombre: 'Barco Corsario'},
+    
 
 
   ];
@@ -2334,7 +2356,7 @@ function confirmarAtaqueSimple() {
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete',
-    'barcolegendario','tritones'
+    'barcolegendario','tritones','barcocorsario'
   ];
 
   unidades.forEach(key => {
@@ -3006,7 +3028,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete',
-    'barcolegendario','tritones'
+    'barcolegendario','tritones','barcocorsario'
   ];
 
   for (const key of unidades) {
@@ -3839,62 +3861,70 @@ function confirmarReclutarTritones() {
   
   // Calcula y muestra el costo total
   function actualizarCostoTotalRecluta() {
-    let total = 0;
-    let descuento = 0;
+  let total = 0;
+  let descuento = 0;
 
-    let descuentoGranja = 0;
-for (const t of Object.values(gameState.territorios)) {
-  if (t.propietario === casa && Array.isArray(t.edificios)) {
-    descuentoGranja += t.edificios.filter(e => e === "Granja").length;
+  let descuentoGranja = 0;
+  for (const t of Object.values(gameState.territorios)) {
+    if (t.propietario === casa && Array.isArray(t.edificios)) {
+      descuentoGranja += t.edificios.filter(e => e === "Granja").length;
+    }
   }
-}
 
-  
-    // Calculamos el total de aserraderos
-    for (const t of Object.values(gameState.territorios)) {
-      if (t.propietario === casa && Array.isArray(t.edificios)) {
-        descuento += t.edificios.filter(e => e === "Aserradero").length * 5;
+  // Calculamos el total de aserraderos
+  for (const t of Object.values(gameState.territorios)) {
+    if (t.propietario === casa && Array.isArray(t.edificios)) {
+      descuento += t.edificios.filter(e => e === "Aserradero").length * 5;
+    }
+  }
+
+  for (const tipo in cantidadesReclutas) {
+    const cantidad = cantidadesReclutas[tipo];
+    const precioBase = preciosReclutas[tipo];
+    let precioFinal = precioBase;
+
+    if (tipo === "soldado" || tipo === "regulares") {
+      precioFinal = Math.max(0, precioBase - descuentoGranja);
+    }
+
+    if (["barco", "catapulta", "torre", "escorpion"].includes(tipo)) {
+      let base = precioBase;
+      if (
+        tipo === "barco" &&
+        casa === "Greyjoy" &&
+        gameState.jugadores[nombre].rumoresDesbloqueados?.includes("Madera del Abismo")
+      ) {
+        base -= 10;
+      }
+      precioFinal = Math.max(0, base - descuento);
+    }
+
+    if (tipo === "barcocorsario") {
+      if (
+        casa === "Martell" &&
+        gameState.jugadores[nombre].rumoresDesbloqueados?.includes("Corsarios del Mediodía")
+      ) {
+        precioFinal = Math.max(0, precioBase - descuento);
+      } else {
+        precioFinal = 999; // Si no debería poderse reclutar, lo ponemos muy caro
       }
     }
-  
-    // Aplicamos descuento visual y actualizamos los textos también
-    for (const tipo in cantidadesReclutas) {
-      const cantidad = cantidadesReclutas[tipo];
-      const precioBase = preciosReclutas[tipo];
-      let precioFinal = precioBase;
 
-      if (tipo === "soldado" || tipo === "regulares") {
-        precioFinal = Math.max(0, precioBase - descuentoGranja);
-      }
-      
-  
-      if (["barco", "catapulta", "torre", "escorpion"].includes(tipo)) {
-  let base = precioBase;
-  if (
-    tipo === "barco" &&
-    casa === "Greyjoy" &&
-    gameState.jugadores[nombre].rumoresDesbloqueados?.includes("Madera del Abismo")
-  ) {
-    base -= 10;
-  }
-  precioFinal = Math.max(0, base - descuento);
-}
+    total += cantidad * precioFinal;
 
-  
-      total += cantidad * precioFinal;
-  
-      // Cambiar el texto visual del coste
-      const box = document.querySelector(`.recluta-box[data-tipo="${tipo}"]`);
-      if (box) {
-        const p = box.querySelector('p');
-        if (p) {
-          p.textContent = `Coste: ${precioFinal} oro`;
-        }
+    // Cambiar el texto visual del coste
+    const box = document.querySelector(`.recluta-box[data-tipo="${tipo}"]`);
+    if (box) {
+      const p = box.querySelector('p');
+      if (p) {
+        p.textContent = `Coste: ${precioFinal} oro`;
       }
     }
-  
-    document.getElementById('costo-total-recluta').textContent = total;
   }
+
+  document.getElementById('costo-total-recluta').textContent = total;
+}
+
 
   function renderizarModalPerdidasLannister() {
   const contenedor = document.getElementById('lista-perdidas-lannister');

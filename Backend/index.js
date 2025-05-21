@@ -176,6 +176,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   caballero: 0,
   oro: ORO_INICIAL_POR_DEFECTO,
   barcos: BARCOS_INICIALES[casasAsignadas[nombre]] || 0,
+  barcocorsario: 0,
   catapulta: 0,
   torre: 0,
   escorpion: 0,
@@ -1107,6 +1108,7 @@ if (casa === "Martell") {
     ingreso += 10;
   }
 }
+
 const esGreyjoy = casa === "Greyjoy";
 
 ingreso += minas * (esGreyjoy ? 15 : (casa === "Lannister" ? 20 : 10));
@@ -1136,14 +1138,17 @@ const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
 const costoBarcoLegendario = jugador.barcolegendario * 2;
+const costobarcocorsario = jugador.barcocorsario * 2;
 
 
 
-
+if (casa === "Martell"){
+  ingreso -= 50
+}
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario);
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario);
 
 
 
@@ -1283,6 +1288,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
   (jugador.mercenarios || 0) +
   (jugador.elite || 0) +
   (jugador.barcos || 0) * 2 +
+  (jugador.barcocorsario || 0) * 2 +
   (jugador.catapulta || 0) +
   (jugador.torre || 0) +
   (jugador.escorpion || 0) +
@@ -1706,6 +1712,7 @@ const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
 const costoBarcoLegendario = jugador.barcolegendario * 2;
+const costobarcocorsario = jugador.barcocorsario * 2;
 
 
 
@@ -1714,7 +1721,7 @@ const costoBarcoLegendario = jugador.barcolegendario * 2;
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario);
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario);
 
 
         }
@@ -1751,6 +1758,8 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
   if (!room) return;
 
   const jugador = room.estadoJugadores[nombre];
+
+
   
   const territorioObj = room.estadoTerritorios[territorio];
 
@@ -1773,6 +1782,7 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
     mercenario: jugador.casa === "Martell" ? 5 : 8,
   elite: jugador.casa === "Martell" ? 9 : 15,
     barco: 20,
+    barcocorsario: 25,
     catapulta: 20,
     escorpion: 20,
     torre: 20,
@@ -1813,7 +1823,7 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
   costoUnitario = Math.max(0, costoUnitario - descuento);
   
 
-if (["barco", "catapulta", "escorpion", "torre"].includes(tipoUnidad)) {
+if (["barco", "barcocorsario", "catapulta", "escorpion", "torre"].includes(tipoUnidad)) {
   for (const nombreTerritorio in room.estadoTerritorios) {
     const territorio = room.estadoTerritorios[nombreTerritorio];
     if (territorio.propietario === jugador.casa && Array.isArray(territorio.edificios)) {
@@ -1824,6 +1834,8 @@ if (["barco", "catapulta", "escorpion", "torre"].includes(tipoUnidad)) {
 
   costoUnitario = Math.max(0, COSTOS[tipoUnidad] - descuento);
 }
+
+
 
 
   
@@ -1859,7 +1871,10 @@ if (tipoUnidad === 'armadura') {
   jugador.sacerdotes = (jugador.sacerdotes || 0) + cantidad;
 } else if (["catapulta", "torre", "escorpion"].includes(tipoUnidad)) {
   jugador[tipoUnidad] = (jugador[tipoUnidad] || 0) + cantidad;
-} 
+} else if (tipoUnidad === 'barcocorsario') {
+  jugador.barcocorsario = (jugador.barcocorsario || 0) + cantidad;
+}
+
 
 if (tipoUnidad === 'caballero') {
   jugador.caballero = (jugador.caballero || 0) + cantidad;
@@ -1966,13 +1981,14 @@ const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
 const costoBarcoLegendario = jugador.barcolegendario * 2;
+const costobarcocorsario = jugador.barcocorsario * 2;
 
 
 
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario
 );
 
 
@@ -2247,6 +2263,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
     mercenario: jugador.casa === "Martell" ? 5 : 8,
     elite: jugador.casa === "Martell" ? 9 : 15,
     barco: 20,
+    barcocorsario: 25,
     catapulta: 20,
     escorpion: 20,
     torre: 20,
@@ -2314,6 +2331,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
     else if (tipo === 'mercenario') jugador.mercenarios += cantidad;
     else if (tipo === 'elite') jugador.elite += cantidad;
     else if (tipo === 'barco') jugador.barcos += cantidad;
+     else if (tipo === 'barcocorsario') jugador.barcocorsario += cantidad;
     else if (tipo === 'catapulta' || tipo === 'torre' || tipo === 'escorpion') jugador[tipo] += cantidad;
     else if (tipo === 'soldadoBlindado') jugador.tropasBlindadas += cantidad;
     else if (tipo === 'armadura') {
