@@ -332,6 +332,7 @@ function renderizarModalPerdidasDefensor() {
     { key: 'martilladores', nombre: 'Martilladores'},
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
+    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -411,6 +412,7 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'martilladores', nombre: 'Martilladores'},
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
+    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
 
 
   ];
@@ -466,6 +468,7 @@ function renderizarInputsPerdidas() {
     { key: 'martilladores', nombre: 'Martilladores'},
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
+    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
 
 
   ];
@@ -559,6 +562,7 @@ unidadesBasicas.forEach(u => {
         { tipo: 'martilladores', nombre: 'Martilladores', icono:'martilladores.png'},
         { tipo: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa', icono:'caballerosdelarosa.png'},
         { tipo: 'guardiadelalba', nombre: 'Guardia del Alba', icono:'guardiadelalba.png'},
+        { tipo: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja', icono:'sacerdotizaroja.png'},
 
     ];
 
@@ -1581,6 +1585,7 @@ misTerritorios.forEach(t => {
     const mantenimientomartilladores = jugador.martilladores || 0;
     const mantenimientocaballerosdelarosa = jugador.caballerosdelarosa || 0;
     const mantenimientoguardiadelalba = jugador.guardiadelalba || 0;
+    const mantenimientosacerdotizaroja = jugador.sacerdotizaroja || 0;
     
 
 
@@ -1588,7 +1593,7 @@ misTerritorios.forEach(t => {
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
     + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal + mantenimientobarcolegendario
     + mantenimientobarcocorsario + mantenimientovenadosblancos + mantenimientomartilladores + mantenimientocaballerosdelarosa
-    + mantenimientoguardiadelalba;
+    + mantenimientoguardiadelalba + mantenimientosacerdotizaroja;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1800,7 +1805,7 @@ if (btnConfirmarLevas) {
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
             'barcolegendario', 'tritones','barcocorsario','venadosblancos','martilladores',
-            'caballerosdelarosa','guardiadelalba'
+            'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
           ];
         
           for (const key of unidades) {
@@ -2167,7 +2172,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
             'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-            'caballerosdelarosa','guardiadelalba'
+            'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
           ];
         
           let total = 0;
@@ -2201,6 +2206,14 @@ if (
   mostrarReemplazoJinete();
 }
 
+if (casa === "Baratheon" && gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Llama de R'hllor") && gameState?.jugadores?.[nombre]?.sacerdotizaroja === 0) {
+      socket.emit("baratheon-reclutar-sacerdotizaroja", {
+        partida,
+        nombre,
+        cantidad:1,
+      });
+    }
+
 
           document.getElementById('fase-neutral-paso1').style.display = 'none';
           document.getElementById('fase-neutral-paso2').style.display = 'block';
@@ -2218,7 +2231,7 @@ if (
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
     'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario','tritones',
-    'barcocorsario','venadosblancos','martilladores','caballerosdelarosa','guardiadelalba'
+    'barcocorsario','venadosblancos','martilladores','caballerosdelarosa','guardiadelalba','sacerdotizaroja'
   ];
 
   claves.forEach(key => {
@@ -2381,6 +2394,7 @@ validarOroSoborno();
     { key: 'martilladores', nombre: 'Martilladores'},
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
+    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
     
 
 
@@ -2424,7 +2438,7 @@ function confirmarAtaqueSimple() {
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete',
     'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-    'caballerosdelarosa','guardiadelalba'
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
   ];
 
   unidades.forEach(key => {
@@ -3072,6 +3086,15 @@ document.getElementById('btn-confirmar-iniciales').addEventListener('click', () 
     const oro = parseInt(document.getElementById('input-oro-inicial').value) || 0;
     const tropas = parseInt(document.getElementById('input-tropas-iniciales').value) || 0;
     const rumorInicial = document.getElementById('select-rumor-inicial').value;
+
+    if (casa === "Baratheon" && rumorInicial === "Llama de R'hllor"){
+      socket.emit("baratheon-reclutar-sacerdotizaroja", {
+        partida,
+        nombre,
+        cantidad:1,
+      });
+    }
+
     if (casa === "Targaryen" && rumorInicial === "Alianza de Sangre") {
       abrirModal("modal-casarse-alianza");
     }
@@ -3123,7 +3146,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete',
     'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-    'caballerosdelarosa','guardiadelalba'
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
   ];
 
   for (const key of unidades) {
@@ -3578,19 +3601,19 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
     if (!inicialYaConfirmado){
       contadorVerificarRumoresInciales++;
       verificarHuargosStark();
-  verificarUnicorniosStark();
-  verificarMurcielagosTully();
-  verificarGuardiarealTargaryen();
-  verificarCaballerosTully();
-  verificarbarcolegendarioGreyjoy();
-  verificartritonesGreyjoy();
-  verificarVenadosBlancosBaratheon();
-  verificarMartilladoresBaratheon();
-  verificarCaballerosdelarosaTyrell();
-  verificarGuardiadelAlbaMartell();
-  if (contadorVerificarRumoresInciales === 2){
-    inicialYaConfirmado = true;
-  }
+      verificarUnicorniosStark();
+      verificarMurcielagosTully();
+      verificarGuardiarealTargaryen();
+      verificarCaballerosTully();
+      verificarbarcolegendarioGreyjoy();
+      verificartritonesGreyjoy();
+      verificarVenadosBlancosBaratheon();
+      verificarMartilladoresBaratheon();
+      verificarCaballerosdelarosaTyrell();
+      verificarGuardiadelAlbaMartell();
+      if (contadorVerificarRumoresInciales === 3){
+        
+      }
     }
 
     
@@ -3830,6 +3853,14 @@ function confirmarRumorElegido() {
 
   if (rumorSeleccionado === "El Portador del Alba" && casa === "Martell") {
         document.getElementById("modal-reclutar-guardiadelalba").style.display = "block"
+  }
+
+  if (rumorSeleccionado === "Llama de R'hllor" && casa === "Baratheon") {
+        socket.emit("baratheon-reclutar-sacerdotizaroja", {
+          partida,
+          nombre,
+          cantidad: 1
+        });
   }
 
   if (rumorSeleccionado === "Alianza de Sangre" && casa === "Targaryen") {
@@ -4209,6 +4240,7 @@ function confirmarReclutarGuardiaDelAlba() {
     { key: 'martilladores', nombre: 'Martilladores'},
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
+    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
 
 
   ];

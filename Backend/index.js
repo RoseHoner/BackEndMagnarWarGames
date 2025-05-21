@@ -204,6 +204,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   murcielagos: 0,
   guardiareal: 0,
   barcolegendario: 0,
+  sacerdotizaroja:0,
   tritones: 0,
   venadosblancos: 0,
   martilladores:0,
@@ -1204,11 +1205,13 @@ const costovenadosblancos = jugador.venadosblancos || 0;
 const costomartilladores = jugador.martilladores || 0;
 const costocaballerosdelarosa = jugador.caballerosdelarosa || 0;
 const costoguardiadelalba = jugador.guardiadelalba || 0;
+const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
 
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
   - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa - costoguardiadelalba
+  - costosacerdotizaroja
 );
 
 
@@ -1256,6 +1259,15 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     socket.emit("forzar-reclutar-caballerosdelarosa");
     //Guardia del Alba:
     socket.emit("forzar-reclutar-guardiadelalba");
+    //Sacerdotiza Roja:
+    socket.emit("forzar-reclutar-sacerdotizaroja");
+
+    
+
+
+
+
+    
 
 
 
@@ -1808,6 +1820,7 @@ const costovenadosblancos = jugador.venadosblancos || 0;
 const costomartilladores = jugador.martilladores || 0;
 const costocaballerosdelarosa = jugador.caballerosdelarosa || 0;
 const costoguardiadelalba = jugador.guardiadelalba || 0;
+const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
 
 
 
@@ -1818,7 +1831,7 @@ const costoguardiadelalba = jugador.guardiadelalba || 0;
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
   - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa
-- costoguardiadelalba);
+- costoguardiadelalba - costosacerdotizaroja);
 
 
         }
@@ -2083,6 +2096,7 @@ const costovenadosblancos = jugador.venadosblancos || 0;
 const costomartilladores = jugador.martilladores || 0;
 const costocaballerosdelarosa = jugador.caballerosdelarosa || 0;
 const costoguardiadelalba = jugador.guardiadelalba || 0;
+const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
 
 
 
@@ -2090,6 +2104,7 @@ const costoguardiadelalba = jugador.guardiadelalba || 0;
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
   - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa - costoguardiadelalba
+  - costosacerdotizaroja
 );
 
 
@@ -2297,6 +2312,23 @@ socket.on('baratheon-reclutar-martilladores', ({ partida, nombre, cantidad }) =>
   jugador.martilladores = (jugador.martilladores || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on("baratheon-reclutar-sacerdotizaroja", ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Baratheon") return;
+
+  jugador.sacerdotizaroja = 1;
+  jugador.oro -= 1;
+
+  io.to(partida).emit("actualizar-estado-juego", {
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
