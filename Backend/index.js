@@ -185,6 +185,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   unircornios: 0,
   murcielagos: 0,
   guardiareal: 0,
+  barcolegendario: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -1100,6 +1101,7 @@ const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
+const costoBarcoLegendario = jugador.barcolegendario * 2;
 
 
 
@@ -1107,7 +1109,7 @@ const costoguardiareal = jugador.guardiareal || 0;
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
-  - costomurcielagos - costoguardiareal);
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario);
 
 
 
@@ -1142,6 +1144,8 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     socket.emit("forzar-reclutar-caballeros-tully");
     //Guardia Real:
     socket.emit("forzar-reclutar-guardiareal");
+    //Barco Legendario:
+    socket.emit("forzar-reclutar-barcolegendario");
 
 
 
@@ -1664,6 +1668,8 @@ const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
+const costoBarcoLegendario = jugador.barcolegendario * 2;
+
 
 
 
@@ -1671,7 +1677,7 @@ const costoguardiareal = jugador.guardiareal || 0;
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos - costoguardiareal);
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario);
 
 
         }
@@ -1744,8 +1750,13 @@ socket.on('solicitud-reclutamiento', ({ partida, nombre, territorio, tipoUnidad,
 
   let costoUnitario = COSTOS[tipoUnidad] ?? 999;
 
+  
+
+
   // Si el jugador está reclutando barcos,escorpion,torre y catapulta aplicamos el descuento por aserraderos, tambien si hay granjas descontamos soldados
   let descuento = 0;
+
+
 
   if (tipoUnidad === "soldado") {
     for (const nombreTerritorio in room.estadoTerritorios) {
@@ -1917,13 +1928,14 @@ const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
 const costoguardiareal = jugador.guardiareal || 0;
+const costoBarcoLegendario = jugador.barcolegendario * 2;
 
 
 
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos - costoguardiareal
+  - costomurcielagos - costoguardiareal - costoBarcoLegendario
 );
 
 
@@ -2064,6 +2076,24 @@ socket.on("targaryen-reclutar-guardiareal", ({ partida, nombre, cantidad }) => {
   });
 });
 
+socket.on("greyjoy-reclutar-barcolegendario", ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Greyjoy") return;
+
+  jugador.tropas = (jugador.tropas || 0) + cantidad;
+  jugador.barcolegendario = 1;
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
 
 
 
@@ -2183,25 +2213,37 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
   let totalCosto = 0;
 
   for (const tipo in unidades) {
-    const cantidad = unidades[tipo] ?? 0;
-    let precioUnitario = COSTOS[tipo] ?? 999;
+  const cantidad = unidades[tipo] ?? 0;
+  let precioUnitario = COSTOS[tipo] ?? 999;
 
-    if (tipo === "soldado") {
-      let descuentoGranja = 0;
-      for (const t of Object.values(room.estadoTerritorios)) {
-        if (t.propietario === jugador.casa && Array.isArray(t.edificios)) {
-          descuentoGranja += t.edificios.filter(e => e === "Granja").length;
-        }
+  if (tipo === "soldado") {
+    let descuentoGranja = 0;
+    for (const t of Object.values(room.estadoTerritorios)) {
+      if (t.propietario === jugador.casa && Array.isArray(t.edificios)) {
+        descuentoGranja += t.edificios.filter(e => e === "Granja").length;
       }
-      precioUnitario = Math.max(0, precioUnitario - descuentoGranja);
     }
-
-    if (["barco", "catapulta", "torre", "escorpion"].includes(tipo)) {
-      precioUnitario = Math.max(0, precioUnitario - descuento);
-    }
-
-    totalCosto += cantidad * precioUnitario;
+    precioUnitario = Math.max(0, precioUnitario - descuentoGranja);
   }
+
+  if (tipo === "barco") {
+    let base = COSTOS[tipo];
+
+    // Descuento por rumor Greyjoy
+    if (jugador.casa === "Greyjoy" && jugador.rumoresDesbloqueados?.includes("Madera del Abismo")) {
+      base -= 10;
+    }
+
+    // Descuento por aserraderos (global)
+    precioUnitario = Math.max(0, base - descuento);
+  } else if (["catapulta", "torre", "escorpion"].includes(tipo)) {
+    precioUnitario = Math.max(0, precioUnitario - descuento);
+  }
+
+  totalCosto += cantidad * precioUnitario;
+}
+
+
 
   if (jugador.oro < totalCosto) {
     io.to(room.playerSockets[nombre]).emit('error-accion', 'Oro insuficiente para reclutar.');

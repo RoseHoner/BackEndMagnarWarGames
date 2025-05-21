@@ -323,7 +323,8 @@ function renderizarModalPerdidasDefensor() {
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
     { key: 'murcielagos', nombre: 'Murciélagos' },
-    { key: 'guardiareal', nombre: 'Guardia Real' }
+    { key: 'guardiareal', nombre: 'Guardia Real' },
+    { key: 'barcolegendario', nombre: 'Barco Legendario'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -395,7 +396,8 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
     { key: 'murcielagos', nombre: 'Murciélagos' },
-    { key: 'guardiareal', nombre: 'Guardia Real' }
+    { key: 'guardiareal', nombre: 'Guardia Real' },
+    { key: 'barcolegendario', nombre: 'Barco Legendario'},
 
 
   ];
@@ -443,7 +445,8 @@ function renderizarInputsPerdidas() {
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
     { key: 'murcielagos', nombre: 'Murciélagos' },
-    { key: 'guardiareal', nombre: 'Guardia Real' }
+    { key: 'guardiareal', nombre: 'Guardia Real' },
+    { key: 'barcolegendario', nombre: 'Barco Legendario'},
 
 
   ];
@@ -529,7 +532,8 @@ unidadesBasicas.forEach(u => {
         { tipo: 'huargos', nombre: 'Huargos', icono: 'huargo.png'},
         { tipo: 'unicornios', nombre: 'unicornios', icono: 'unicornios.png'},
         { tipo: 'murcielagos', nombre: 'murcielagos', icono: 'murcielagos.png'},
-        { tipo: 'guardiareal', nombre: 'Guardia Real', icono: 'guardiareal.png' }
+        { tipo: 'guardiareal', nombre: 'Guardia Real', icono: 'guardiareal.png' },
+        { tipo: 'barcolegendario', nombre: 'Barco Legendario', icono: 'barcolegendario.png'},
 
     ];
 
@@ -1154,6 +1158,18 @@ function actualizarCostoReclutar() {
 // Costos base de cada unidad o edificio usados en la interfaz del cliente
     // Aplicar otros descuentos/costos específicos (ej. coste caballero Arryn ya está en COSTOS_BASE_UI)
 
+    // Descuento adicional por rumor "Madera del Abismo" (Greyjoy)
+// Rumor "Madera del Abismo" de los Greyjoy
+if (
+  tipoUnidadValue === "barco" &&
+  jugador.casa === "Greyjoy" &&
+  jugador.rumoresDesbloqueados?.includes("Madera del Abismo")
+) {
+  costoUnitario -= 10;
+}
+
+
+
     const costoFinalUnitario = Math.max(0, costoUnitario - descuento);
     const costoTotal = costoFinalUnitario * cantidad;
     if(costoValorEl) costoValorEl.textContent = costoTotal;
@@ -1511,11 +1527,12 @@ misTerritorios.forEach(t => {
     const mantenimientoUnicornios = jugador.unicornios || 0;
     const mantenimientomurcielagos = jugador.murcielagos || 0;
     const mantenimientoguardiareal = jugador.guardiareal || 0;
+    const mantenimientobarcolegendario = jugador.barcolegendario  * 2;
 
 
     const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + 
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
-    + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal;
+    + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal + mantenimientobarcolegendario;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1717,7 +1734,8 @@ if (btnConfirmarLevas) {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'kraken','huargos','unicornios','murcielagos','guardiareal','jinete'
+            'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
+            'barcolegendario'
           ];
         
           for (const key of unidades) {
@@ -2054,7 +2072,8 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'jinete','kraken','huargos','unicornios','murcielagos','guardiareal'
+            'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
+            'barcolegendario'
           ];
         
           let total = 0;
@@ -2096,7 +2115,7 @@ if (
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
-    'huargos','unicornios','murcielagos','guardiareal'
+    'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario'
   ];
 
   claves.forEach(key => {
@@ -2251,7 +2270,8 @@ validarOroSoborno();
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
     { key: 'murcielagos', nombre: 'Murciélagos' },
-    { key: 'guardiareal', nombre: 'Guardia Real' }
+    { key: 'guardiareal', nombre: 'Guardia Real' },
+    { key: 'barcolegendario', nombre: 'Barco Legendario'},
 
 
   ];
@@ -2292,7 +2312,8 @@ function confirmarAtaqueSimple() {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete'
+    'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete',
+    'barcolegendario'
   ];
 
   unidades.forEach(key => {
@@ -2957,7 +2978,8 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete'
+    'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete',
+    'barcolegendario'
   ];
 
   for (const key of unidades) {
@@ -3171,6 +3193,10 @@ socket.on("forzar-reclutar-guardiareal", () => {
   verificarGuardiarealTargaryen();
 });
 
+socket.on("forzar-reclutar-barcolegendario", () => {
+  verificarbarcolegendarioGreyjoy();
+});
+
 
 socket.on("forzar-reclutar-murcielagos", () => {
   verificarMurcielagosTully();
@@ -3367,6 +3393,7 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
   verificarMurcielagosTully();
   verificarGuardiarealTargaryen();
   verificarCaballerosTully();
+  verificarbarcolegendarioGreyjoy();
   if (contadorVerificarRumoresInciales === 2){
     inicialYaConfirmado = true;
   }
@@ -3519,6 +3546,7 @@ function confirmarGanarRumor(haGanado) {
     verificarUnicorniosStark();
     verificarMurcielagosTully();
     verificarGuardiarealTargaryen();
+    verificarbarcolegendarioGreyjoy();
   }
 }
 
@@ -3580,6 +3608,10 @@ function confirmarRumorElegido() {
         document.getElementById("modal-reclutar-guardiareal").style.display = "block";
   }
 
+  if (rumorSeleccionado === "Rey de los Mares" && casa === "Greyjoy") {
+        document.getElementById("modal-reclutar-barcolegendario").style.display = "block";
+  }
+
   if (rumorSeleccionado === "Alianza de Sangre" && casa === "Targaryen") {
   const jineteCount = (gameState.jugadores[nombre]?.jinete || 0);
 
@@ -3598,6 +3630,7 @@ function confirmarRumorElegido() {
   verificarUnicorniosStark();
   verificarMurcielagosTully();
   verificarGuardiarealTargaryen();
+  verificarbarcolegendarioGreyjoy();
 }
 
 function verificarHuargosStark() {
@@ -3655,6 +3688,17 @@ function verificarGuardiarealTargaryen() {
   }
 }
 
+function verificarbarcolegendarioGreyjoy() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Greyjoy" &&
+    jugador.rumoresDesbloqueados?.includes("Rey de los Mares") &&
+    (!jugador.barcolegendario || jugador.barcolegendario === 0)
+  ) {
+      document.getElementById("modal-reclutar-barcolegendario").style.display = "block";
+  }
+}
+
 
 function confirmarReclutarUnicornios() {
   const cantidad = parseInt(document.getElementById("cantidad-unicornios").value);
@@ -3694,6 +3738,19 @@ function confirmarReclutarGuardiaReal() {
   });
 
   document.getElementById("modal-reclutar-guardiareal").style.display = "none";
+}
+
+function confirmarReclutarBarcoLegendario() {
+  const cantidad = parseInt(document.getElementById("cantidad-barcolegendario").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("greyjoy-reclutar-barcolegendario", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-barcolegendario").style.display = "none";
 }
 
 
@@ -3742,8 +3799,17 @@ for (const t of Object.values(gameState.territorios)) {
       
   
       if (["barco", "catapulta", "torre", "escorpion"].includes(tipo)) {
-        precioFinal = Math.max(0, precioBase - descuento);
-      }
+  let base = precioBase;
+  if (
+    tipo === "barco" &&
+    casa === "Greyjoy" &&
+    gameState.jugadores[nombre].rumoresDesbloqueados?.includes("Madera del Abismo")
+  ) {
+    base -= 10;
+  }
+  precioFinal = Math.max(0, base - descuento);
+}
+
   
       total += cantidad * precioFinal;
   
@@ -3786,7 +3852,8 @@ for (const t of Object.values(gameState.territorios)) {
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
     { key: 'murcielagos', nombre: 'Murciélagos' },
-    { key: 'guardiareal', nombre: 'Guardia Real' }
+    { key: 'guardiareal', nombre: 'Guardia Real' },
+    { key: 'barcolegendario', nombre: 'Barco Legendario'},
 
 
   ];
