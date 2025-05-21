@@ -325,6 +325,7 @@ function renderizarModalPerdidasDefensor() {
     { key: 'murcielagos', nombre: 'Murciélagos' },
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
+    { key: 'tritones', nombre: 'Tritones'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -398,6 +399,7 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'murcielagos', nombre: 'Murciélagos' },
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
+    { key: 'tritones', nombre: 'Tritones'},
 
 
   ];
@@ -447,6 +449,7 @@ function renderizarInputsPerdidas() {
     { key: 'murcielagos', nombre: 'Murciélagos' },
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
+    { key: 'tritones', nombre: 'Tritones'},
 
 
   ];
@@ -534,6 +537,7 @@ unidadesBasicas.forEach(u => {
         { tipo: 'murcielagos', nombre: 'murcielagos', icono: 'murcielagos.png'},
         { tipo: 'guardiareal', nombre: 'Guardia Real', icono: 'guardiareal.png' },
         { tipo: 'barcolegendario', nombre: 'Barco Legendario', icono: 'barcolegendario.png'},
+        { tipo: 'tritones', nombre: 'Tritones', icono:'tritones.png'},
 
     ];
 
@@ -1735,18 +1739,26 @@ if (btnConfirmarLevas) {
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
-            'barcolegendario'
+            'barcolegendario', 'tritones'
           ];
         
           for (const key of unidades) {
-            const input = document.getElementById(`perdida-${key}`);
-            if (!input) continue;
-            const cantidad = parseInt(input.value) || 0;
-            if (cantidad < 0 || cantidad > (jugador[key] || 0)) {
-              return alert(`Cantidad inválida para ${key}`);
-            }
-            if (cantidad > 0) perdidas[key] = cantidad;
-          }
+  const input = document.getElementById(`perdida-${key}`);
+  if (!input) continue;
+  const cantidad = parseInt(input.value) || 0;
+
+  // ⚓ Si es Greyjoy y tritones, lo tratamos como cantidad total
+  if (key === "tritones" && casa === "Greyjoy") {
+    perdidas[key] = `tritones-final:${cantidad}`;
+    continue;
+  }
+
+  if (cantidad < 0 || cantidad > (jugador[key] || 0)) {
+    return alert(`Cantidad inválida para ${key}`);
+  }
+  if (cantidad > 0) perdidas[key] = cantidad;
+}
+
 
           const perdidasJinetes = parseInt(document.getElementById("perdida-jinete")?.value) || 0;
 
@@ -2073,20 +2085,28 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
-            'barcolegendario'
+            'barcolegendario','tritones'
           ];
         
           let total = 0;
         
           for (const key of unidades) {
-            const el = document.getElementById(`perdidas-${key}`);
-            if (!el) continue;
-            const cantidad = Math.max(0, parseInt(el.value) || 0);
-            const tiene = jugador[key] ?? 0;
-            if (cantidad > tiene) return alert(`No puedes perder más de ${tiene} ${key}`);
-            if (cantidad > 0) perdidasPorUnidad[key] = cantidad;
-            total += cantidad;
-          }
+  const el = document.getElementById(`perdidas-${key}`);
+  if (!el) continue;
+  const cantidad = Math.max(0, parseInt(el.value) || 0);
+  const tiene = jugador[key] ?? 0;
+
+  // 👇 Si es Greyjoy y estamos con tritones, interpretamos como total final
+  if (key === "tritones" && casa === "Greyjoy") {
+    perdidasPorUnidad[key] = `tritones-final:${cantidad}`;
+    continue;
+  }
+
+  if (cantidad > tiene) return alert(`No puedes perder más de ${tiene} ${key}`);
+  if (cantidad > 0) perdidasPorUnidad[key] = cantidad;
+  total += cantidad;
+}
+
 
           const perdidasJinetes = parseInt(document.getElementById("perdidas-jinete")?.value) || 0;
 
@@ -2115,7 +2135,7 @@ if (
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
-    'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario'
+    'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario','tritones'
   ];
 
   claves.forEach(key => {
@@ -2272,6 +2292,7 @@ validarOroSoborno();
     { key: 'murcielagos', nombre: 'Murciélagos' },
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
+    { key: 'tritones', nombre: 'Tritones'},
 
 
   ];
@@ -2313,16 +2334,22 @@ function confirmarAtaqueSimple() {
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete',
-    'barcolegendario'
+    'barcolegendario','tritones'
   ];
 
   unidades.forEach(key => {
-    const input = document.getElementById(`perdida-${key}`);
-    if (input) {
-      const valor = parseInt(input.value) || 0;
-      if (valor > 0) perdidasPorUnidad[key] = valor;
-    }
-  });
+  const input = document.getElementById(`perdida-${key}`);
+  if (!input) return;
+
+  const valor = parseInt(input.value) || 0;
+
+  if (key === "tritones" && casa === "Greyjoy") {
+    perdidasPorUnidad[key] = `tritones-final:${valor}`;
+  } else if (valor > 0) {
+    perdidasPorUnidad[key] = valor;
+  }
+});
+
 
   const perdidasJinetes = perdidasPorUnidad.jinete || 0;
 
@@ -2979,15 +3006,23 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete',
-    'barcolegendario'
+    'barcolegendario','tritones'
   ];
 
   for (const key of unidades) {
-    const input = document.getElementById(`perdidas-def-${key}`);
-    if (!input) continue;
-    const valor = parseInt(input.value) || 0;
-    if (valor > 0) perdidas[key] = valor;
+  const input = document.getElementById(`perdidas-def-${key}`);
+  if (!input) continue;
+  const valor = parseInt(input.value) || 0;
+
+  // 💀 Si es Greyjoy y son tritones, el número es la cantidad final
+  if (key === "tritones" && casa === "Greyjoy") {
+    perdidas[key] = `tritones-final:${valor}`;
+    continue;
   }
+
+  if (valor > 0) perdidas[key] = valor;
+}
+
 
   // Detectar jinete perdido si eres Targaryen con Fuego Heredado
 const perdidasJinetes = parseInt(document.getElementById("perdidas-def-jinete")?.value) || 0;
@@ -3197,6 +3232,10 @@ socket.on("forzar-reclutar-barcolegendario", () => {
   verificarbarcolegendarioGreyjoy();
 });
 
+socket.on("forzar-reclutar-tritones", () => {
+  verificartritonesGreyjoy();
+});
+
 
 socket.on("forzar-reclutar-murcielagos", () => {
   verificarMurcielagosTully();
@@ -3394,6 +3433,7 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
   verificarGuardiarealTargaryen();
   verificarCaballerosTully();
   verificarbarcolegendarioGreyjoy();
+  verificartritonesGreyjoy();
   if (contadorVerificarRumoresInciales === 2){
     inicialYaConfirmado = true;
   }
@@ -3547,6 +3587,7 @@ function confirmarGanarRumor(haGanado) {
     verificarMurcielagosTully();
     verificarGuardiarealTargaryen();
     verificarbarcolegendarioGreyjoy();
+    verificartritonesGreyjoy();
   }
 }
 
@@ -3612,6 +3653,10 @@ function confirmarRumorElegido() {
         document.getElementById("modal-reclutar-barcolegendario").style.display = "block";
   }
 
+  if (rumorSeleccionado === "Trono de Viejo Wyck" && casa === "Greyjoy") {
+        document.getElementById("modal-reclutar-tritones").style.display = "block";
+  }
+
   if (rumorSeleccionado === "Alianza de Sangre" && casa === "Targaryen") {
   const jineteCount = (gameState.jugadores[nombre]?.jinete || 0);
 
@@ -3631,6 +3676,7 @@ function confirmarRumorElegido() {
   verificarMurcielagosTully();
   verificarGuardiarealTargaryen();
   verificarbarcolegendarioGreyjoy();
+  verificartritonesGreyjoy();
 }
 
 function verificarHuargosStark() {
@@ -3699,6 +3745,17 @@ function verificarbarcolegendarioGreyjoy() {
   }
 }
 
+function verificartritonesGreyjoy() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Greyjoy" &&
+    jugador.rumoresDesbloqueados?.includes("Trono de Viejo Wyck") &&
+    (!jugador.tritones || jugador.tritones === 0)
+  ) {
+      document.getElementById("modal-reclutar-tritones").style.display = "block";
+  }
+}
+
 
 function confirmarReclutarUnicornios() {
   const cantidad = parseInt(document.getElementById("cantidad-unicornios").value);
@@ -3751,6 +3808,19 @@ function confirmarReclutarBarcoLegendario() {
   });
 
   document.getElementById("modal-reclutar-barcolegendario").style.display = "none";
+}
+
+function confirmarReclutarTritones() {
+  const cantidad = parseInt(document.getElementById("cantidad-tritones").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("greyjoy-reclutar-tritones", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-tritones").style.display = "none";
 }
 
 
@@ -3854,6 +3924,7 @@ for (const t of Object.values(gameState.territorios)) {
     { key: 'murcielagos', nombre: 'Murciélagos' },
     { key: 'guardiareal', nombre: 'Guardia Real' },
     { key: 'barcolegendario', nombre: 'Barco Legendario'},
+    { key: 'tritones', nombre: 'Tritones'},
 
 
   ];

@@ -186,6 +186,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   murcielagos: 0,
   guardiareal: 0,
   barcolegendario: 0,
+  tritones: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -297,6 +298,7 @@ socket.on('targaryen-eclosionar-huevo', ({ partida, nombre }) => {
 
 
   socket.on('ataque-coordinado', ({ partida, nombre, casaAtacante, aliados, territorios }) => {
+    console.log("PENEEEEEEEEEEEEEEEEEEEEEEEEEE DIOOOOOOOOOOOOOOOS")
     const room = rooms[partida];
     if (!room) return;
 
@@ -343,11 +345,25 @@ for (const casaAliada of aliados) {
   });
 
   socket.on('perdidas-en-batalla', ({ partida, nombre, perdidas, esSaqueoGreyjoy }) => {
+    console.log("gracias por este pene")
     const room = rooms[partida];
     if (!room) return;
   
     const jugador = room.estadoJugadores[nombre];
     if (!jugador) return;
+
+    // Procesar pérdidas
+for (const key in perdidas) {
+  const valor = perdidas[key];
+
+  if (typeof valor === "string" && valor.startsWith("tritones-final:") && jugador.casa === "Greyjoy") {
+    const nuevosTritones = parseInt(valor.split(":")[1]) || 0;
+    jugador.tritones = nuevosTritones;
+  } else if (jugador[key] !== undefined) {
+    jugador[key] = Math.max(0, jugador[key] - valor);
+  }
+}
+
   
     // Aplicar las pérdidas recibidas
     // Si es Targaryen y tiene Fuego Heredado y va a perder jinetes, avisamos al cliente antes
@@ -693,10 +709,16 @@ room.casasAtacantesTurno = null;
 
   // Restar unidades perdidas
   for (const key in perdidasPorUnidad) {
-    if (jugador[key] !== undefined) {
-      jugador[key] = Math.max(0, jugador[key] - perdidasPorUnidad[key]);
-    }
+  const valor = perdidasPorUnidad[key];
+
+  if (typeof valor === "string" && valor.startsWith("tritones-final:") && jugador.casa === "Greyjoy") {
+    const nuevosTritones = parseInt(valor.split(":")[1]) || 0;
+    jugador.tritones = nuevosTritones;
+  } else if (jugador[key] !== undefined) {
+    jugador[key] = Math.max(0, jugador[key] - valor);
   }
+}
+
 
   // Procesar territorios atacados
   for (const t of territorios) {
@@ -758,10 +780,16 @@ socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
 
   const jugador = room.estadoJugadores[nombre];
   for (const key in perdidas) {
-    if (jugador[key] !== undefined) {
-      jugador[key] = Math.max(0, jugador[key] - perdidas[key]);
-    }
+  const valor = perdidas[key];
+
+  if (typeof valor === "string" && valor.startsWith("tritones-final:") && jugador.casa === "Greyjoy") {
+    const nuevosTritones = parseInt(valor.split(":")[1]) || 0;
+    jugador.tritones = nuevosTritones;
+  } else if (jugador[key] !== undefined) {
+    jugador[key] = Math.max(0, jugador[key] - valor);
   }
+}
+
 
   // Actualizar estado de ese jugador
   io.to(partida).emit('actualizar-estado-juego', {
@@ -964,12 +992,18 @@ socket.on('actualizar-perdidas-neutral', ({ partida, nombre, perdidas, perdidasP
     jugador.tropas = Math.max(0, jugador.tropas - perdidas);
 
     if (perdidasPorUnidad && typeof perdidasPorUnidad === 'object') {
-      for (const key in perdidasPorUnidad) {
-        if (jugador.hasOwnProperty(key)) {
-          jugador[key] = Math.max(0, jugador[key] - perdidasPorUnidad[key]);
-        }
-      }
+  for (const key in perdidasPorUnidad) {
+    const valor = perdidasPorUnidad[key];
+
+    if (typeof valor === "string" && valor.startsWith("tritones-final:") && jugador.casa === "Greyjoy") {
+      const nuevosTritones = parseInt(valor.split(":")[1]) || 0;
+      jugador.tritones = nuevosTritones;
+    } else if (jugador.hasOwnProperty(key)) {
+      jugador[key] = Math.max(0, jugador[key] - valor);
     }
+  }
+}
+
     
   
     if (territoriosPerdidos && typeof nuevoPropietarioPorTerritorio === "object") {
@@ -1146,6 +1180,8 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     socket.emit("forzar-reclutar-guardiareal");
     //Barco Legendario:
     socket.emit("forzar-reclutar-barcolegendario");
+    //tritones:
+    socket.emit("forzar-reclutar-tritones");
 
 
 
@@ -1473,6 +1509,7 @@ socket.on('targaryen-activar-alianza-sangre', ({ partida, nombre, casaElegida })
 
   // Registro de una batalla
   socket.on('registrar-batalla', (data) => {
+    console.log("super pene")
     const { partida, atacante, casaAtacante, territorioAtacado, resultado, perdidasAtacante, perdidasDefensor } = data;
     const room = rooms[partida];
     if (!room || !room.estadoTerritorios || !room.estadoJugadores) return;
@@ -2084,6 +2121,23 @@ socket.on("greyjoy-reclutar-barcolegendario", ({ partida, nombre, cantidad }) =>
 
   jugador.tropas = (jugador.tropas || 0) + cantidad;
   jugador.barcolegendario = 1;
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on("greyjoy-reclutar-tritones", ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Greyjoy") return;
+
+  jugador.tritones = (jugador.tritones || 0) + cantidad;
 
   io.to(partida).emit("actualizar-estado-juego", {
     territorios: room.estadoTerritorios,
