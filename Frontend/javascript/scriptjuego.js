@@ -9,6 +9,7 @@ const BACKEND_URL = isLocalhost
 // =============================================
 let modoReclutarNorte = false; // false = reclutar normal, true = reclutar para el norte (Stark)
 let levasStarkUsadas = false;
+let contadorVerificarRumoresInciales = 0;
 
 window.refuerzoTullyConfirmado = false;
 
@@ -22,6 +23,9 @@ let inicialYaConfirmado = false;
 let modalInicialYaMostrado = false;
 
 window.esAtaqueNorteStark = false;
+
+let jinetesPendientes = 0;
+let ataquePendiente = null;
 
 
 const RUMORES_POR_CASA = {
@@ -129,6 +133,85 @@ function calcularLimiteGreyjoy(territoriosJugador) {
   return limite;
 }
 
+function poblarRumoresIniciales() {
+  const selectRumor = document.getElementById('select-rumor-inicial');
+  if (!selectRumor) return;
+
+  selectRumor.innerHTML = `<option value="">-- Ninguno --</option>`; // opción por defecto
+
+  const rumores = RUMORES_POR_CASA[casa] || [];
+  rumores.forEach(rumor => {
+    const option = document.createElement('option');
+    option.value = rumor;
+    option.textContent = rumor;
+    selectRumor.appendChild(option);
+  });
+}
+
+function poblarRumoresInicialesArryn() {
+  const selectRumor = document.getElementById('select-rumor-inicial-arryn');
+  if (!selectRumor) return;
+
+  selectRumor.innerHTML = `<option value="">-- Ninguno --</option>`; // opción por defecto
+
+  const rumores = RUMORES_POR_CASA[casa] || [];
+  rumores.forEach(rumor => {
+    const option = document.createElement('option');
+    option.value = rumor;
+    option.textContent = rumor;
+    selectRumor.appendChild(option);
+  });
+}
+
+function poblarRumoresInicialesTyrell() {
+  const selectRumor = document.getElementById('select-rumor-inicial-tyrell');
+  if (!selectRumor) return;
+
+  selectRumor.innerHTML = `<option value="">-- Ninguno --</option>`; // opción por defecto
+
+  const rumores = RUMORES_POR_CASA[casa] || [];
+  rumores.forEach(rumor => {
+    const option = document.createElement('option');
+    option.value = rumor;
+    option.textContent = rumor;
+    selectRumor.appendChild(option);
+  });
+}
+
+
+function mostrarReemplazoJinete() {
+  if (jinetesPendientes > 0) {
+    document.getElementById("modal-reemplazar-jinete").style.display = "block";
+  }
+}
+
+function confirmarReemplazoJinete(reponer) {
+  document.getElementById("modal-reemplazar-jinete").style.display = "none";
+  if (reponer) {
+    socket.emit("targaryen-reponer-jinete", { partida, nombre });
+  }
+
+  jinetesPendientes--;
+  if (jinetesPendientes > 0) {
+    setTimeout(() => mostrarReemplazoJinete(), 300);
+  } else if (ataquePendiente) {
+    // Emitimos el ataque después de completar los reemplazos
+    socket.emit('ataque-simple-doble', ataquePendiente);
+
+    if (ataquePendiente.esAtaqueNorteStark) {
+      incrementarContadorNorte();
+      window.esAtaqueNorteStark = false;
+    }
+
+    if (casa === "Arryn") {
+      abrirModal('modal-caballero-batalla-arryn');
+    }
+
+    ataquePendiente = null; // limpiamos
+  }
+}
+
+
 
 function mostrarModalRumoresCasa() {
   const lista = document.getElementById('lista-rumores-casa');
@@ -229,13 +312,14 @@ function renderizarModalPerdidasDefensor() {
     { key: 'caballero', nombre: 'Caballeros' },
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
+    { key: 'jinete', nombre: 'Jinetes' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
-    { key: 'murcielagos', nombre: 'Murciélagos' }
-
+    { key: 'murcielagos', nombre: 'Murciélagos' },
+    { key: 'guardiareal', nombre: 'Guardia Real' }
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -300,12 +384,15 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'caballero', nombre: 'Caballeros' },
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
+    { key: 'jinete', nombre: 'Jinetes' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
-    { key: 'murcielagos', nombre: 'Murciélagos' }
+    { key: 'murcielagos', nombre: 'Murciélagos' },
+    { key: 'guardiareal', nombre: 'Guardia Real' }
+
 
   ];
 
@@ -351,7 +438,9 @@ function renderizarInputsPerdidas() {
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
-    { key: 'murcielagos', nombre: 'Murciélagos' }
+    { key: 'murcielagos', nombre: 'Murciélagos' },
+    { key: 'guardiareal', nombre: 'Guardia Real' }
+
 
   ];
 
@@ -425,6 +514,7 @@ unidadesBasicas.forEach(u => {
 
     const unidades = [
         { tipo: 'dragones', nombre: 'Dragón', icono: 'dragon.png' },
+        
         { tipo: 'barcos', nombre: 'Barco', icono: 'barco.png' },
         { tipo: 'catapulta', nombre: 'Catapulta', icono: 'catapulta.png' },
         { tipo: 'torre', nombre: 'Torre de Asedio', icono: 'torre.png' },
@@ -434,7 +524,9 @@ unidadesBasicas.forEach(u => {
         { tipo: 'kraken', nombre: 'Kraken', icono: 'kraken.png' },
         { tipo: 'huargos', nombre: 'Huargos', icono: 'huargo.png'},
         { tipo: 'unicornios', nombre: 'unicornios', icono: 'unicornios.png'},
-        { tipo: 'murcielagos', nombre: 'murcielagos', icono: 'murcielagos.png'}
+        { tipo: 'murcielagos', nombre: 'murcielagos', icono: 'murcielagos.png'},
+        { tipo: 'guardiareal', nombre: 'Guardia Real', icono: 'guardiareal.png' }
+
     ];
 
     unidades.forEach(u => {
@@ -474,6 +566,8 @@ function actualizarInfoJugador() {
 
     if (cantidadOroEl) cantidadOroEl.textContent = jugador.oro ?? 0;
     if (oroJugadorDiv) oroJugadorDiv.style.display = 'flex';
+
+    
 }
 
 function poblarSelectTyrellGranja() {
@@ -1359,11 +1453,12 @@ misTerritorios.forEach(t => {
     const mantenimientoHuargos = jugador.huargos || 0;
     const mantenimientoUnicornios = jugador.unicornios || 0;
     const mantenimientomurcielagos = jugador.murcielagos || 0;
+    const mantenimientoguardiareal = jugador.guardiareal || 0;
 
 
     const mantenimientoTotal = mantenimientoTropas + mantenimientoBarcos + mantenimientoMaquinas + 
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
-    + mantenimientoUnicornios + mantenimientomurcielagos;
+    + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1556,6 +1651,7 @@ if (btnConfirmarLevas) {
         });
 
         setupListener('btn-confirmar-perdidas-ataque', 'click', () => {
+          console.log("PENES GIGANTES DIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOS")
           const perdidas = {};
           const jugador = gameState?.jugadores?.[nombre];
           if (!jugador) return;
@@ -1564,7 +1660,7 @@ if (btnConfirmarLevas) {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'kraken','huargos','unicornios','murcielagos'
+            'kraken','huargos','unicornios','murcielagos','guardiareal','jinete'
           ];
         
           for (const key of unidades) {
@@ -1576,6 +1672,17 @@ if (btnConfirmarLevas) {
             }
             if (cantidad > 0) perdidas[key] = cantidad;
           }
+
+          const perdidasJinetes = parseInt(document.getElementById("perdida-jinete")?.value) || 0;
+
+if (
+  casa === "Targaryen" &&
+  gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+  perdidasJinetes > 0
+) {
+  jinetesPendientes = perdidasJinetes;
+  mostrarReemplazoJinete();
+}
         
           socket.emit('perdidas-en-batalla', {
   partida,
@@ -1583,6 +1690,7 @@ if (btnConfirmarLevas) {
   perdidas,
   esSaqueoGreyjoy: true // ⚓ marcar que es saqueo
 });
+
 
         
           cerrarModal('modal-perdidas-ataque');
@@ -1874,7 +1982,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
             'barcos', 'catapulta', 'torre', 'escorpion',
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'jinete','kraken','huargos','unicornios','murcielagos'
+            'jinete','kraken','huargos','unicornios','murcielagos','guardiareal'
           ];
         
           let total = 0;
@@ -1888,6 +1996,19 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             if (cantidad > 0) perdidasPorUnidad[key] = cantidad;
             total += cantidad;
           }
+
+          const perdidasJinetes = parseInt(document.getElementById("perdidas-jinete")?.value) || 0;
+
+if (
+  casa === "Targaryen" &&
+  gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+  perdidasJinetes > 0
+) {
+  jinetesPendientes = perdidasJinetes;
+  mostrarReemplazoJinete();
+}
+
+
           document.getElementById('fase-neutral-paso1').style.display = 'none';
           document.getElementById('fase-neutral-paso2').style.display = 'block';
         });
@@ -1903,7 +2024,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
-    'huargos','unicornios','murcielagos'
+    'huargos','unicornios','murcielagos','guardiareal'
   ];
 
   claves.forEach(key => {
@@ -2051,12 +2172,15 @@ validarOroSoborno();
     { key: 'caballero', nombre: 'Caballeros' },
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
+    { key: 'jinete', nombre: 'Jinetes' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
-    { key: 'murcielagos', nombre: 'Murciélagos' }
+    { key: 'murcielagos', nombre: 'Murciélagos' },
+    { key: 'guardiareal', nombre: 'Guardia Real' }
+
 
   ];
 
@@ -2096,7 +2220,7 @@ function confirmarAtaqueSimple() {
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken','huargos','unicornios','murcielagos'
+    'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete'
   ];
 
   unidades.forEach(key => {
@@ -2107,40 +2231,71 @@ function confirmarAtaqueSimple() {
     }
   });
 
+  const perdidasJinetes = perdidasPorUnidad.jinete || 0;
+
+  // 🔥 Verificar Fuego Heredado
+  if (
+    casa === "Targaryen" &&
+    gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+    perdidasJinetes > 0
+  ) {
+    jinetesPendientes = perdidasJinetes;
+
+    // Guardar ataque pendiente para emitirlo después de los reemplazos
+    ataquePendiente = {
+      partida,
+      nombre,
+      casa,
+      territorios: [],
+      perdidasPorUnidad,
+      esAtaqueNorteStark
+    };
+
+    const propietario1 = document.getElementById('select-propietario-ataque1')?.value || casa;
+    const propietario2 = document.getElementById('select-propietario-ataque2')?.value || casa;
+
+    ataquePendiente.territorios.push({ nombre: territorio1, gano: resultado1 === "si", propietario: propietario1 });
+
+    if (territorio2 && territorio2 !== territorio1) {
+      ataquePendiente.territorios.push({ nombre: territorio2, gano: resultado2 === "si", propietario: propietario2 });
+    }
+
+    cerrarModal('modal-ataque-simple');
+    mostrarReemplazoJinete();
+    return;
+  }
+
+  // Emitir el ataque directamente si no hay jinete perdido o no es Targaryen
   const propietario1 = document.getElementById('select-propietario-ataque1')?.value || casa;
-const propietario2 = document.getElementById('select-propietario-ataque2')?.value || casa;
+  const propietario2 = document.getElementById('select-propietario-ataque2')?.value || casa;
 
+  const territorios = [{ nombre: territorio1, gano: resultado1 === "si", propietario: propietario1 }];
 
-
-  const territorios = [
-  { nombre: territorio1, gano: resultado1 === "si", propietario: propietario1 }
-];
-
-if (territorio2 && territorio2 !== territorio1) {
-  territorios.push({ nombre: territorio2, gano: resultado2 === "si", propietario: propietario2 });
-}
-
-
-
+  if (territorio2 && territorio2 !== territorio1) {
+    territorios.push({ nombre: territorio2, gano: resultado2 === "si", propietario: propietario2 });
+  }
 
   socket.emit('ataque-simple-doble', {
-    partida, nombre, casa, territorios, perdidasPorUnidad, esAtaqueNorteStark
+    partida,
+    nombre,
+    casa,
+    territorios,
+    perdidasPorUnidad,
+    esAtaqueNorteStark
   });
 
   if (window.esAtaqueNorteStark) {
-  incrementarContadorNorte();
-  window.esAtaqueNorteStark = false;
-}
+    incrementarContadorNorte();
+    window.esAtaqueNorteStark = false;
+  }
 
   cerrarModal('modal-ataque-simple');
 
-  
-
-
   if (casa === "Arryn") {
-  abrirModal('modal-caballero-batalla-arryn');
+    abrirModal('modal-caballero-batalla-arryn');
+  }
 }
-}
+
 window.confirmarAtaqueSimple = confirmarAtaqueSimple;
 
 
@@ -2680,18 +2835,24 @@ function agregarReclutaAsedioSiAplica() {
 document.getElementById('btn-confirmar-iniciales').addEventListener('click', () => {
     const oro = parseInt(document.getElementById('input-oro-inicial').value) || 0;
     const tropas = parseInt(document.getElementById('input-tropas-iniciales').value) || 0;
+    const rumorInicial = document.getElementById('select-rumor-inicial').value;
   
     if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) {
       alert("⚠️ Aún no se ha recibido el estado del juego del servidor. Espera unos segundos y vuelve a intentar.");
       return;
     }
   
-    socket.emit('confirmar-iniciales-turno1', { partida, nombre, tropas, oroExtra: oro });
-    inicialYaConfirmado = true;
+    socket.emit('confirmar-iniciales-turno1', { partida, nombre, tropas, oroExtra: oro,rumorInicial: rumorInicial || null });
+    
+
+  
+
 
   
     actualizarInfoJugador();
     cerrarModal('modal-inicial');
+    
+  
   });
   
   // BLOQUEAR OPCIÓN DE BARCO SI NO TIENE PUERTO
@@ -2721,7 +2882,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
     'barcos', 'catapulta', 'torre', 'escorpion',
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-    'kraken','huargos','unicornios','murcielagos'
+    'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete'
   ];
 
   for (const key of unidades) {
@@ -2730,6 +2891,19 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     const valor = parseInt(input.value) || 0;
     if (valor > 0) perdidas[key] = valor;
   }
+
+  // Detectar jinete perdido si eres Targaryen con Fuego Heredado
+const perdidasJinetes = parseInt(document.getElementById("perdidas-def-jinete")?.value) || 0;
+
+if (
+  casa === "Targaryen" &&
+  gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+  perdidasJinetes > 0
+) {
+  jinetesPendientes = perdidasJinetes;
+  mostrarReemplazoJinete();
+}
+
 
   cerrarModal('modal-perdidas-defensor');
     if (casa === "Arryn") {
@@ -2760,16 +2934,17 @@ document.getElementById('btn-confirmar-inicial-arryn').addEventListener('click',
   const caballeros = parseInt(document.getElementById('input-caballeros-arryn').value) || 0;
   const oro = parseInt(document.getElementById('input-oro-arryn').value) || 0;
   const tropas = parseInt(document.getElementById('input-tropas-arryn').value) || 0;
+  const rumorInicial = document.getElementById('select-rumor-inicial-arryn').value;
 
   socket.emit("arryn-inicial-completo", {
     partida,
     nombre,
     caballeros,
     oro,
-    tropas
+    tropas,
+    rumorInicial
   });
 
-  inicialYaConfirmado = true;
   cerrarModal("modal-inicial-arryn");
 });
 
@@ -2778,6 +2953,7 @@ document.getElementById('btn-confirmar-inicial-tyrell').addEventListener('click'
   const territorio = document.getElementById('select-tyrell-granja').value;
   const oro = parseInt(document.getElementById('input-oro-tyrell').value) || 0;
   const tropas = parseInt(document.getElementById('input-tropas-tyrell').value) || 0;
+  const rumorInicial = document.getElementById('select-rumor-inicial-tyrell').value;
 
   if (!territorio) {
     alert("Debes seleccionar un territorio para la Granja.");
@@ -2789,11 +2965,11 @@ document.getElementById('btn-confirmar-inicial-tyrell').addEventListener('click'
     nombre,
     territorio,
     oro,
-    tropas
+    tropas,
+    rumorInicial
   });
 
 
-  inicialYaConfirmado = true;
   cerrarModal("modal-inicial-tyrell");
 });
 
@@ -2906,9 +3082,20 @@ socket.on('error-accion', (mensaje) => {
     }
 });
 
+socket.on("preguntar-reemplazo-jinetes", ({ cantidad }) => {
+  jinetesPendientes = cantidad;
+  mostrarReemplazoJinete();
+});
+
+
 socket.on("forzar-reclutar-huargos", () => {
   verificarHuargosStark();
 });
+
+socket.on("forzar-reclutar-guardiareal", () => {
+  verificarGuardiarealTargaryen();
+});
+
 
 socket.on("forzar-reclutar-murcielagos", () => {
   verificarMurcielagosTully();
@@ -3096,6 +3283,25 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
 
     renderizarRumoresDesbloqueados();
 
+    
+    if (!inicialYaConfirmado){
+      contadorVerificarRumoresInciales++;
+      console.log("PINGA NO VERIFICAMOS TODO MI PANA!")
+      verificarHuargosStark();
+  verificarUnicorniosStark();
+  verificarMurcielagosTully();
+  verificarGuardiarealTargaryen();
+  if (contadorVerificarRumoresInciales === 2){
+    inicialYaConfirmado = true;
+  }
+    }
+
+    
+
+
+    
+
+
     // Validar que el gameState recibido es usable
     if (!gameState.jugadores || !gameState.territorios || !gameState.jugadores[nombre]) {
         console.error("El estado recibido no contiene la información mínima necesaria (jugadores, territorios, datos propios).");
@@ -3128,15 +3334,17 @@ const yaTermino = gameState.jugadoresAccionTerminada?.includes(nombre);
 if (
   gameState.turno === 1 &&
   gameState.accion === 1 &&
-  !inicialYaConfirmado &&
   !modalInicialYaMostrado
 ) {
   if (casa === "Tyrell") {
     poblarSelectTyrellGranja();
+    poblarRumoresInicialesTyrell();
     abrirModal("modal-inicial-tyrell");
   } else if (casa === "Arryn") {
+    poblarRumoresInicialesArryn();
     abrirModal("modal-inicial-arryn");
   } else {
+    poblarRumoresIniciales();
     abrirModal("modal-inicial");
   }
   modalInicialYaMostrado = true;
@@ -3223,6 +3431,7 @@ function confirmarGanarRumor(haGanado) {
     verificarHuargosStark();
     verificarUnicorniosStark();
     verificarMurcielagosTully();
+    verificarGuardiarealTargaryen();
   }
 }
 
@@ -3280,9 +3489,14 @@ function confirmarRumorElegido() {
         document.getElementById("modal-reclutar-caballeros-tully").style.display = "block";
   }
 
+  if (rumorSeleccionado === "Acero y Juramento" && casa === "Targaryen") {
+        document.getElementById("modal-reclutar-guardiareal").style.display = "block";
+  }
+
   verificarHuargosStark();
   verificarUnicorniosStark();
   verificarMurcielagosTully();
+  verificarGuardiarealTargaryen();
 }
 
 function verificarHuargosStark() {
@@ -3329,6 +3543,17 @@ function verificarCaballerosTully() {
   }
 }
 
+function verificarGuardiarealTargaryen() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Targaryen" &&
+    jugador.rumoresDesbloqueados?.includes("Acero y Juramento") &&
+    (!jugador.guardiareal || jugador.guardiareal === 0)
+  ) {
+      document.getElementById("modal-reclutar-guardiareal").style.display = "block";
+  }
+}
+
 
 function confirmarReclutarUnicornios() {
   const cantidad = parseInt(document.getElementById("cantidad-unicornios").value);
@@ -3356,6 +3581,20 @@ function confirmarReclutarHuargos() {
 
   document.getElementById("modal-reclutar-huargos").style.display = "none";
 }
+
+function confirmarReclutarGuardiaReal() {
+  const cantidad = parseInt(document.getElementById("cantidad-guardiareal").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("targaryen-reclutar-guardiareal", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-guardiareal").style.display = "none";
+}
+
 
 
   
@@ -3439,12 +3678,15 @@ for (const t of Object.values(gameState.territorios)) {
     { key: 'caballero', nombre: 'Caballeros' },
     { key: 'sacerdotes', nombre: 'Sacerdotes' },
     { key: 'dragones', nombre: 'Dragones' },
+    { key: 'jinete', nombre: 'Jinetes' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'kraken', nombre: 'Kraken'},
     { key: 'huargos', nombre: 'Huargos'},
     { key: 'unicornios', nombre: 'Unicornios'},
-    { key: 'murcielagos', nombre: 'Murciélagos' }
+    { key: 'murcielagos', nombre: 'Murciélagos' },
+    { key: 'guardiareal', nombre: 'Guardia Real' }
+
 
   ];
 

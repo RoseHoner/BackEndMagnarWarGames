@@ -92,6 +92,19 @@ const TERRITORIOS_BASE = [
     { nombre: "Monte Orca", oro: 7, propietarioInicial: "Greyjoy", casa: "Greyjoy", edificios: [] },
     { nombre: "Gran Wyk", oro: 9, propietarioInicial: "Greyjoy", casa: "Greyjoy", edificios: [] }
   ];
+
+  const RUMORES_POR_CASA = {
+  Stark: ["Camino del Silencio", "Aliento de los Antiguos", "Cornamenta de Skagos"],
+  Tully: ["Juramento sin Estandartes", "Lluvia de Roble", "Ecos de Harren el Negro"],
+  Targaryen: ["Acero y Juramento", "Fuego Heredado", "Alianza de Sangre"],
+  Greyjoy: ["Madera del Abismo", "Rey de los Mares", "Trono de Viejo Wyck"],
+  Martell: ["Corsarios del Mediodía", "Mercancía de Sombras", "El Portador del Alba"],
+  Tyrell: ["Diezmo de la Abundancia", "Caballeros de la Rosa", "Levantamiento del Pueblo"],
+  Baratheon: ["Caza del Venado Blanco", "Martillos de Tormenta", "Llama de R'hllor"],
+  Lannister: ["Renacer de Reyne", "Sombras Doradas", "Cetro del León"],
+  Arryn: ["Tributo de la Luna", "Alas del Valle", "Roca de los Titanes"]
+};
+
   
 const ORO_INICIAL_POR_DEFECTO = 0;
 const TROPAS_INICIALES_POR_DEFECTO = 0;
@@ -171,6 +184,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   huargos: 0,
   unircornios: 0,
   murcielagos: 0,
+  guardiareal: 0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -238,6 +252,23 @@ io.on('connection', (socket) => {
     });
   }
 });
+
+socket.on("targaryen-reponer-jinete", ({ partida, nombre }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Targaryen") return;
+
+  jugador.jinete = (jugador.jinete || 0) + 1;
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
 
 
   socket.on('targaryen-ganar-hijo', ({ partida, nombre }) => {
@@ -318,11 +349,20 @@ for (const casaAliada of aliados) {
     if (!jugador) return;
   
     // Aplicar las pérdidas recibidas
-    for (const key in perdidas) {
-      if (jugador[key] !== undefined) {
-        jugador[key] = Math.max(0, jugador[key] - perdidas[key]);
-      }
-    }
+    // Si es Targaryen y tiene Fuego Heredado y va a perder jinetes, avisamos al cliente antes
+    console.log(jugador.casa,jugador.rumoresDesbloqueados?.includes("Fuego Heredado"),perdidas.jinete)
+    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+if (
+  jugador.casa === "Targaryen" &&
+  jugador.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+  perdidas.jinete && perdidas.jinete > 0
+) {
+  socket.emit("preguntar-reemplazo-jinetes", {
+    cantidad: perdidas.jinete
+  });
+  return; // detenemos la ejecución, aplicamos pérdidas después según respuesta del jugador
+}
+
 
     if (esSaqueoGreyjoy) {
     if (!room.jugadoresAccionTerminada.includes(nombre)) {
@@ -734,7 +774,7 @@ socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
 
   
 
-  socket.on("arryn-inicial-completo", ({ partida, nombre, caballeros, oro, tropas }) => {
+  socket.on("arryn-inicial-completo", ({ partida, nombre, caballeros, oro, tropas, rumorInicial }) => {
     const room = rooms[partida];
     if (!room) return;
   
@@ -789,6 +829,17 @@ socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
       (jugador.sacerdotes || 0);
   
     jugador.oro = Math.max(0, ingreso - mantenimiento);
+
+
+    if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
+  jugador.rumoresDesbloqueados = [rumorInicial];
+  console.log(`[Rumor Inicial] ${jugador.nombre} empieza con el rumor: ${rumorInicial}`);
+}
+
+if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
+  jugador.rumoresDesbloqueados = [rumorInicial];
+  console.log(`[Rumor Inicial] ${jugador.nombre} empieza con el rumor: ${rumorInicial}`);
+}
   
     io.to(partida).emit("actualizar-estado-juego", {
       territorios: room.estadoTerritorios,
@@ -799,7 +850,7 @@ socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
   });
   
 
-  socket.on("tyrell-inicial-completo", ({ partida, nombre, territorio, oro, tropas }) => {
+  socket.on("tyrell-inicial-completo", ({ partida, nombre, territorio, oro, tropas, rumorInicial }) => {
   const room = rooms[partida];
   if (!room) return;
 
@@ -859,6 +910,11 @@ socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
   (jugador.dragones || 0) * 5 +
   (jugador.sacerdotes || 0);
 jugador.oro = Math.max(0, ingreso - mantenimiento);
+
+if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
+  jugador.rumoresDesbloqueados = [rumorInicial];
+  console.log(`[Rumor Inicial] ${jugador.nombre} empieza con el rumor: ${rumorInicial}`);
+}
 
 
   // Emitir estado actualizado
@@ -1037,6 +1093,7 @@ const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
+const costoguardiareal = jugador.guardiareal || 0;
 
 
 
@@ -1044,7 +1101,7 @@ const costomurcielagos = jugador.murcielagos || 0;
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
-  - costomurcielagos);
+  - costomurcielagos - costoguardiareal);
 
 
 
@@ -1077,6 +1134,8 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     socket.emit("forzar-reclutar-murcielagos");
     //Caballeros Tully:
     socket.emit("forzar-reclutar-caballeros-tully");
+    //Guardia Real:
+    socket.emit("forzar-reclutar-guardiareal");
 
 
 
@@ -1100,7 +1159,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     });
   });
 
-  socket.on('confirmar-iniciales-turno1', ({ partida, nombre, tropas, oroExtra }) => {
+  socket.on('confirmar-iniciales-turno1', ({ partida, nombre, tropas, oroExtra, rumorInicial }) => {
     const room = rooms[partida];
     if (!room || !room.estadoJugadores?.[nombre]) return;
   
@@ -1184,6 +1243,13 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
   (jugador.dragones || 0) * 5 +
   (jugador.sacerdotes || 0);
 jugador.oro = Math.max(0, ingreso - mantenimiento);
+
+if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
+  jugador.rumoresDesbloqueados = [rumorInicial];
+  console.log(`[Rumor Inicial] ${jugador.nombre} empieza con el rumor: ${rumorInicial}`);
+}
+
+
 
   
     io.to(partida).emit('actualizar-estado-juego', {
@@ -1566,6 +1632,7 @@ const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
+const costoguardiareal = jugador.guardiareal || 0;
 
 
 
@@ -1573,7 +1640,7 @@ const costomurcielagos = jugador.murcielagos || 0;
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos);
+  - costomurcielagos - costoguardiareal);
 
 
         }
@@ -1817,13 +1884,14 @@ const costoCaballeros = caballeros * 1;
 const costoHuargos = jugador.huargos || 0;
 const costounicornios = jugador.unicornios || 0;
 const costomurcielagos = jugador.murcielagos || 0;
+const costoguardiareal = jugador.guardiareal || 0;
 
 
 
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos
+  - costomurcielagos - costoguardiareal
 );
 
 
@@ -1935,6 +2003,24 @@ socket.on("tully-reclutar-caballeros", ({ partida, nombre, cantidad }) => {
     accion: room.accionActual
   });
 });
+
+socket.on("targaryen-reclutar-guardiareal", ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Targaryen") return;
+
+  jugador.guardiareal = (jugador.guardiareal || 0) + cantidad;
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
 
 
 

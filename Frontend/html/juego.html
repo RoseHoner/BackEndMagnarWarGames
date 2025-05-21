@@ -43,6 +43,15 @@
     <input type="number" id="input-tropas-tyrell" min="0" value="30" style="width: 100%;">
   </div>
 
+  <div class="campo-formulario">
+      <label for="select-rumor-inicial-tyrell">📜 Rumor inicial:</label>
+      <select id="select-rumor-inicial-tyrell">
+        <option value="">-- Ninguno --</option>
+      </select>
+    </div>
+
+
+
   <div class="botones-modal" style="margin-top: 20px;">
     <button id="btn-confirmar-inicial-tyrell" class="btn-confirmar" style="width: 100%;">
       ✔️ Confirmar
@@ -68,6 +77,13 @@
     <label for="input-tropas-arryn">🛡️ Tropas Iniciales:</label>
     <input type="number" id="input-tropas-arryn" min="0" value="30" style="width: 100%;">
   </div>
+
+  <div class="campo-formulario">
+      <label for="select-rumor-inicial-arryn">📜 Rumor inicial:</label>
+      <select id="select-rumor-inicial-arryn">
+        <option value="">-- Ninguno --</option>
+      </select>
+    </div>
 
   <div class="botones-modal" style="margin-top: 20px;">
     <button id="btn-confirmar-inicial-arryn" class="btn-confirmar" style="width: 100%;">
@@ -418,6 +434,28 @@
   </div>
 </div>
 
+<!-- Modal Reclutar Guardia Real -->
+<div id="modal-reclutar-guardiareal" class="modal-juego" style="display: none;">
+  <h2>🛡️ Reclutar Guardia Real</h2>
+  <div class="campo-formulario">
+    <label for="cantidad-guardiareal">¿Cuántos miembros de la Guardia Real quieres reclutar?</label>
+    <input type="number" id="cantidad-guardiareal" min="1" value="1" />
+  </div>
+  <div class="botones-modal">
+    <button class="btn-confirmar" onclick="confirmarReclutarGuardiaReal()">✔️ Confirmar</button>
+  </div>
+</div>
+
+<div id="modal-reemplazar-jinete" class="modal-juego" style="display: none;">
+  <h2>🐴 Jinete perdido</h2>
+  <p>¿Deseas colocar otro jinete en su lugar?</p>
+  <div class="botones-modal">
+    <button onclick="confirmarReemplazoJinete(true)" class="btn-confirmar">✔️ Sí</button>
+    <button onclick="confirmarReemplazoJinete(false)" class="btn-cancelar">✖️ No</button>
+  </div>
+</div>
+
+
 
 
 
@@ -439,6 +477,14 @@
       <label for="input-tropas-iniciales">🛡️ Tropas iniciales:</label>
       <input type="number" id="input-tropas-iniciales" min="0" value="30" style="width: 100%;">
     </div>
+
+    <div class="campo-formulario">
+      <label for="select-rumor-inicial">📜 Rumor inicial:</label>
+      <select id="select-rumor-inicial">
+        <option value="">-- Ninguno --</option>
+      </select>
+    </div>
+
   
     <div class="botones-modal" style="margin-top: 20px;">
       <button id="btn-confirmar-iniciales" class="btn-confirmar" style="width: 100%;">
