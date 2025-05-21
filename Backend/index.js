@@ -1024,11 +1024,17 @@ if (jugador.casa === "Tyrell") {
           const j = jugadores[jugadorNombre];
           const casa = j.casa;
           let ingreso = 0;
+
+          if (casa === "Tully") {
+  ingreso += 20;
+}
+
           
           // 💍 Bonus por casarse con Casa Celtigar
-if (j.casa === "Targaryen" && j.casadoCon === "Celtigar") {
+if (j.casa === "Targaryen" && (j.casadoCon === "Celtigar" || j.casamientoExtra === "Celtigar")) {
   ingreso += 30;
 }
+
 
 
           for (const nombreTerritorio in territorios) {
@@ -1436,6 +1442,30 @@ room.playerSockets[nombre] = socket.id;
 
 
 
+socket.on('targaryen-activar-alianza-sangre', ({ partida, nombre, casaElegida }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Targaryen") return;
+
+  jugador.casamientoExtra = casaElegida;
+
+  // 🎁 Aplicar beneficios del casamiento extra
+  if (casaElegida === "Celtigar") {
+    jugador.oro = (jugador.oro || 0) + 30;
+  } else if (casaElegida === "Qoherys") {
+    jugador.limiteReclutamientoExtra = (jugador.limiteReclutamientoExtra || 0) + 12;
+  }
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
 
   // Registro de una batalla
   socket.on('registrar-batalla', (data) => {
@@ -1576,9 +1606,10 @@ if (tipoEdificio === "Puerto Fluvial") {
           let ingreso = 0;
 
           // 💍 Bonus por casarse con Casa Celtigar
-if (j.casa === "Targaryen" && j.casadoCon === "Celtigar") {
+if (j.casa === "Targaryen" && (j.casadoCon === "Celtigar" || j.casamientoExtra === "Celtigar")) {
   ingreso += 30;
 }
+
 
           for (const nombreTerritorio in territorios) {
             const t = territorios[nombreTerritorio];
@@ -1827,9 +1858,10 @@ if (tipoUnidad === 'caballero') {
         let ingreso = 0;
 
         // 💍 Bonus por casarse con Casa Celtigar
-if (j.casa === "Targaryen" && j.casadoCon === "Celtigar") {
+if (j.casa === "Targaryen" && (j.casadoCon === "Celtigar" || j.casamientoExtra === "Celtigar")) {
   ingreso += 30;
 }
+
 
         for (const nombreTerritorio in territorios) {
           const t = territorios[nombreTerritorio];
@@ -1935,8 +1967,11 @@ socket.on("rumor-desbloqueado", ({ partida, nombre, rumor }) => {
 socket.on('stark-reclutar-huargos', ({ partida, nombre, cantidad }) => {
   const room = rooms[partida];
   if (!room) return;
+  
 
+  const costo = cantidad;
   const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
   if (!jugador || jugador.casa !== "Stark") return;
 
   jugador.huargos = (jugador.huargos || 0) + cantidad;
@@ -1953,7 +1988,9 @@ socket.on("stark-reclutar-unicornios", ({ partida, nombre, cantidad }) => {
   const room = rooms[partida];
   if (!room) return;
 
+   const costo = cantidad;
   const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
   if (!jugador || jugador.casa !== "Stark") return;
 
   jugador.unicornios = (jugador.unicornios || 0) + cantidad;
@@ -1970,7 +2007,9 @@ socket.on("tully-reclutar-murcielagos", ({ partida, nombre, cantidad }) => {
   const room = rooms[partida];
   if (!room) return;
 
+  const costo = cantidad;
   const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
   if (!jugador || jugador.casa !== "Tully") return;
 
   jugador.murcielagos = (jugador.murcielagos || 0) + cantidad;
@@ -1991,7 +2030,9 @@ socket.on("tully-reclutar-caballeros", ({ partida, nombre, cantidad }) => {
   const room = rooms[partida];
   if (!room) return;
 
+  const costo = cantidad;
   const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
   if (!jugador || jugador.casa !== "Tully") return;
 
   jugador.caballero = (jugador.caballero || 0) + cantidad;
@@ -2008,7 +2049,9 @@ socket.on("targaryen-reclutar-guardiareal", ({ partida, nombre, cantidad }) => {
   const room = rooms[partida];
   if (!room) return;
 
+  const costo = cantidad;
   const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
   if (!jugador || jugador.casa !== "Targaryen") return;
 
   jugador.guardiareal = (jugador.guardiareal || 0) + cantidad;

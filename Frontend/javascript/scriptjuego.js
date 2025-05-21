@@ -13,6 +13,9 @@ let contadorVerificarRumoresInciales = 0;
 
 window.refuerzoTullyConfirmado = false;
 
+let alianzaDeSangrePendiente = false;
+
+
 let contadorAccionesNorte = 0;
 let tropasPerdidas = 0;
 let territoriosPerdidos = [];
@@ -111,6 +114,7 @@ const LIMITE_SOLDADOS_POR_CASA = {
     Greyjoy: 7
     // Puedes ajustar estos valores por casa según quieras
   };
+
 
   // Lista de capitales
 const CAPITALES = ["Invernalia", "Rocadragón", "Desembarco del Rey", "Aguasdulces", "Lanza del Sol", "El Nido de Águilas", "Altojardín", "Roca Casterly", "Pyke"];
@@ -679,29 +683,39 @@ const btnCasarse = document.getElementById('btn-casarse-targaryen');
 if (btnCasarse) {
   const jugador = gameState.jugadores?.[nombre];
   if (casa === "Targaryen") {
-    if (!jugador?.casadoCon) {
-      btnCasarse.style.display = 'inline-block';
-      // Eliminar texto previo si existía
-      const anterior = document.getElementById('casado-texto-targaryen');
-      if (anterior) anterior.remove();
-    } else {
-      btnCasarse.style.display = 'none';
+    const textoCasadoExistente = document.getElementById('casado-texto-targaryen');
+if (textoCasadoExistente) textoCasadoExistente.remove();
 
-      // Crear texto de casado si no existe
-      if (!document.getElementById('casado-texto-targaryen')) {
-        const texto = document.createElement('div');
-        texto.id = 'casado-texto-targaryen';
-        texto.textContent = `💍 Casado con Casa ${jugador.casadoCon}`;
-        texto.style.color = 'white';
-        texto.style.fontSize = '0.9rem';
-        texto.style.marginTop = '6px';
-        texto.style.textAlign = 'center';
+const jugador = gameState.jugadores?.[nombre];
+if (casa === "Targaryen") {
+  const texto = document.createElement('div');
+  texto.id = 'casado-texto-targaryen';
+  texto.style.color = 'white';
+  texto.style.fontSize = '0.9rem';
+  texto.style.marginTop = '6px';
+  texto.style.textAlign = 'center';
 
-        btnCasarse.parentNode.insertBefore(texto, btnCasarse.nextSibling);
-      }
-    }
+  let contenido = '';
+  if (jugador.casadoCon) {
+    contenido += `💍 Casado con Casa ${jugador.casadoCon}`;
+  }
+  if (jugador.casamientoExtra) {
+    if (contenido) contenido += '<br>';
+    contenido += `💍 Casado Extra con Casa ${jugador.casamientoExtra}`;
+  }
+
+  if (contenido) {
+    texto.innerHTML = contenido;
+    btnCasarse.parentNode.insertBefore(texto, btnCasarse.nextSibling);
+  }
+
+  // Mostrar el botón solo si NO está casado normal
+  btnCasarse.style.display = jugador.casadoCon ? 'none' : 'inline-block';
+}
+
   }
 }
+
 
 const btnLevas = document.getElementById('btn-levas-stark');
 const jugador = gameState?.jugadores?.[nombre];
@@ -818,6 +832,49 @@ if (btnOrganizar && btnNorteOrganizar) {
 
 
 }
+function prepararOpcionesCasamientoNormal() {
+  const select = document.getElementById("select-casa-matrimonio");
+  const jugador = gameState.jugadores[nombre];
+
+  const casaCasamientoExtra = jugador.casamientoExtra;
+
+  // Resetear opciones
+  select.innerHTML = `
+    <option value="">-- Elige casa --</option>
+    <option value="Velaryon">Casa Velaryon</option>
+    <option value="Qoherys">Casa Qoherys</option>
+    <option value="Celtigar">Casa Celtigar</option>
+  `;
+
+  // Si ya tiene casamiento extra, eliminar esa opción
+  if (casaCasamientoExtra) {
+    const option = select.querySelector(`option[value="${casaCasamientoExtra}"]`);
+    if (option) option.remove();
+  }
+}
+
+function prepararOpcionesCasamientoExtra() {
+  const select = document.getElementById("select-casa-matrimonio-alianza");
+  const jugador = gameState.jugadores[nombre];
+
+  const casaCasadoNormal = jugador.casadoCon;
+
+  // Resetear opciones
+  select.innerHTML = `
+    <option value="">-- Elige casa --</option>
+    <option value="Velaryon">Casa Velaryon</option>
+    <option value="Qoherys">Casa Qoherys</option>
+    <option value="Celtigar">Casa Celtigar</option>
+  `;
+
+  // Si ya está casado normal, eliminar esa opción
+  if (casaCasadoNormal) {
+    const option = select.querySelector(`option[value="${casaCasadoNormal}"]`);
+    if (option) option.remove();
+  }
+}
+
+
 
 function incrementarContadorNorte() {
   contadorAccionesNorte++;
@@ -1035,7 +1092,7 @@ if (casaJugador === "Greyjoy") {
 
 
 // Si está casado con Qoherys, subir el límite a 12
-if (casaJugador === "Targaryen" && jugador.casadoCon === "Qoherys") {
+if (casaJugador === "Targaryen" && jugador.casadoCon === "Qoherys" || jugador.casamientoExtra === "Qoherys") {
   limite = 12;
 }
 
@@ -1479,7 +1536,7 @@ if (casa === "Martell") {
 }
 
 // 💰 Bonus por estar casado con Casa Celtigar
-if (jugador.casadoCon === "Celtigar") {
+if (jugador.casadoCon === "Celtigar" || jugador.casamientoExtra === "Celtigar") {
   oroEstimado += 30;
 
   const pBonus = document.createElement('p');
@@ -1703,6 +1760,20 @@ btnStarkAtacar?.addEventListener("click", () => {
   poblarSelectTerritorioAtaque();
   abrirModal('modal-ataque-simple');
 });
+
+document.getElementById('btn-confirmar-casamiento-alianza')?.addEventListener('click', () => {
+  const casaElegida = document.getElementById('select-casa-matrimonio-alianza').value;
+  if (!casaElegida) return alert("Debes elegir una casa.");
+
+  socket.emit('targaryen-activar-alianza-sangre', {
+    partida,
+    nombre,
+    casaElegida
+  });
+
+  cerrarModal('modal-casarse-alianza');
+});
+
         
         document.getElementById('btn-confirmar-asignacion-territorios').addEventListener('click', () => {
           const asignaciones = {};
@@ -1924,6 +1995,7 @@ setupListener('btn-stark-reorganizar', 'click', () => {
 
         
         setupListener('btn-casarse-targaryen', 'click', () => {
+          prepararOpcionesCasamientoNormal();
   abrirModal('modal-casarse-targaryen');
 });
 
@@ -2836,6 +2908,9 @@ document.getElementById('btn-confirmar-iniciales').addEventListener('click', () 
     const oro = parseInt(document.getElementById('input-oro-inicial').value) || 0;
     const tropas = parseInt(document.getElementById('input-tropas-iniciales').value) || 0;
     const rumorInicial = document.getElementById('select-rumor-inicial').value;
+    if (casa === "Targaryen" && rumorInicial === "Alianza de Sangre") {
+      abrirModal("modal-casarse-alianza");
+    }
   
     if (!gameState || !gameState.jugadores || !gameState.jugadores[nombre]) {
       alert("⚠️ Aún no se ha recibido el estado del juego del servidor. Espera unos segundos y vuelve a intentar.");
@@ -3291,6 +3366,7 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
   verificarUnicorniosStark();
   verificarMurcielagosTully();
   verificarGuardiarealTargaryen();
+  verificarCaballerosTully();
   if (contadorVerificarRumoresInciales === 2){
     inicialYaConfirmado = true;
   }
@@ -3309,6 +3385,17 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
         alert("Error al sincronizar con el servidor. Intenta recargar.");
         return;
     }
+
+    if (alianzaDeSangrePendiente) {
+  const jineteActualizado = (gameState.jugadores[nombre]?.jinete || 0);
+  if (jineteActualizado > 0) {
+    alianzaDeSangrePendiente = false;
+    prepararOpcionesCasamientoExtra();
+    abrirModal("modal-casarse-alianza");
+  }
+}
+
+
 
     // --- Actualizar TODA la UI basada en el nuevo gameState ---
     try {
@@ -3492,6 +3579,20 @@ function confirmarRumorElegido() {
   if (rumorSeleccionado === "Acero y Juramento" && casa === "Targaryen") {
         document.getElementById("modal-reclutar-guardiareal").style.display = "block";
   }
+
+  if (rumorSeleccionado === "Alianza de Sangre" && casa === "Targaryen") {
+  const jineteCount = (gameState.jugadores[nombre]?.jinete || 0);
+
+  if (jineteCount > 0) {
+    prepararOpcionesCasamientoExtra();
+    abrirModal("modal-casarse-alianza");
+  } else {
+    alianzaDeSangrePendiente = true;
+  }
+}
+
+
+
 
   verificarHuargosStark();
   verificarUnicorniosStark();
