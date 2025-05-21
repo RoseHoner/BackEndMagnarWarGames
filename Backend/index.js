@@ -143,6 +143,23 @@ function inicializarEstadoTerritorios() {
     return estadoTerritorios;
 }
 
+function revisarYEmitirRoboMoral(socket, room, nombre) {
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Martell") return;
+  if (!jugador.rumoresDesbloqueados?.includes("El Portador del Alba")) return;
+  if (!jugador.guardiadelalba || jugador.guardiadelalba <= 0) return;
+
+  const casasDisponibles = Object.values(room.estadoJugadores)
+    .filter(j => j.casa !== jugador.casa)
+    .map(j => j.casa);
+
+  const socketId = room.playerSockets[nombre];
+  if (socketId) {
+    io.to(socketId).emit("mostrar-modal-robo-moral", { casasDisponibles });
+  }
+}
+
+
 
 
 const BARCOS_INICIALES = {
@@ -384,6 +401,8 @@ if (
   });
   return; // detenemos la ejecución, aplicamos pérdidas después según respuesta del jugador
 }
+
+revisarYEmitirRoboMoral(socket, room, nombre);
 
 
     if (esSaqueoGreyjoy) {
@@ -741,6 +760,8 @@ room.casasAtacantesTurno = null;
   }
   // Marcar acción terminada
   
+  revisarYEmitirRoboMoral(socket, room, nombre);
+
 
   // Enviar a todos menos al atacante para que informen sus pérdidas
 room.players.forEach(jugador => {
@@ -794,6 +815,9 @@ socket.on('perdidas-defensor', ({ partida, nombre, perdidas }) => {
     jugador[key] = Math.max(0, jugador[key] - valor);
   }
 }
+
+revisarYEmitirRoboMoral(socket, room, nombre);
+
 
 
   // Actualizar estado de ese jugador
@@ -1037,6 +1061,9 @@ if (jugador.casa === "Tyrell") {
   }
 }
 
+revisarYEmitirRoboMoral(socket, room, nombre);
+
+
   
     io.to(partida).emit('actualizar-estado-juego', {
       territorios: room.estadoTerritorios,
@@ -1235,6 +1262,28 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
 
   });
   
+  socket.on("martell-robar-tropas-moral", ({ partida, nombre, cantidad, casaObjetivo }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  const victima = Object.values(room.estadoJugadores).find(j => j.casa === casaObjetivo);
+
+  if (!jugador || jugador.casa !== "Martell" || !victima) return;
+
+  // Aseguramos que no robe más de lo que tiene la víctima
+  const cantidadFinal = Math.min(cantidad, victima.tropas || 0);
+  jugador.tropas = (jugador.tropas || 0) + cantidadFinal;
+  victima.tropas = Math.max(0, (victima.tropas || 0) - cantidadFinal);
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
 
   socket.on('actualizar-iniciales', ({ partida, nombre, oro, tropas }) => {
     const room = rooms[partida];

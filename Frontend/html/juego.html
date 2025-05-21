@@ -528,6 +528,30 @@
   </div>
 </div>
 
+<!-- Modal Robar Tropas por Moral (Martell + El Portador del Alba + Guardia del Alba) -->
+<div id="modal-robar-tropas-moral" class="modal-juego" style="display: none;">
+  <h2>⛨ Robar tropas por moral</h2>
+  <p>Has inspirado terror gracias a la Guardia del Alba. Robas tropas del enemigo.</p>
+
+  <div class="campo-formulario">
+    <label for="input-cantidad-robo-tropas">¿Cuántas tropas normales robas?</label>
+    <input type="number" id="input-cantidad-robo-tropas" min="1" value="1" style="width: 100%;">
+  </div>
+
+  <div class="campo-formulario">
+    <label for="select-casa-robo-tropas">¿A qué casa se las robas?</label>
+    <select id="select-casa-robo-tropas">
+      <option value="">-- Selecciona casa --</option>
+    </select>
+  </div>
+
+  <div class="botones-modal">
+    <button id="btn-confirmar-robo-tropas" class="btn-confirmar">✔️ Robar</button>
+    <button onclick="cerrarModal('modal-robar-tropas-moral')" class="btn-cancelar">✖️ Cancelar</button>
+  </div>
+</div>
+
+
 
 
 

@@ -1999,6 +1999,26 @@ function finalizarFaseNeutralYEmitir() {
           socket.emit('organizar-torneo-arryn', { partida, nombre, cantidad });
           cerrarModal('modal-torneo-arryn');
         });
+
+        setupListener('btn-confirmar-robo-tropas', 'click', () => {
+  const cantidad = parseInt(document.getElementById("input-cantidad-robo-tropas").value);
+  const casaRival = document.getElementById("select-casa-robo-tropas").value;
+
+  if (!casaRival || isNaN(cantidad) || cantidad <= 0) {
+    alert("Selecciona una casa y una cantidad válida");
+    return;
+  }
+
+  socket.emit("martell-robar-tropas-moral", {
+    partida,
+    nombre,
+    cantidad,
+    casaObjetivo: casaRival
+  });
+
+  cerrarModal("modal-robar-tropas-moral");
+});
+
         
 
         // Botones barra superior y principal
@@ -3310,6 +3330,27 @@ socket.on('error-accion', (mensaje) => {
         actualizarTurnoAccionUI(); // Restaurar texto/estado del botón principal
     }
 });
+
+socket.on('mostrar-modal-robo-moral', () => {
+  const casas = [
+    "Stark", "Lannister", "Targaryen", "Baratheon", "Greyjoy",
+    "Tyrell", "Martell", "Arryn", "Tully"
+  ];
+
+  const select = document.getElementById("select-casa-robo-tropas");
+  select.innerHTML = '<option value="">-- Selecciona casa --</option>';
+  casas.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
+
+  document.getElementById("input-cantidad-robo-tropas").value = 1;
+  abrirModal("modal-robar-tropas-moral");
+});
+
+
 
 socket.on("preguntar-reemplazo-jinetes", ({ cantidad }) => {
   jinetesPendientes = cantidad;
