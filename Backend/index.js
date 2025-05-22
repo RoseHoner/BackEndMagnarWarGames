@@ -2629,6 +2629,27 @@ socket.on('levas-stark', ({ partida, nombre, cantidad }) => {
   }
 });
 
+socket.on("transferencia-oro", ({ partida, nombre, casaDestino, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugadorOrigen = room.estadoJugadores[nombre];
+  const jugadorDestino = Object.values(room.estadoJugadores).find(j => j.casa === casaDestino);
+
+  if (!jugadorOrigen || !jugadorDestino) return;
+  if ((jugadorOrigen.oro || 0) < cantidad) return;
+
+  jugadorOrigen.oro -= cantidad;
+  jugadorDestino.oro += cantidad;
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
 
 socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, reclutarNorte }) => {
 

@@ -43,6 +43,10 @@ body {
   object-fit: contain;
 }
 
+#logo-oro:hover { transform: scale(1.05); }
+
+#logo-oro {flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease;}
+
 /* --- Indicadores Tropas/Oro --- */
 #tropas-jugador, #oro-jugador {
   display: flex; align-items: center; gap: 15px;
@@ -327,6 +331,20 @@ body {
   max-width: 500px;
   border-radius: 10px;
 }
+
+.boton-dorado {
+  background-color: gold;
+  color: black;
+  font-weight: bold;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.boton-dorado:hover {
+  background-color: #e0c200;
+}
+
 
 
 

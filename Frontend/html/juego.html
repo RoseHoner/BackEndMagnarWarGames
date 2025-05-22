@@ -14,7 +14,7 @@
              <img id="logo-casa" src="" alt="Logo de casa">
         </div>
         <div id="oro-jugador" style="display: none;">
-            <img src="../imgs/Interfaz/oro.png" alt="Oro">
+            <img id="logo-oro" src="../imgs/Interfaz/oro.png" alt="Oro">
             <span id="cantidad-oro">0</span>
         </div>
     </div>
@@ -365,8 +365,41 @@
   </div>
 </div>
 
+<!-- Modal de Ingresos -->
+<div id="modal-ingresos" class="modal-juego" style="display: none;">
+  <button class="modal-cerrar" onclick="cerrarModal('modal-ingresos')">X</button>
+  <h2>💰 Información de Oro</h2>
+  <p id="oroEstimadoTexto">Oro estimado al final del turno: 0 oro</p>
+  <p id="ingresosPorTerritorioTexto">Ingresos por territorios: 0 oro</p>
+  <div class="botones-modal">
+    <button class="boton-dorado" onclick="abrirModal('modal-ofrecer-oro')">Ofrecer oro</button>
+  </div>
+</div>
 
-    <!-- ****** ELIMINADO Modal Mover/Atacar ****** -->
+<!-- Modal Ofrecer Oro -->
+<div id="modal-ofrecer-oro" class="modal-juego" style="display: none;">
+  <button class="modal-cerrar" onclick="cerrarModal('modal-ofrecer-oro')">X</button>
+  <h2>🤝 Transferir Oro</h2>
+
+  <div class="campo-formulario">
+    <label for="casaDestino">Elige la casa destinataria:</label>
+    <select id="casaDestino"><option value="">-- Selecciona casa --</option></select>
+  </div>
+
+  <div class="campo-formulario">
+    <label for="cantidadOro">Cantidad de oro a transferir:</label>
+    <input type="number" id="cantidadOro" min="1" value="1" />
+  </div>
+
+  <div class="botones-modal">
+    <button class="btn-confirmar" onclick="confirmarTransferenciaOro()">✔️ Transferir</button>
+    <button class="btn-cancelar" onclick="cerrarModal('modal-ofrecer-oro')">✖️ Cancelar</button>
+  </div>
+</div>
+
+
+    
+
 
     <!-- Modal Mis Territorios (Sin cambios estructurales) -->
     <div id="modal-mis-territorios" class="modal-juego" style="display: none;">

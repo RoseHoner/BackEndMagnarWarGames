@@ -944,6 +944,20 @@ if (btnOrganizar && btnNorteOrganizar) {
   }
 }
 
+const selectDestino = document.getElementById("casaDestino");
+if (selectDestino) {
+  selectDestino.innerHTML = "";
+  Object.values(gameState.jugadores || {}).forEach(j => {
+    if (j.casa !== casa) {
+      const op = document.createElement("option");
+      op.value = j.casa;
+      op.textContent = j.casa;
+      selectDestino.appendChild(op);
+    }
+  });
+}
+
+
 
 }
 function prepararOpcionesCasamientoNormal() {
@@ -988,7 +1002,31 @@ function prepararOpcionesCasamientoExtra() {
   }
 }
 
+function confirmarTransferenciaOro() {
+  const casaDestino = document.getElementById("casaDestino").value;
+  const cantidad = parseInt(document.getElementById("cantidadOro").value);
 
+  if (!casaDestino || isNaN(cantidad) || cantidad <= 0) {
+    alert("Selecciona una casa válida y una cantidad de oro.");
+    return;
+  }
+
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador || jugador.oro < cantidad) {
+    alert("No tienes suficiente oro.");
+    return;
+  }
+
+  socket.emit("transferencia-oro", {
+    partida,
+    nombre,
+    casaDestino,
+    cantidad
+  });
+
+  cerrarModal("modal-ofrecer-oro");
+  cerrarModal("modal-ingresos");
+}
 
 function incrementarContadorNorte() {
   contadorAccionesNorte++;
@@ -1805,6 +1843,27 @@ if (btnLevasStark) {
   });
 }
 
+setupListener("oro-jugador", "click", () => {
+  const jugador = gameState?.jugadores?.[nombre];
+  const territorios = Object.values(gameState?.territorios || {});
+
+  if (!jugador) return;
+
+  let ingresos = 0;
+
+  territorios.forEach(t => {
+    if (t.propietario === jugador.casa) {
+      ingresos += t.oroBase || 0;
+    }
+  });
+
+  document.getElementById("oroEstimadoTexto").textContent = `Oro estimado al final del turno: ${jugador.oro} oro`;
+  document.getElementById("ingresosPorTerritorioTexto").textContent = `Ingresos por territorios: ${ingresos} oro`;
+
+  abrirModal("modal-ingresos");
+});
+
+
 setupListener('btn-revuelta-campesina', 'click', () => {
   const select = document.getElementById("select-casa-revuelta");
   select.innerHTML = `<option value="">-- Elige casa --</option>`;
@@ -2065,6 +2124,7 @@ function poblarSelectConCasas(idSelect) {
     select.appendChild(option);
   });
 }
+
 
 
 function mostrarModalEclosion() {
