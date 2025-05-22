@@ -210,6 +210,8 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   martilladores:0,
   caballerosdelarosa:0,
   guardiadelalba:0,
+  barbaros:0,
+  caballerosdelaguila:0,
   atalayasConstruidas: false,
   torneoUsadoEsteTurno: false,
   dobleImpuestosUsado: false,
@@ -1331,12 +1333,14 @@ const costomartilladores = jugador.martilladores || 0;
 const costocaballerosdelarosa = jugador.caballerosdelarosa || 0;
 const costoguardiadelalba = jugador.guardiadelalba || 0;
 const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
+const costobarbaros = jugador.barbaros || 0;
+const costocaballerosdelaguila= jugador.caballerosdelaguila || 0;
 
 
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
   - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa - costoguardiadelalba
-  - costosacerdotizaroja
+  - costosacerdotizaroja - costobarbaros - costocaballerosdelaguila
 );
 
 
@@ -1386,6 +1390,10 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
     socket.emit("forzar-reclutar-guardiadelalba");
     //Sacerdotiza Roja:
     socket.emit("forzar-reclutar-sacerdotizaroja");
+    //barbaros:
+    socket.emit("forzar-reclutar-barbaros");
+    //Caballeros del Aguila:
+    socket.emit("forzar-reclutar-caballerosdelaguila");
 
     
 
@@ -1946,6 +1954,8 @@ const costomartilladores = jugador.martilladores || 0;
 const costocaballerosdelarosa = jugador.caballerosdelarosa || 0;
 const costoguardiadelalba = jugador.guardiadelalba || 0;
 const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
+const costobarbaros = jugador.barbaros || 0;
+const costocaballerosdelaguila= jugador.caballerosdelaguila || 0;
 
 
 
@@ -1956,7 +1966,7 @@ const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
   - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa
-- costoguardiadelalba - costosacerdotizaroja);
+- costoguardiadelalba - costosacerdotizaroja - costobarbaros - costocaballerosdelaguila);
 
 
         }
@@ -2222,6 +2232,8 @@ const costomartilladores = jugador.martilladores || 0;
 const costocaballerosdelarosa = jugador.caballerosdelarosa || 0;
 const costoguardiadelalba = jugador.guardiadelalba || 0;
 const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
+const costobarbaros = jugador.barbaros || 0;
+const costocaballerosdelaguila= jugador.caballerosdelaguila || 0;
 
 
 
@@ -2229,7 +2241,7 @@ const costosacerdotizaroja = jugador.sacerdotizaroja || 0;
 j.oro += ingreso;
 j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
   - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa - costoguardiadelalba
-  - costosacerdotizaroja
+  - costosacerdotizaroja - costobarbaros - costocaballerosdelaguila
 );
 
 
@@ -2492,6 +2504,46 @@ socket.on('martell-reclutar-guardiadelalba', ({ partida, nombre, cantidad }) => 
   if (!jugador || jugador.casa !== "Martell") return;
 
   jugador.guardiadelalba = (jugador.guardiadelalba || 0) + cantidad;
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on('arryn-reclutar-barbaros', ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  
+
+  const costo = cantidad;
+  const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
+  if (!jugador || jugador.casa !== "Arryn") return;
+
+  jugador.barbaros = (jugador.barbaros || 0) + cantidad;
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on('arryn-reclutar-caballerosdelaguila', ({ partida, nombre, cantidad }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  
+
+  const costo = cantidad;
+  const jugador = room.estadoJugadores[nombre];
+  jugador.oro -= costo;
+  if (!jugador || jugador.casa !== "Arryn") return;
+
+  jugador.caballerosdelaguila = (jugador.caballerosdelaguila || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
     territorios: room.estadoTerritorios,
@@ -2931,24 +2983,37 @@ if (casa === "Tyrell") {
       ingreso += aserraderos * 5;
       ingreso += canteras * 5;
       ingreso += granjas * 5;
-
-      // Si tiene puerto, añade oro por edificios de producción
-      if (territorio.edificios.includes("Puerto")) {
-        let totalProd = 0;
-        for (const otro of Object.values(room.estadoTerritorios)) {
-          if (otro.propietario === jugador.casa && Array.isArray(otro.edificios)) {
-            totalProd += otro.edificios.filter(e =>
-              ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)
-            ).length;
-          }
-        }
-        ingreso += totalProd * 10;
-      }
     }
   }
 
-  // Se multiplica por 2 por la habilidad
-  jugador.oro += ingreso * 2;
+  // Verificamos si algún territorio tiene puerto para añadir el bono
+  const tienePuerto = Object.values(room.estadoTerritorios).some(
+    t => t.propietario === jugador.casa && t.edificios.includes("Puerto")
+  );
+
+  if (tienePuerto) {
+    let totalProd = 0;
+    for (const otro of Object.values(room.estadoTerritorios)) {
+      if (otro.propietario === jugador.casa && Array.isArray(otro.edificios)) {
+        totalProd += otro.edificios.filter(e =>
+          ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)
+        ).length;
+      }
+    }
+    ingreso += totalProd * 10;
+  }
+
+  // Si tiene el rumor "Cetro del León", se multiplica todo el ingreso
+  const tieneCetro = jugador.rumoresDesbloqueados?.includes("Cetro del León");
+const ingresoFinal = ingreso * 2; // SIEMPRE se multiplica por 2
+if (tieneCetro) {
+  console.log("✨ Cetro del León activado: ingresos completos multiplicados.");
+} else {
+  console.log("✨ MARICO TERRITORIOS X 2");
+}
+
+
+  jugador.oro += ingresoFinal;
   jugador.dobleImpuestosUsado = true;
 
   // Avanza acción
@@ -2979,6 +3044,7 @@ if (casa === "Tyrell") {
     });
   }
 });
+
 
 
 

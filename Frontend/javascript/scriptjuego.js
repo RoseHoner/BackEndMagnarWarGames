@@ -339,6 +339,8 @@ function renderizarModalPerdidasDefensor() {
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
+    { key: 'barbaros', nombre: 'Barbaros'},
+    { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -419,6 +421,8 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
+    { key: 'barbaros', nombre: 'Barbaros'},
+    { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
 
 
   ];
@@ -464,6 +468,8 @@ function renderizarInputsPerdidasRevuelta() {
   { key: 'barcolegendario', nombre: 'Barco Legendario' },
   { key: 'jinete', nombre: 'Jinetes' },
   { key: 'dragon', nombre: 'Dragones' },
+  { key: 'barbaros', nombre: 'Barbaros'},
+  { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
 ];
  // Usa el mismo array de unidades
   unidades.forEach(({ key, nombre }) => {
@@ -516,6 +522,8 @@ function renderizarInputsPerdidas() {
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
+    { key: 'barbaros', nombre: 'Barbaros'},
+    { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
 
 
   ];
@@ -610,6 +618,8 @@ unidadesBasicas.forEach(u => {
         { tipo: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa', icono:'caballerosdelarosa.png'},
         { tipo: 'guardiadelalba', nombre: 'Guardia del Alba', icono:'guardiadelalba.png'},
         { tipo: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja', icono:'sacerdotizaroja.png'},
+        { tipo: 'barbaros', nombre: 'Barbaros', icono:'barbaros.png'},
+        { tipo: 'caballerosdelaguila', nombre: 'Caballeros del Aguila', icono:"caballerosdelaguila.png"},
 
     ];
 
@@ -1645,6 +1655,8 @@ misTerritorios.forEach(t => {
     const mantenimientocaballerosdelarosa = jugador.caballerosdelarosa || 0;
     const mantenimientoguardiadelalba = jugador.guardiadelalba || 0;
     const mantenimientosacerdotizaroja = jugador.sacerdotizaroja || 0;
+    const mantenimientobarbaros = jugador.barbaros || 0;
+    const mantenimientocaballerosdelaguila = jugador.caballerosdelaguila || 0;
     
 
 
@@ -1652,7 +1664,7 @@ misTerritorios.forEach(t => {
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
     + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal + mantenimientobarcolegendario
     + mantenimientobarcocorsario + mantenimientovenadosblancos + mantenimientomartilladores + mantenimientocaballerosdelarosa
-    + mantenimientoguardiadelalba + mantenimientosacerdotizaroja;
+    + mantenimientoguardiadelalba + mantenimientosacerdotizaroja + mantenimientobarbaros + mantenimientocaballerosdelaguila;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1930,7 +1942,7 @@ if (btnConfirmarLevas) {
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
             'barcolegendario', 'tritones','barcocorsario','venadosblancos','martilladores',
-            'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
+            'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
           ];
         
           for (const key of unidades) {
@@ -2309,7 +2321,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
             'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
             'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
             'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-            'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
+            'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
           ];
         
           let total = 0;
@@ -2351,6 +2363,8 @@ if (casa === "Baratheon" && gameState?.jugadores?.[nombre]?.rumoresDesbloqueados
       });
     }
 
+    verificarHuargosStark();
+
 
           document.getElementById('fase-neutral-paso1').style.display = 'none';
           document.getElementById('fase-neutral-paso2').style.display = 'block';
@@ -2369,6 +2383,7 @@ if (casa === "Baratheon" && gameState?.jugadores?.[nombre]?.rumoresDesbloqueados
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
     'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario','tritones',
     'barcocorsario','venadosblancos','martilladores','caballerosdelarosa','guardiadelalba','sacerdotizaroja'
+    ,'barbaros','caballerosdelaguila'
   ];
 
   claves.forEach(key => {
@@ -2532,6 +2547,8 @@ validarOroSoborno();
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
+    { key: 'barbaros', nombre: 'Barbaros'},
+    { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
     
 
 
@@ -2575,7 +2592,7 @@ function confirmarAtaqueSimple() {
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete',
     'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-    'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
   ];
 
   unidades.forEach(key => {
@@ -3245,7 +3262,76 @@ document.getElementById('btn-confirmar-iniciales').addEventListener('click', () 
     
 
   
+    if (rumorInicial === "Aliento de los Antiguos" && casa === "Stark") {
+        document.getElementById("modal-reclutar-huargos").style.display = "block"
+  }
 
+  if (rumorInicial === "Cornamenta de Skagos" && casa === "Stark") {
+        document.getElementById("modal-reclutar-unicornios").style.display = "block";
+  }
+
+  if (rumorInicial === "Ecos de Harren el Negro" && casa === "Tully") {
+        document.getElementById("modal-reclutar-murcielagos").style.display = "block";
+  }
+
+  if (rumorInicial === "Juramento sin Estandartes" && casa === "Tully") {
+        document.getElementById("modal-reclutar-caballeros-tully").style.display = "block";
+  }
+
+  if (rumorInicial === "Acero y Juramento" && casa === "Targaryen") {
+        document.getElementById("modal-reclutar-guardiareal").style.display = "block";
+  }
+
+  if (rumorInicial === "Rey de los Mares" && casa === "Greyjoy") {
+        document.getElementById("modal-reclutar-barcolegendario").style.display = "block";
+  }
+
+  if (rumorInicial === "Trono de Viejo Wyck" && casa === "Greyjoy") {
+        document.getElementById("modal-reclutar-tritones").style.display = "block";
+  }
+
+  if (rumorInicial === "Caza del Venado Blanco" && casa === "Baratheon") {
+        document.getElementById("modal-reclutar-venadosblancos").style.display = "block"
+  }
+
+  if (rumorInicial === "Martillos de Tormenta" && casa === "Baratheon") {
+        document.getElementById("modal-reclutar-martilladores").style.display = "block"
+  }
+
+  if (rumorInicial === "Caballeros de la Rosa" && casa === "Tyrell") {
+        document.getElementById("modal-reclutar-caballerosdelarosa").style.display = "block"
+  }
+
+  if (rumorInicial === "El Portador del Alba" && casa === "Martell") {
+        document.getElementById("modal-reclutar-guardiadelalba").style.display = "block"
+  }
+
+  if (rumorInicial === "Tributo de la Luna" && casa === "Arryn") {
+        document.getElementById("modal-reclutar-barbaros").style.display = "block"
+  }
+
+  if (rumorInicial === "Alas del Valle" && casa === "Arryn") {
+        document.getElementById("modal-reclutar-caballerosdelaguila").style.display = "block"
+  }
+
+  if (rumorInicial === "Llama de R'hllor" && casa === "Baratheon") {
+        socket.emit("baratheon-reclutar-sacerdotizaroja", {
+          partida,
+          nombre,
+          cantidad: 1
+        });
+  }
+
+  if (rumorInicial === "Alianza de Sangre" && casa === "Targaryen") {
+  const jineteCount = (gameState.jugadores[nombre]?.jinete || 0);
+
+  if (jineteCount > 0) {
+    prepararOpcionesCasamientoExtra();
+    abrirModal("modal-casarse-alianza");
+  } else {
+    alianzaDeSangrePendiente = true;
+  }
+}
 
   
     actualizarInfoJugador();
@@ -3283,7 +3369,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete',
     'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-    'caballerosdelarosa','guardiadelalba','sacerdotizaroja'
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
   ];
 
   for (const key of unidades) {
@@ -3354,6 +3440,14 @@ document.getElementById('btn-confirmar-inicial-arryn').addEventListener('click',
     rumorInicial
   });
 
+  if (rumorInicial === "Tributo de la Luna" && casa === "Arryn") {
+        document.getElementById("modal-reclutar-barbaros").style.display = "block"
+  }
+
+  if (rumorInicial === "Alas del Valle" && casa === "Arryn") {
+        document.getElementById("modal-reclutar-caballerosdelaguila").style.display = "block"
+  }
+
   cerrarModal("modal-inicial-arryn");
 });
 
@@ -3378,6 +3472,9 @@ document.getElementById('btn-confirmar-inicial-tyrell').addEventListener('click'
     rumorInicial
   });
 
+  if (rumorInicial === "Caballeros de la Rosa" && casa === "Tyrell") {
+        document.getElementById("modal-reclutar-caballerosdelarosa").style.display = "block"
+  }
 
   cerrarModal("modal-inicial-tyrell");
 });
@@ -3589,6 +3686,14 @@ socket.on("forzar-reclutar-guardiadelalba", () => {
   verificarGuardiadelAlbaMartell();
 });
 
+socket.on("forzar-reclutar-barbaros", () => {
+  verificarBarbarosArryn();
+});
+
+socket.on("forzar-reclutar-caballerosdelaguila", () => {
+  verificarCaballerosdelaguilaArryn();
+});
+
 
 socket.on("abrir-modal-militantes-fe", () => {
   document.getElementById("input-militantes-fe").value = 1;
@@ -3758,27 +3863,11 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
     // Más adelante se podría optimizar para fusionar solo cambios.
     gameState = estadoRecibido;
     console.log("   -> GameState local actualizado completamente.");
+    console.log("PENEEEEEEEEEEEEEEEEEE", gameState.accion);
 
     renderizarRumoresDesbloqueados();
 
     
-    if (!inicialYaConfirmado){
-      contadorVerificarRumoresInciales++;
-      verificarHuargosStark();
-      verificarUnicorniosStark();
-      verificarMurcielagosTully();
-      verificarGuardiarealTargaryen();
-      verificarCaballerosTully();
-      verificarbarcolegendarioGreyjoy();
-      verificartritonesGreyjoy();
-      verificarVenadosBlancosBaratheon();
-      verificarMartilladoresBaratheon();
-      verificarCaballerosdelarosaTyrell();
-      verificarGuardiadelAlbaMartell();
-      if (contadorVerificarRumoresInciales === 3){
-        
-      }
-    }
 
     
 
@@ -3934,6 +4023,9 @@ function confirmarGanarRumor(haGanado) {
     verificarMartilladoresBaratheon();
     verificarCaballerosdelarosaTyrell();
     verificarGuardiadelAlbaMartell();
+    verificarBarbarosArryn();
+    verificarCaballerosdelaguilaArryn();
+    
   }
 }
 
@@ -3963,6 +4055,7 @@ function abrirModalElegirRumor() {
 
 
 function confirmarRumorElegido() {
+  console.log("aaaaaaaaaaaaRUMOOOOOOOOOOOOOOOOOOOOOOOASDFASFASFASFASFASFASaaa")
   const select = document.getElementById("select-rumor");
   const rumorSeleccionado = select.value;
 
@@ -4019,6 +4112,14 @@ function confirmarRumorElegido() {
         document.getElementById("modal-reclutar-guardiadelalba").style.display = "block"
   }
 
+  if (rumorSeleccionado === "Tributo de la Luna" && casa === "Arryn") {
+        document.getElementById("modal-reclutar-barbaros").style.display = "block"
+  }
+
+  if (rumorSeleccionado === "Alas del Valle" && casa === "Arryn") {
+        document.getElementById("modal-reclutar-caballerosdelaguila").style.display = "block"
+  }
+
   if (rumorSeleccionado === "Llama de R'hllor" && casa === "Baratheon") {
         socket.emit("baratheon-reclutar-sacerdotizaroja", {
           partida,
@@ -4047,10 +4148,13 @@ function confirmarRumorElegido() {
   verificarMartilladoresBaratheon();
   verificarCaballerosdelarosaTyrell();
   verificarGuardiadelAlbaMartell();
+  verificarBarbarosArryn();
+  verificarCaballerosdelaguilaArryn();
 }
 
 function verificarHuargosStark() {
   const jugador = gameState.jugadores[nombre];
+
   if (
     jugador?.casa === "Stark" &&
     jugador.rumoresDesbloqueados?.includes("Aliento de los Antiguos") &&
@@ -4167,6 +4271,28 @@ function verificarGuardiadelAlbaMartell() {
     (!jugador.guardiadelalba || jugador.guardiadelalba === 0)
   ) {
       document.getElementById("modal-reclutar-guardiadelalba").style.display = "block";
+  }
+}
+
+function verificarBarbarosArryn() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Arryn" &&
+    jugador.rumoresDesbloqueados?.includes("Tributo de la Luna") &&
+    (!jugador.barbaros || jugador.barbaros === 0)
+  ) {
+      document.getElementById("modal-reclutar-barbaros").style.display = "block";
+  }
+}
+
+function verificarCaballerosdelaguilaArryn() {
+  const jugador = gameState.jugadores[nombre];
+  if (
+    jugador?.casa === "Arryn" &&
+    jugador.rumoresDesbloqueados?.includes("Alas del Valle") &&
+    (!jugador.caballerosdelaguila || jugador.caballerosdelaguila === 0)
+  ) {
+      document.getElementById("modal-reclutar-caballerosdelaguila").style.display = "block";
   }
 }
 
@@ -4289,6 +4415,32 @@ function confirmarReclutarGuardiaDelAlba() {
   document.getElementById("modal-reclutar-guardiadelalba").style.display = "none";
 }
 
+function confirmarReclutarBarbaros() {
+  const cantidad = parseInt(document.getElementById("cantidad-barbaros").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("arryn-reclutar-barbaros", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-barbaros").style.display = "none";
+}
+
+function confirmarReclutarCaballerosDelAguila() {
+  const cantidad = parseInt(document.getElementById("cantidad-caballerosdelaguila").value);
+  if (isNaN(cantidad) || cantidad <= 0) return;
+
+  socket.emit("arryn-reclutar-caballerosdelaguila", {
+    partida,
+    nombre,
+    cantidad
+  });
+
+  document.getElementById("modal-reclutar-caballerosdelaguila").style.display = "none";
+}
+
 
 
   
@@ -4405,6 +4557,8 @@ function confirmarReclutarGuardiaDelAlba() {
     { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
     { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
+    { key: 'barbaros', nombre: 'Barbaros'},
+    { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
 
 
   ];
