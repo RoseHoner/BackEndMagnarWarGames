@@ -208,7 +208,7 @@ function confirmarReemplazoJinete(reponer) {
 
   jinetesPendientes--;
   if (jinetesPendientes > 0) {
-    setTimeout(() => mostrarReemplazoJinete(), 300);
+    mostrarReemplazoJinete()
   } else if (ataquePendiente) {
     // Emitimos el ataque después de completar los reemplazos
     socket.emit('ataque-simple-doble', ataquePendiente);
@@ -2011,16 +2011,20 @@ if (btnConfirmarLevas) {
   for (const key of unidades) {
     const input = document.getElementById(`perdida-${key}`);
     if (!input) continue;
-    const cantidad = parseInt(input.value) || 0;
+
+    const cantidad = parseInt(input.value);
+
+    if ((jugador[key] || 0) === 0) continue; // ⚠️ Salta si ya no tiene esa unidad
 
     if (key === "tritones" && casa === "Greyjoy") {
-      perdidas[key] = `tritones-final:${cantidad}`;
+      perdidas[key] = `tritones-final:${cantidad || 0}`;
       continue;
     }
 
-    if (cantidad < 0 || cantidad > (jugador[key] || 0)) {
+    if (isNaN(cantidad) || cantidad < 0 || cantidad > (jugador[key] || 0)) {
       return alert(`Cantidad inválida para ${key}`);
     }
+
     if (cantidad > 0) perdidas[key] = cantidad;
   }
 
@@ -2033,9 +2037,6 @@ if (btnConfirmarLevas) {
     poblarCasasBarco();
     mostrarModalTransferenciaBarco();
 
-    // Guardamos perdidas para emitir después
-    window._perdidasAtaquePendientes = perdidas;
-    window._debeEmitirAtaque = true;
     return;
   }
 
@@ -2055,9 +2056,11 @@ if (btnConfirmarLevas) {
     perdidas,
     esSaqueoGreyjoy: true
   });
+  // ✅ Limpiar datos previos
 
   cerrarModal('modal-perdidas-ataque');
 });
+
 
 
         const btnStarkAtacar = document.getElementById("btn-stark-atacar");
@@ -2429,9 +2432,9 @@ if (barcosPerdidos > 0) {
   transferenciasBarcos = [];
   poblarCasasBarco();
 
-  setTimeout(() => {
+  
     mostrarModalTransferenciaBarco();
-  }, 300); // pequeño delay para asegurar que el paso 2 se ve debajo
+     // pequeño delay para asegurar que el paso 2 se ve debajo
 }
 
 // Emitimos ya las pérdidas para que el backend lo procese
@@ -2744,6 +2747,16 @@ function confirmarAtaqueSimple() {
     cerrarModal('modal-ataque-simple');
     mostrarReemplazoJinete();
     return;
+  }
+
+  // ⛴️ Detectar barcos perdidos
+  const barcosPerdidos = perdidasPorUnidad.barcos || 0;
+  if (barcosPerdidos > 0) {
+    barcosPerdidosPendientes = barcosPerdidos;
+    transferenciasBarcos = [];
+    poblarCasasBarco();
+    
+      mostrarModalTransferenciaBarco();
   }
 
   // Emitir el ataque directamente si no hay jinete perdido o no es Targaryen
@@ -3482,28 +3495,11 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
 
     if (key === "tritones" && casa === "Greyjoy") {
       perdidas[key] = `tritones-final:${valor}`;
-      continue;
+    } else if (valor > 0) {
+      perdidas[key] = valor;
     }
-
-    if (valor > 0) perdidas[key] = valor;
   }
 
-  // 🔥 INSERTAMOS LA LÓGICA DE TRANSFERENCIA DE BARCOS
-  const barcosPerdidos = perdidas.barcos || 0;
-  if (barcosPerdidos > 0) {
-    cerrarModal('modal-fase-neutral');
-    barcosPerdidosPendientes = barcosPerdidos;
-    transferenciasBarcos = [];
-    poblarCasasBarco();
-    mostrarModalTransferenciaBarco();
-
-    // Guardamos perdidas para emitir después de terminar la transferencia
-    window._perdidasDefensorPendientes = perdidas;
-    window._debeEmitirDefensor = true;
-    return; // detenemos aquí y continuamos después
-  }
-
-  // 🐉 Targaryen Fuego Heredado
   const perdidasJinetes = parseInt(document.getElementById("perdidas-def-jinete")?.value) || 0;
   if (
     casa === "Targaryen" &&
@@ -3516,13 +3512,26 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
 
   cerrarModal('modal-perdidas-defensor');
 
+  // 🧠 Emitimos las pérdidas al backend para que las registre ya
+  socket.emit('perdidas-defensor', { partida, nombre, perdidas });
+
+  // 🛳️ Si hay barcos, mostramos el modal de reparto encima
+  const barcosPerdidos = perdidas.barcos || 0;
+  if (barcosPerdidos > 0) {
+    barcosPerdidosPendientes = barcosPerdidos;
+    transferenciasBarcos = [];
+    poblarCasasBarco();
+      mostrarModalTransferenciaBarco();
+  }
+
+  // ⚔️ Si es casa Arryn, mostrar caballeros si aplica
   if (casa === "Arryn") {
     abrirModal('modal-caballero-batalla-arryn');
   }
 
-  socket.emit('perdidas-defensor', { partida, nombre, perdidas });
   window.refuerzoTullyConfirmado = false;
 });
+
 
 
 
@@ -4148,10 +4157,8 @@ function confirmarTransferenciaBarco() {
   barcosPerdidosPendientes--;
 
   if (barcosPerdidosPendientes > 0) {
-    setTimeout(() => {
       poblarCasasBarco();
       mostrarModalTransferenciaBarco();
-    }, 300);
   } else {
     // Aquí ya puedes emitir al backend o continuar el flujo normal
     socket.emit("transferencia-barcos", {
