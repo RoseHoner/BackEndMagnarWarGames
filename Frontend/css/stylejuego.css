@@ -367,7 +367,7 @@ body {
   .modal-juego h2, .ventana-oro h2 { font-size: 1.4rem; margin-bottom: 20px; }
   .control-numero input[type="number"] { width: 60px; font-size: 1rem;}
   .control-numero button { width: 30px; height: 30px; font-size: 1.2rem; }
-  .botones-modal { flex-direction: column; gap: 10px; }
+  .botones-modal { flex-direction: column; gap: 1000px; }
   .ventana-oro input[type="number"] { width: 80%; padding: 12px 15px;} /* Ajustar input oro/tropas */
   .ventana-oro button { padding: 12px 35px; } /* Ajustar botón OK */
   .lista-scrollable { max-height: 35vh; }
@@ -378,6 +378,94 @@ body {
   .campo-formulario fieldset label { display: block; margin-bottom: 8px; }
   .ventana-oro input[type="number"] { width: 90%;}
   .lista-scrollable { max-height: 30vh; }
+}
+
+
+/* mediaQuery para moviles */
+@media (max-width: 600px) {
+
+  /*Texto turno*/
+  .turno-texto {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    top: 40px;
+    left: 60px;
+  }
+
+  /*Texto accion*/
+  .accion-texto {
+    font-size: clamp(1.2rem, 5vw, 2rem);
+    top: 40px;
+    left: 350px;
+  }
+
+  .accion-texto {
+    font-size: clamp(1.2rem, 5vw, 2rem);
+    top: 40px;
+    left: 350px;
+  }
+
+  #oro-jugador {
+    position: relative;
+    left: -120px;
+    top: -30px;
+    width: 150px;
+    align-items: center;
+    display:none;
+    font-size: clamp(2.2rem, 7vw, 4.5rem); background-color: rgba(0, 0, 0, 0.69);
+    padding: 10px 70px; border-radius: 12px; border: 1px solid rgb(255, 213, 0);
+    flex-shrink: 1; flex-grow: 0; justify-content: center;
+    min-width:0px; text-align: center; box-shadow: 0 2px 8px rgb(0, 0, 0);
+  }
+
+  #oro-jugador img { 
+    width: clamp(70px, 4vw, 80px); height: auto; 
+  }
+
+  #logo-casa-container {
+    border: #000;
+    left: 80px;
+    position: relative;
+    top: 210px;
+    flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease;
+  }
+
+#logo-casa-container:hover { transform: scale(1.05); }
+
+#logo-casa {
+  display: block; width: 160px; height: 160px;
+  max-width: 200vw; max-height: 200vw; min-width:0px; min-height: 0px;
+  object-fit: contain;
+  width: 200px;
+}
+
+#zona-unidades-militares{
+  position: relative !important;
+  top: -120px !important;
+  width: 80px !important;
+}
+
+#zona-edificios {
+  position: relative !important;
+  top: -305px !important;
+  left: 295px !important;
+  width: 100px !important;
+}
+
+#contador-stark{
+  position: relative;
+  top: 80px;
+  left: -165px;
+  background-color: #00000082;
+  padding: 10px;
+  border-radius: 10px;
+  width: 70px;
+  font-size: 12px !important;
+}
+
+#lista-edificios-jugador{
+  width: 100px !important;
+}
+
 }
 
 
