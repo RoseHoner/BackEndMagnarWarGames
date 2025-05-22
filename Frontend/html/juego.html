@@ -8,21 +8,114 @@
   <link rel="stylesheet" href="../css/stylejuego.css">
 </head>
 <body>
-    <!-- BARRA SUPERIOR (Sin cambios) -->
+     <!-- BARRA SUPERIOR -->
     <div id="top-bar">
-        <div id="logo-casa-container">
-             <img id="logo-casa" src="" alt="Logo de casa">
+      <div class="top-bar-left">
+        <div id="turno-jugador" class="turno-texto">Turno 1</div>
+        <div id="accion-jugador" class="accion-texto">Acción 1</div>
+      </div>
+      <div class="top-bar-right">
+        <!-- #logo-casa-container and #oro-jugador are MOVED OUT for mobile and handled by #mobile-main-feature -->
+        <!-- On PC, #logo-casa-container is typically hidden, and #pc-gold-display shows gold. -->
+        <!-- If you need gold in the top-bar on mobile *as well*, you'd add a separate element here. -->
+      </div>
+    </div>
+
+    <div id="estado-turno"></div>
+
+    
+
+    <div class="game-ui-container">
+
+     <div id="zona-unidades-militares" class="side-panel panel-top-left">
+            <h3>Unidades Militares</h3>
+            <ul id="lista-unidades-jugador"></ul>
         </div>
-        <div id="oro-jugador" style="display: none;">
-            <img id="logo-oro" src="../imgs/Interfaz/oro.png" alt="Oro">
-            <span id="cantidad-oro">0</span>
+
+      <div id="zona-edificios" class="side-panel panel-top-right">
+            <h3>Edificios</h3>
+            <ul id="lista-edificios-jugador"></ul>
+        </div>
+
+        <div id="cuadro-rumores" class="side-panel panel-bottom-right"> <!-- Contenido movido aquí para móvil -->
+            <strong>🕵️ Rumores</strong>
+            <ul id="lista-rumores"> <!-- Usar la misma lista o una copia; asegúrate que JS la popule correctamente -->
+            </ul>
+        </div>
+
+        
+
+        <div class="center-actions-stack pc-only-inline-block">
+            <!-- Group ALL buttons that should appear in the central stack here -->
+            <button id="btn-batalla1" class="game-action-bar">⚔️ Batalla</button>
+            <button id="btn-reclutar1" class="btn-accion-juego game-action-bar">➕ Reclutar</button>
+            <button id="btn-construir1" class="btn-accion-juego game-action-bar">🔨 Construir</button>
+            <button id="btn-mover1" class="game-action-bar">➡️ Mover</button>
+            <button id="btn-reorganizar1" class="btn-accion-juego game-action-bar">🔄 Reorganizar</button>
+
+            <div id="contador-stark1" class="game-action-bar-info">
+                Contador acciones del norte: <span id="valor-contador-stark1">0</span>
+             </div>
+            <button id="btn-stark-atacar1" class="btn-accion-juego game-action-bar" style="display: none;">🧊 Atacar en el norte</button>
+            <button id="btn-stark-mover1" class="btn-accion-juego game-action-bar" style="display: none;">➡️ Mover en el norte</button>
+            <button id="btn-stark-reorganizar1" class="btn-accion-juego game-action-bar" style="display: none;">🔄 Reorganizar en el norte</button>
+            <button id="btn-stark-reclutar1" class="btn-accion-juego game-action-bar" style="display: none;">➕ Reclutar en el norte</button>
+            <!-- Botón duplicado eliminado -->
+            <button id="btn-levas-stark1" class="btn-accion-juego game-action-bar" style="display: none;">🛡️ Levantamiento de Levas</button>
+            <button id="btn-organizar-torneo1" class="btn-accion-juego game-action-bar" style="display: none;">🏇 Organizar Torneo</button>
+            <button id="btn-doble-impuestos1" class="game-action-bar" style="display: none;">💰 Doble Impuestos</button>
+            <button id="btn-sobornar-soldados1" class="btn-accion-juego game-action-bar" style="display: none;">🪙 Sobornar Soldados</button>
+            <button id="btn-saquear-greyjoy1" class="btn-accion-juego game-action-bar" style="display: none;">⚓ Saquear</button>
+            <button id="btn-ritual-kraken-greyjoy1" class="btn-accion-juego game-action-bar" style="display: none;">🐙 Ritual de Sal</button>
+            <button id="btn-revuelta-campesina1" class="btn-accion-juego game-action-bar" style="display: none;">🌾 Iniciar Revuelta Campesina</button>
+        </div>
+
+        <div id="cuadro-rumores-1" class="side-panel panel-bottom-right pc-only-block">
+            <strong>🕵️ Rumores</strong>
+            <ul id="lista-rumores1"></ul>
         </div>
     </div>
 
-    <!-- Info Turno/Acción (Sin cambios) -->
-    <div id="turno-jugador" class="turno-texto">Turno 1</div>
-    <div id="accion-jugador" class="accion-texto">Acción 1</div>
-    <div id="estado-turno"></div>
+    <!-- NUEVO: Contenedor para botones y rumores en la parte inferior fija (solo móvil) -->
+    <div id="mobile-bottom-bar" class="mobile-only">
+        <div class="center-actions-stack"> <!-- Contenido movido aquí para móvil -->
+            <!-- Group ALL buttons that should appear in the central stack here -->
+            <button id="btn-batalla" class="game-action-bar">⚔️ Batalla</button>
+            <button id="btn-reclutar" class="btn-accion-juego game-action-bar">➕ Reclutar</button>
+            <button id="btn-construir" class="btn-accion-juego game-action-bar">🔨 Construir</button>
+            <button id="btn-mover" class="game-action-bar">➡️ Mover</button>
+            <button id="btn-reorganizar" class="btn-accion-juego game-action-bar">🔄 Reorganizar</button>
+
+            <div id="contador-stark" class="game-action-bar-info">
+                Contador acciones del norte: <span id="valor-contador-stark">0</span>
+             </div>
+            <button id="btn-stark-atacar" class="btn-accion-juego game-action-bar" style="display: none;">🧊 Atacar en el norte</button>
+            <button id="btn-stark-mover" class="btn-accion-juego game-action-bar" style="display: none;">➡️ Mover en el norte</button>
+            <button id="btn-stark-reorganizar" class="btn-accion-juego game-action-bar" style="display: none;">🔄 Reorganizar en el norte</button>
+            <button id="btn-stark-reclutar" class="btn-accion-juego game-action-bar" style="display: none;">➕ Reclutar en el norte</button>
+            <!-- Botón duplicado eliminado -->
+            <button id="btn-levas-stark" class="btn-accion-juego game-action-bar" style="display: none;">🛡️ Levantamiento de Levas</button>
+            <button id="btn-organizar-torneo" class="btn-accion-juego game-action-bar" style="display: none;">🏇 Organizar Torneo</button>
+            <button id="btn-doble-impuestos" class="game-action-bar" style="display: none;">💰 Doble Impuestos</button>
+            <button id="btn-sobornar-soldados" class="btn-accion-juego game-action-bar" style="display: none;">🪙 Sobornar Soldados</button>
+            <button id="btn-saquear-greyjoy" class="btn-accion-juego game-action-bar" style="display: none;">⚓ Saquear</button>
+            <button id="btn-ritual-kraken-greyjoy" class="btn-accion-juego game-action-bar" style="display: none;">🐙 Ritual de Sal</button>
+            <button id="btn-revuelta-campesina" class="btn-accion-juego game-action-bar" style="display: none;">🌾 Iniciar Revuelta Campesina</button>
+        </div>
+
+
+        <!-- NUEVO: Contenedor para logo grande y oro en el centro (solo móvil) -->
+    <div id="mobile-main-feature" class="mobile-only">
+      <div id="logo-casa-container"> <!-- Movido desde top-bar -->
+          <img id="logo-casa" src="" alt="Logo de casa"> <!-- JS actualiza src -->
+      </div>
+      <div id="oro-jugador"> <!-- Movido desde top-bar -->
+        <img id="logo-oro" src="../imgs/Interfaz/oro.png" alt="Oro">
+        <span id="cantidad-oro">0</span> <!-- JS actualiza este valor -->
+      </div>
+    </div>
+        
+    </div>
 
     <!-- Modal Tyrell Inicio Combinado -->
 <div id="modal-inicial-tyrell" class="modal-juego" style="display: none; z-index: 99999;">
@@ -92,31 +185,6 @@
   </div>
 </div>
 
-
-
-
-    <!-- CONTENEDOR BOTONES ACCIÓN (Sin cambios estructurales) -->
-    <div id="acciones-container">
-        <button id="btn-batalla" class="btn-accion-juego">⚔️ Batalla</button>
-        <button id="btn-reclutar" class="btn-accion-juego">➕ Reclutar</button>
-        <button id="btn-construir" class="btn-accion-juego">🔨 Construir</button>
-        <button id="btn-mover" class="btn-accion-juego">➡️ Mover</button> <!-- Texto actualizado -->
-        <button id="btn-reorganizar" class="btn-accion-juego">🔄 Reorganizar</button>
-        <!-- Podríamos añadir botones para habilidades específicas aquí -->
-         <!-- Botones exclusivos para Stark -->
-    </div>
-    <div id="acciones-container2">
-          <div id="contador-stark" style="margin: 10px; font-weight: bold; font-size: 1.2em;">
-          Contador acciones del norte: <span id="valor-contador-stark">0</span>
-        </div>
-        <button id="btn-stark-atacar" class="btn-accion-juego">🧊 Atacar en el norte</button>
-        <button id="btn-stark-mover" class="btn-accion-juego">➡️ Mover en el norte</button>
-        <button id="btn-stark-reorganizar" class="btn-accion-juego">🔄 Reorganizar en el norte</button>
-        <button id="btn-stark-reclutar" class="btn-accion-juego" >➕ Reclutar en el norte</button>
-        <!-- Contador de acciones del norte (solo para Stark) -->
-    </div>
-      
-
     <!-- Modal Ataque Simple Mejorado -->
 <div id="modal-ataque-simple" class="modal-juego" style="display: none;">
   <h2>⚔️ Ataque</h2>
@@ -158,7 +226,7 @@
     <label>¿Ganaste el SEGUNDO territorio?</label><br>
     <label><input type="radio" name="resultado-ataque2" value="si" checked> Sí</label>
     <label><input type="radio" name="resultado-ataque2" value="no"> No</label>
-    <<div id="asignar-propietario-ataque2" class="campo-formulario" style="display: none;">
+    <div id="asignar-propietario-ataque2" class="campo-formulario" style="display: none;">
   <label for="select-propietario-ataque2">¿Quién se queda con el PRIMER territorio?</label>
   <select id="select-propietario-ataque2">
     <option value="">-- Elige casa --</option>
@@ -175,14 +243,7 @@
   </div>
 </div>
 
-  <button id="btn-levas-stark" class="btn-accion-juego" style="display: none;">🛡️ Levantamiento de Levas</button>
-  <button id="btn-organizar-torneo" class="btn-accion-juego" style="display: none;">🏇 Organizar Torneo</button>
-  <button id="btn-doble-impuestos" class="btn-accion-juego" style="display: none;">💰 Doble Impuestos</button>
-  <button id="btn-sobornar-soldados" class="btn-accion-juego" style="display: none;">🪙 Sobornar Soldados</button>
-  <button id="btn-saquear-greyjoy" class="btn-accion-juego" style="display: none;">⚓ Saquear</button>
-  <button id="btn-ritual-kraken-greyjoy" class="btn-accion-juego" style="display: none;">🐙 Ritual de Sal</button>
-  <button id="btn-revuelta-campesina" class="btn-accion-juego" style="display: none;">🌾 Iniciar Revuelta Campesina</button>
-
+  
 <div id="modal-revuelta-tyrell" class="modal-juego" style="display: none;">
   <h2>🌾 Revuelta Campesina</h2>
   <label>¿A qué casa inicias la revuelta?</label>
@@ -415,23 +476,6 @@
         </div>
     </div>
     <!-- Fin Modal Mis Territorios -->
-
-    <div id="cuadro-rumores" style="
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  background-color: #111;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-size: 14px;
-  max-width: 250px;
-  z-index: 999;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-">
-  <strong>🕵️ Rumores</strong>
-  <p id="lista-rumores" style="padding-left: 15px; margin-top: 5px;"></p>
-</div>
 
 <!-- Modal: ¿Has conseguido un rumor? -->
 <div id="modal-ganar-rumor" class="modal-juego" style="display: none;">
@@ -727,20 +771,6 @@
   </div>
 </div>
 
-
-  <!-- ZONA DE UNIDADES MILITARES -->
-<div id="zona-unidades-militares" style="position: fixed; top: 250px; left: 10px; background-color: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; width: 180px; z-index: 10;">
-  <h3 style="margin: 0 0 10px; font-size: 1.2rem; color: white; text-align: center;">Unidades Militares</h3>
-  <ul id="lista-unidades-jugador" style="list-style: none; padding: 0; margin: 0;"></ul>
-</div>
-
-
-  <!-- ZONA DE EDIFICIOS -->
-<div id="zona-edificios" style="position: fixed; top: 250px; right: 10px; background-color: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; width: 180px; z-index: 10;">
-    <h3 style="margin: 0 0 10px; font-size: 1.2rem; color: white; text-align: center;">Edificios</h3>
-    <ul id="lista-edificios-jugador" style="list-style: none; padding: 0; margin: 0;"></ul>
-  </div>
-
   <div id="modal-lannister-perdidas" class="modal-juego" style="display: none;">
   <h2>🩸 ¿Qué unidades perdiste al cobrar impuestos?</h2>
   <p>Indica cuántas unidades militares has perdido:</p>
@@ -978,7 +1008,7 @@
 
 
 
-
+</div>
   
   
   

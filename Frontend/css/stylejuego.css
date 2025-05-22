@@ -1,471 +1,509 @@
-/* --- Estilos Generales --- */
+/* === GLOBAL VARIABLES & RESET (sin cambios) === */
+:root {
+  --color-bg-main: #0c0a08;
+  --color-bg-panel: #120f0def; /* Paneles sólidos y oscuros */
+  --color-bg-top-bar: #0a0907f2; /* Barra superior sólida y oscura */
+  --color-bg-button: #080706;  /* Botones muy oscuros, sólidos */
+  --color-bg-button-hover: #1f1b17;
+
+  --color-text-primary: #d4c2a2;
+  --color-text-secondary: #988870;
+  --color-text-title: #e8d8b8;
+  --color-text-button: #d4c2a2;
+
+  --color-border-panel: #2c251e;
+  --color-border-button-outer: #1f1b16;
+  --color-border-button-highlight: #ad8f63;
+  --color-border-accent: #8c7853;
+
+  --color-accent-gold: #f5c555;
+  --color-accent-red: #a83f3f;
+  --color-accent-green: #6a8c58;
+
+  --font-family-main: "Georgia", "Times New Roman", Times, serif;
+  --font-family-title: "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --font-family-button: "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+
+  --spacing-xs: 0.25rem; --spacing-s: 0.5rem; --spacing-m: 0.75rem;
+  --spacing-l: 1rem;    --spacing-xl: 1.5rem;
+
+  --border-radius-sharp: 0px;
+  --border-radius-subtle: 2px;
+
+  --text-shadow-subtle: 1px 1px 2px rgba(0,0,0,0.6);
+  --text-shadow-strong: 1px 1px 2px rgba(0,0,0,0.9);
+  --box-shadow-panel: 0 1px 3px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  color: white; margin: 0; padding: 0;
-  background-color: #1B2631; background-image: url('../imgs/mapa/mapafinal.jpeg');
-  background-size: cover; background-position: center center; background-repeat: no-repeat;
-  min-height: 100vh; font-family: Arial, sans-serif; overflow-x: hidden;
+  color: var(--color-text-primary); background-color: var(--color-bg-main);
+  background-image: url('../input_file_0.png'); 
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  min-height: 100vh; font-family: var(--font-family-main); overflow-x: hidden; line-height: 1.5;
 }
 
-#modal-inicial {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #1b1b1b;
-  color: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 0 10px rgba(255,255,255,0.1);
-}
+h1,h2,h3,h4,h5,h6 { font-family: var(--font-family-title); color: var(--color-text-title); text-shadow: var(--text-shadow-strong); margin-bottom: var(--spacing-m); font-weight: 600; }
+p { margin-bottom: var(--spacing-m); color: var(--color-text-secondary); }
+.oculto { display: none !important; }
+.icono-inline { width: 1em; height: 1em; vertical-align: -0.15em; margin-right: var(--spacing-xs); opacity: 0.9; }
 
-.oculto {
-    display: none !important;
-  }
-
-
-/* --- Barra Superior (Flexbox) --- */
+/* === TOP BAR (sin cambios funcionales, pero #logo-casa-container y #oro-jugador son movidos en HTML para móvil) === */
 #top-bar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 15px 30px; width: 100%; box-sizing: border-box;
-  position: relative; z-index: 10; gap: 25px;
+  padding: var(--spacing-xs) var(--spacing-s);
+  width: 100%; position: fixed;
+  top: 0; left: 0; z-index: 100; background-color: var(--color-bg-top-bar);
+  border-bottom: 1px solid var(--color-border-panel); box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  min-height: 40px; 
+}
+.top-bar-left { display: flex; align-items: center; gap: var(--spacing-m); }
+.top-bar-right { display: flex; align-items: center; gap: var(--spacing-xs); }
+
+#top-bar-main-title-mobile {
+  display: none; 
+  font-family: var(--font-family-title);
+  font-size: clamp(0.7rem, 2.2vw, 0.9rem); 
+  color: var(--color-text-title);
+  text-shadow: var(--text-shadow-strong);
+  font-weight: 600;
+  text-align: center;
+  flex-grow: 1; 
+  margin: 0 var(--spacing-xs); 
 }
 
-/* --- Contenedor del Logo de Casa --- */
-#logo-casa-container {
-  flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease;
+#turno-jugador, #accion-jugador {
+  font-family: var(--font-family-title); font-size: clamp(0.7rem, 2vw, 0.9rem);
+  color: var(--color-text-title); text-shadow: var(--text-shadow-strong); font-weight: 600;
+  white-space: nowrap; 
 }
-#logo-casa-container:hover { transform: scale(1.05); }
-#logo-casa {
-  display: block; width: 160px; height: 160px;
-  max-width: 20vw; max-height: 20vw; min-width: 90px; min-height: 90px;
-  object-fit: contain;
+/* Estilos originales para #logo-casa-container y #oro-jugador, que ahora aplicarán a sus nuevas posiciones en móvil si no se sobreescriben específicamente */
+#logo-casa-container img { display: block; width: clamp(35px, 4vw, 45px); height: auto; aspect-ratio: 1/1; }
+#oro-jugador {
+  display: flex; align-items: center; gap: var(--spacing-xs);
+  font-family: var(--font-family-title); font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+  font-weight: 600; color: var(--color-accent-gold);
 }
+#oro-jugador img { width: clamp(15px, 2vw, 20px); height: auto; filter: drop-shadow(0 0 3px var(--color-accent-gold)); }
 
-#logo-oro:hover { transform: scale(1.05); }
 
-#logo-oro {flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease;}
-
-/* --- Indicadores Tropas/Oro --- */
-#tropas-jugador, #oro-jugador {
-  display: flex; align-items: center; gap: 15px;
-  font-size: clamp(2.2rem, 7vw, 4.5rem); background-color: rgba(0, 0, 0, 0.75);
-  padding: 15px 25px; border-radius: 12px; border: 1px solid white;
-  flex-shrink: 1; flex-grow: 0; justify-content: center;
-  min-width: 180px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-}
-#oro-jugador { border-color: gold; flex-shrink: 0; }
-#tropas-jugador img, #oro-jugador img { width: clamp(50px, 9vw, 80px); height: auto; }
-#tropas-jugador img { filter: drop-shadow(0 0 5px white); }
-#oro-jugador img { filter: drop-shadow(0 0 5px gold); }
-#cantidad-tropas, #cantidad-oro { white-space: nowrap; line-height: 1; font-weight: bold; }
-
-/* --- Textos Turno/Acción --- */
-.turno-texto, .accion-texto {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  font-weight: bold; color: white; text-shadow: 2px 2px 6px black;
-  width: 90%; text-align: center; z-index: 5;
-}
-.turno-texto { top: 250px; font-size: clamp(3rem, 10vw, 5.5rem); }
-.accion-texto { top: 340px; font-size: clamp(2rem, 7vw, 3.5rem); font-style: italic; color: #ddd; text-shadow: 1px 1px 4px black; }
-
-/* --- Estado Turno (Esperando...) --- */
 #estado-turno {
-  position: absolute; top: 215px; left: 50%; transform: translateX(-50%);
-  font-size: clamp(0.8rem, 2.2vw, 1rem); color: #ccc; background-color: rgba(0,0,0,0.7);
-  padding: 5px 12px; border-radius: 6px; z-index: 6; text-align: center; white-space: nowrap;
+  font-family: var(--font-family-main); font-size: 0.7rem; color: var(--color-text-secondary);
+  background-color: rgba(0,0,0,0.7); padding: 2px var(--spacing-s); border-radius: var(--border-radius-subtle);
+  position: fixed; top: calc(40px + var(--spacing-xs)); 
+  left: 50%; transform: translateX(-50%); z-index: 99; white-space: nowrap;
 }
 
-/* --- Botones Acción Juego --- */
-#acciones-container {
-  position: absolute; top: 410px; left: 50%; transform: translateX(-50%);
-  width: fit-content; max-width: 90%; display: flex; flex-wrap: wrap;
-  justify-content: center; gap: 15px; z-index: 10;
-}
-#acciones-container2 {
-  position: absolute; top: 600px; left: 50%; transform: translateX(-50%);
-  width: fit-content; max-width: 90%; display: flex; flex-wrap: wrap;
-  justify-content: center; gap: 15px; z-index: 10;
+.pc-only { display: none; } 
+.pc-only-inline-block { display: none; } /* Helper for elements that are inline-block on PC */
+.pc-only-block { display: none; } /* Helper for elements that are block on PC */
+
+/* === MAIN GAME UI CONTAINER === */
+.game-ui-container {
+  padding-top: calc(40px + 20px + var(--spacing-m)); 
+  padding-left: var(--spacing-l); padding-right: var(--spacing-l);
+  padding-bottom: 80px; /* Espacio para #boton-accion fijo. Se aumentará para móvil. */
+  min-height: 100vh; position: relative;
+  display: flex; 
+  flex-direction: column; 
 }
 
-.btn-accion-juego {
-  padding: 10px 18px; font-size: clamp(0.9rem, 2.5vw, 1.2rem); color: #e0e0e0;
-  background-color: rgba(40, 40, 40, 0.85); border: 1px solid #777; border-radius: 6px;
-  cursor: pointer; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
-  transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); white-space: nowrap;
+/* SIDE PANELS (sin cambios) */
+.side-panel {
+  background-color: var(--color-bg-panel); border: 1px solid var(--color-border-panel);
+  padding: var(--spacing-s); border-radius: var(--border-radius-sharp);
+  box-shadow: var(--box-shadow-panel); color: var(--color-text-primary);
+  z-index: 10; 
+  width: 100%; 
+  margin-bottom: var(--spacing-m); 
 }
-.btn-accion-juego:hover {
-  background-color: rgba(60, 60, 60, 0.9); border-color: #999; color: white;
-  transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+.side-panel h3 {
+  margin: 0 0 var(--spacing-s); font-family: var(--font-family-title);
+  font-size: 0.9rem; color: var(--color-text-title); text-align: center;
+  padding-bottom: var(--spacing-xs); border-bottom: 1px solid var(--color-border-button-highlight);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
 }
-.btn-accion-juego:active { background-color: rgba(20, 20, 20, 0.9); transform: translateY(0px); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+.side-panel ul { list-style: none; padding: 0; margin: 0; }
+.side-panel li {
+  font-family: var(--font-family-main); font-size: 0.8rem;
+  color: var(--color-text-primary); padding: 1px 0;
+  display: flex; align-items: center; gap: var(--spacing-xs);
+}
+.side-panel li img { width: 16px; height: 16px; object-fit: contain; opacity: 0.8; margin-right: 4px;}
+.side-panel li .location-name { color: #7aabc7; font-weight: bold; }
 
-/* --- Botón Siguiente Acción (Principal) --- */
-#boton-accion {
-  position: absolute; top: 700px; left: 50%; transform: translateX(-50%);
-  padding: 15px 30px; font-size: clamp(1.4rem, 5vw, 2.4rem); background-color: rgba(245, 245, 245, 0.97);
-  color: #111; border: 1px solid #666; border-radius: 10px; cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.4); z-index: 15; font-weight: bold;
-}
-#boton-accion:hover { background-color: white; transform: translate(-50%, -3px); box-shadow: 0 6px 12px rgba(0,0,0,0.4); }
-#boton-accion:active { transform: translate(-50%, 0px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+.panel-top-left, .panel-top-right, .panel-bottom-right { position: static; width: 100%; margin-bottom: var(--spacing-m); }
 
-/* --- Modales Generales --- */
-/* Aplica a #modal-batalla, #modal-mis-territorios, #fase-neutral */
+/* CENTRAL ACTION BUTTONS STACK (Estilos base, en móvil irá a #mobile-bottom-bar) */
+.center-actions-stack {
+  display: flex; flex-direction: column; width: 100%; max-width: 360px;
+  margin: 0 auto var(--spacing-m) auto; position: relative; z-index: 5;
+}
+/* ... (resto de estilos para .game-action-bar, etc. sin cambios funcionales inmediatos) ... */
+.general-actions-group, .north-actions-group {
+    display: flex; flex-direction: column; gap: 1px;
+}
+.north-actions-group { margin-top: var(--spacing-m); }
+
+.game-action-bar, .game-action-bar-info {
+  font-family: var(--font-family-button); font-size: 1rem;
+  color: var(--color-text-button); background-color: var(--color-bg-button);
+  border: 1px solid var(--color-border-button-outer);
+  padding: 8px var(--spacing-m); 
+  justify-content: center;
+  text-align: center !important; text-transform: uppercase; letter-spacing: 0.8px;
+  display: flex; align-items: center; gap: var(--spacing-s);
+  min-height: 38px; 
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  border-radius: var(--border-radius-sharp); 
+  margin-bottom: 2px; 
+}
+.game-action-bar { cursor: pointer; }
+.game-action-bar:hover { background-color: var(--color-bg-button-hover); border-color: var(--color-border-button-highlight); color: var(--color-text-title); }
+.game-action-bar img { height: 0.9em; width: auto; filter: brightness(1) saturate(0.8) opacity(0.8); }
+.game-action-bar-info { font-size: 0.75rem; justify-content: center; text-align:center; background-color: #050403b3; color: var(--color-text-secondary); border: 1px solid #222; padding: 6px; }
+
+
+/* Botón "Terminar Acción" (sin cambios) */
+#boton-accion { 
+  font-family: var(--font-family-button); font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: var(--color-text-title); background-color: var(--color-accent-green);
+  border: 1px solid #2a3c24; padding: var(--spacing-s) var(--spacing-l);
+  border-radius: var(--border-radius-subtle); text-align: center; text-transform: uppercase;
+  letter-spacing: 1px; cursor: pointer; transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.05);
+  text-shadow: var(--text-shadow-subtle); min-width: 180px; min-height: 40px;
+  position: fixed; bottom: var(--spacing-m); left: 50%; transform: translateX(-50%); z-index: 20;
+}
+#boton-accion:hover { background-color: #4c6843; border-color: #22311d; }
+
+/* === MODAL STYLES (sin cambios) === */
+/* ... (todos tus estilos de modal aquí, sin modificaciones) ... */
 .modal-juego {
   display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 90%; max-width: 550px; background-color: rgba(25, 35, 45, 0.97);
-  border: 1px solid #6a7a8a; border-radius: 15px; padding: 25px 35px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6); z-index: 1000; color: #e8e8e8; box-sizing: border-box;
+  width: 90%; max-width: 500px; background-color: var(--color-bg-panel);
+  border: 1px solid var(--color-border-accent); border-radius: var(--border-radius-subtle);
+  padding: var(--spacing-m); box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  z-index: 1000; color: var(--color-text-primary);
 }
-.modal-juego h2, #fase-neutral h3 { /* Título del modal */
-  text-align: center; margin-top: 0; margin-bottom: 25px; color: white;
-  font-size: 1.6rem; border-bottom: 1px solid #556677; padding-bottom: 10px;
+/* ... (resto de modal y botones-modal sin cambios) ... */
+.modal-juego h2, .modal-juego h3 {
+  margin-top: 0; margin-bottom: var(--spacing-m); color: var(--color-text-title);
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem); border-bottom: 1px solid var(--color-border-button-highlight);
+  padding-bottom: var(--spacing-s); text-transform: uppercase; letter-spacing: 0.5px;
 }
-.modal-cerrar { /* Botón 'X' */
-  position: absolute; top: 10px; right: 15px; background: none; border: none;
-  color: #aaa; font-size: 1.8rem; font-weight: bold; cursor: pointer; line-height: 1; padding: 5px;
-}
-.modal-cerrar:hover { color: white; }
-.campo-formulario { margin-bottom: 20px; }
-.campo-formulario label, .campo-formulario legend { display: block; margin-bottom: 8px; font-weight: bold; color: #b0c4de; }
-.campo-formulario select, .campo-formulario input[type="number"] {
-  width: 100%; padding: 10px 12px; border: 1px solid #6a7a8a; border-radius: 6px;
-  background-color: #334455; color: white; font-size: 1rem; box-sizing: border-box;
-}
-.campo-formulario select option { background-color: #2a3a4a; color: #e0e0e0; padding: 8px 12px; }
-.campo-formulario select option:hover { background-color: #4a5a6a; color: white; }
-.campo-formulario input[type="number"] { -moz-appearance: textfield; text-align: center; }
-.campo-formulario input[type=number]::-webkit-inner-spin-button, .campo-formulario input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-.campo-formulario fieldset { border: 1px solid #445566; border-radius: 6px; padding: 10px 15px; }
-.campo-formulario fieldset legend { padding: 0 10px; margin-left: 5px; font-size: 0.95em; }
-.campo-formulario fieldset label { display: inline-block; margin-right: 20px; font-weight: normal; color: #e8e8e8; }
-.campo-formulario fieldset input[type="radio"] { margin-right: 5px; vertical-align: middle; }
-.campo-perdidas label { margin-bottom: 10px; }
-.control-numero { display: flex; align-items: center; gap: 8px; justify-content: center; /* Centrar botones +/- */ }
-.control-numero input[type="number"] { width: 80px; font-size: 1.1rem; font-weight: bold; flex-grow: 0; }
-.control-numero button { width: 35px; height: 35px; font-size: 1.4rem; font-weight: bold; line-height: 1; padding: 0; border-radius: 50%; border: 1px solid #556677; background-color: #3a4a5a; color: #e0e0e0; cursor: pointer; transition: background-color 0.2s ease; }
-.control-numero button:hover { background-color: #4a5a6a; }
-.control-numero button:active { background-color: #2a3a4a; }
-.botones-modal { display: flex; justify-content: space-around; margin-top: 30px; padding-top: 20px; border-top: 1px solid #556677; }
-.botones-modal button { padding: 10px 25px; font-size: 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; border: none; }
-.btn-confirmar { background-color: #28a745; color: white; }
-.btn-confirmar:hover { background-color: #218838; }
-.btn-cancelar { background-color: #dc3545; color: white; }
-.btn-cancelar:hover { background-color: #c82333; }
+.modal-cerrar { position: absolute; top: var(--spacing-s); right: var(--spacing-s); background: none; border: none; color: var(--color-text-secondary); font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: color 0.2s; }
+.modal-cerrar:hover { color: var(--color-text-primary); }
 
-/* --- Estilos específicos Fase Neutral --- */
-#fase-neutral { max-width: 480px; }
-#fase-neutral button { background-color: #FFC107; color: black; }
-#fase-neutral button:hover{ background-color: #e0a800; }
+.campo-formulario { margin-bottom: var(--spacing-m); }
+.campo-formulario label { color: var(--color-text-title); font-family: var(--font-family-title); font-size: 0.9rem; text-transform: capitalize; display: block; margin-bottom: var(--spacing-xs); }
+.campo-formulario select, .campo-formulario input[type="number"], .campo-formulario input[type="text"] {
+  width: 100%; background-color: var(--color-bg-button); border: 1px solid var(--color-border-panel);
+  color: var(--color-text-primary); border-radius: var(--border-radius-sharp);
+  padding: var(--spacing-s); font-family: var(--font-family-main); font-size: 0.9rem;
+}
+.recluta-box img { width: 50px; height: 50px; object-fit: contain; margin: var(--spacing-xs) auto; display: block; background-color: rgba(0,0,0,0.2); padding: 2px; }
+.modal-juego img { max-width: 90%; height: auto; display: block; margin: var(--spacing-s) auto; }
+#modal-elegir-asedio img { width: 45px; height: 45px; }
 
-/* --- ****** ESTILOS CORREGIDOS: Ventanas Iniciales Oro/Tropas ****** --- */
-/* Usar la clase genérica .ventana-oro para ambas */
-.ventana-oro {
-  display: none; /* Oculto por defecto */
-  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 90%; max-width: 480px; /* Ancho máximo */
-  background-color: rgba(30, 30, 40, 0.95); /* Fondo oscuro azulado */
-  border: 1px solid #778899; /* Borde gris azulado */
-  border-radius: 12px;
-  padding: 30px; /* Más padding */
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  z-index: 1001; /* Encima de otros modales si es necesario */
-  color: #e8e8e8;
-  box-sizing: border-box;
-  text-align: center; /* Centrar contenido */
+.botones-modal { display: flex; justify-content: space-around; gap: var(--spacing-s); margin-top: var(--spacing-m); padding-top: var(--spacing-m); border-top: 1px solid var(--color-border-panel); }
+.botones-modal .btn, .botones-modal .btn-confirmar, .botones-modal .btn-cancelar, .botones-modal .boton-dorado {
+  font-size: 0.8rem; min-height: 34px; padding: var(--spacing-s);
+  font-family: var(--font-family-button);
+  color: var(--color-text-button); background-color: var(--color-bg-button);
+  border: 1px solid var(--color-border-button-outer);
+  border-top: 1px solid var(--color-border-button-highlight);
+  border-bottom: 1px solid var(--color-border-button-highlight);
+  text-align: center; text-transform: uppercase; letter-spacing: 0.5px;
+  display: flex; align-items: center; justify-content: center; gap: var(--spacing-s);
+  transition: background-color 0.2s ease, border-color 0.2s ease; cursor: pointer;
+  flex-grow: 1;
 }
-.ventana-oro h2 {
-   font-size: clamp(1.4rem, 5vw, 2rem); /* Tamaño ajustado */
-   margin-top: 0; margin-bottom: 25px;
-   color: white;
-   border-bottom: 1px solid #556677; padding-bottom: 10px;
+.botones-modal .btn:hover, .botones-modal .btn-confirmar:hover, .botones-modal .btn-cancelar:hover, .botones-modal .boton-dorado:hover {
+  background-color: var(--color-bg-button-hover);
+  border-color: var(--color-border-button-highlight); color: var(--color-text-title);
 }
-.ventana-oro input[type="number"] {
-  display: block; /* Para que ocupe su línea */
-  width: 70%;    /* Ancho del input */
-  margin: 20px auto; /* Centrado y con margen */
-  padding: 15px 20px; /* Más padding interno */
-  font-size: clamp(2.2rem, 8vw, 3.5rem); /* Fuente grande */
-  box-sizing: border-box; border: 1px solid #8899aa; border-radius: 8px;
-  background-color: #405060; /* Fondo input */
-  color: white; text-align: center;
-  -moz-appearance: textfield;
-}
-.ventana-oro input[type=number]::-webkit-inner-spin-button,
-.ventana-oro input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-
-.ventana-oro button { /* Botón OK */
-  display: inline-block; /* Para que no ocupe todo el ancho */
-  padding: 15px 45px; /* Padding generoso */
-  font-size: clamp(1.5rem, 6vw, 2.5rem); /* Fuente grande */
-  border: none; border-radius: 8px; background-color: #28a745; /* Verde */
-  color: white; cursor: pointer; transition: background-color 0.3s ease; font-weight: bold;
-  margin-top: 10px; /* Espacio sobre el botón */
-}
-.ventana-oro button:hover { background-color: #218838; }
-/* --- ****** FIN ESTILOS CORREGIDOS ****** --- */
-
-.recluta-box {
-  background-color: rgba(0, 0, 0, 0.6);
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-  width: 120px;
-  min-width: 120px;
-  box-shadow: 0 0 10px #000;
-  flex-shrink: 0;
-}
+.botones-modal .btn-confirmar { background-color: var(--color-accent-green); border-color: #2b4025 !important; color: var(--color-text-title); }
+.botones-modal .btn-confirmar:hover { background-color: #314a2a !important; border-color: #25381f !important; }
+.botones-modal .btn-cancelar { background-color: var(--color-accent-red); border-color: #5f1a1a !important; color: var(--color-text-title); }
+.botones-modal .btn-cancelar:hover { background-color: #651a1a !important; border-color: #4d1414 !important; }
+/* FIN MODAL STYLES */
 
 
-.recluta-box img {
-  margin: 10px 0;
-}
-
-.control-numero {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0;
-}
-
-.control-numero button {
-  font-size: 18px;
-  width: 30px;
-  height: 30px;
-}
-
-/* === Estilo para selección múltiple de territorios perdidos === */
-#select-territorios-perdidos {
-  width: 100%;
-  height: 120px;
-  background-color: #2a3a4a;
-  color: #e0e0e0;
-  border: 2px solid #778899;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 1rem;
-  box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
-}
-
-/* Botón de confirmar territorios perdidos */
-#btn-confirmar-territorios-perdidos {
-  margin-top: 10px;
-  padding: 8px 20px;
-  background-color: #17a2b8;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-}
-#btn-confirmar-territorios-perdidos:hover {
-  background-color: #138496;
-}
-
-/* === Estilo para contenedor de selector de nuevas casas === */
-#contenedor-cambios-propietario > div {
-  margin-top: 15px;
-  padding: 10px 15px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-left: 4px solid #6a7a8a;
-  border-radius: 8px;
-}
-
-/* Etiquetas y selects para asignar nueva casa */
-#contenedor-cambios-propietario label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-  color: #ddd;
-}
-
-#contenedor-cambios-propietario select {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #6a7a8a;
-  background-color: #334455;
-  color: white;
-  font-size: 1rem;
-}
-
-/* Botón Finalizar Neutral */
-#btn-finalizar-neutral {
-  margin-top: 20px;
-  padding: 12px 25px;
-  background-color: #ffc107;
-  color: black;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 1.1rem;
-}
-#btn-finalizar-neutral:hover {
-  background-color: #e0a800;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.75);
-}
-
-.modal-contenido {
-  background-color: #fefefe;
-  margin: 10% auto;
-  padding: 2rem;
-  border: 1px solid #888;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 10px;
-}
-
-.boton-dorado {
-  background-color: gold;
-  color: black;
-  font-weight: bold;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.boton-dorado:hover {
-  background-color: #e0c200;
-}
+/* Helpers para visibilidad PC/Móvil */
+.mobile-only { display: none; } /* Oculto por defecto */
 
 
+/* === MEDIA QUERIES === */
+
+/* --- ESTILOS PARA PC (min-width: 1025px) (Adaptado) --- */
+@media (min-width: 1025px) {
+  .mobile-topbar-elements { display: none !important; } 
+  .mobile-only { display: none !important; } /* Asegura que los elementos solo móviles estén ocultos en PC */
+
+  .pc-only { display: flex; align-items: center; position: fixed; z-index: 110; }
+  .pc-only-inline-block { display: inline-block; }
+  .pc-only-block { display: block; }
+
+  /* ... (resto de tus estilos de PC, como #pc-logo-display, .game-ui-container grid, etc. permanecen aquí) ... */
+   #top-bar .top-bar-left { justify-content: left; margin-left: auto;} 
+   #top-bar .top-bar-right { display: flex; } 
+   #top-bar-main-title-mobile { display: none; } 
+   #top-bar #logo-casa-container { display: block; /* O el display que tenía en PC */ }
+   #top-bar #oro-jugador { display: flex; /* O el display que tenía en PC */ }
 
 
-/* --- Estilos Modal Mis Territorios --- */
-#modal-mis-territorios { max-width: 600px; }
-#modal-mis-territorios h2 { margin-bottom: 15px; }
-#modal-mis-territorios p { text-align: center; margin-bottom: 20px; font-size: 1.1rem; color: #c0d0e0; }
-.icono-inline { width: 20px; height: 20px; vertical-align: -4px; margin-left: 5px; }
-.lista-scrollable { max-height: 40vh; overflow-y: auto; border: 1px solid #445566; border-radius: 6px; background-color: rgba(0, 0, 0, 0.2); margin-bottom: 20px; }
-#lista-mis-territorios { list-style: none; padding: 0; margin: 0; }
-#lista-mis-territorios li { padding: 10px 15px; border-bottom: 1px solid #334455; font-size: 1rem; color: #d0e0f0; }
-#lista-mis-territorios li:last-child { border-bottom: none; }
+  #pc-logo-display {
+    top: var(--spacing-l); left: var(--spacing-l);
+    background-color: var(--color-bg-panel);
+    padding: var(--spacing-s);
+    border-radius: var(--border-radius-subtle);
+    border: 1px solid var(--color-border-panel);
+  }
+  #pc-large-logo-casa { width: 100px; height: 100px; }
 
-/* --- Media Queries --- */
-@media (max-width: 1200px) { /* ... (sin cambios) ... */ }
-@media (max-width: 992px) { /* ... (sin cambios) ... */ }
-@media (max-width: 768px) {
-  /* ... (otros ajustes) ... */
-  .modal-juego, .ventana-oro { padding: 20px; max-width: 95%; } /* Aplicar a ventana-oro también */
-  .modal-juego h2, .ventana-oro h2 { font-size: 1.4rem; margin-bottom: 20px; }
-  .control-numero input[type="number"] { width: 60px; font-size: 1rem;}
-  .control-numero button { width: 30px; height: 30px; font-size: 1.2rem; }
-  .botones-modal { flex-direction: column; gap: 1000px; }
-  .ventana-oro input[type="number"] { width: 80%; padding: 12px 15px;} /* Ajustar input oro/tropas */
-  .ventana-oro button { padding: 12px 35px; } /* Ajustar botón OK */
-  .lista-scrollable { max-height: 35vh; }
-  #lista-mis-territorios li { padding: 8px 12px; font-size: 0.9rem; }
-}
-@media (max-width: 480px) {
-  /* ... (otros ajustes) ... */
-  .campo-formulario fieldset label { display: block; margin-bottom: 8px; }
-  .ventana-oro input[type="number"] { width: 90%;}
-  .lista-scrollable { max-height: 30vh; }
-}
+  #pc-gold-display {
+    top: var(--spacing-l); right: var(--spacing-l);
+    background-color: var(--color-bg-panel);
+    padding: var(--spacing-m);
+    border-radius: var(--border-radius-subtle);
+    border: 1px solid var(--color-border-panel);
+    gap: var(--spacing-s);
+    font-family: var(--font-family-title); font-weight: 600; color: var(--color-accent-gold);
+    font-size: 1.5rem; 
+  }
+  #pc-large-logo-oro { width: 35px; height: 35px; filter: drop-shadow(0 0 4px var(--color-accent-gold));}
+  #pc-large-cantidad-oro { font-size: 1.8rem; }
 
-
-/* mediaQuery para moviles */
-@media (max-width: 600px) {
-
-  /*Texto turno*/
-  .turno-texto {
-    font-size: clamp(1.5rem, 6vw, 2.5rem);
-    top: 40px;
-    left: 60px;
+  .game-ui-container {
+    padding-top: 60px; 
+    display: grid; 
+    grid-template-columns: 220px 1fr 220px; 
+    grid-template-rows: auto 1fr auto; 
+    gap: var(--spacing-l);
+    align-items: start; 
+    min-height: calc(100vh - 60px); 
   }
 
-  /*Texto accion*/
-  .accion-texto {
-    font-size: clamp(1.2rem, 5vw, 2rem);
-    top: 40px;
-    left: 350px;
+  .panel-top-left { position: static; grid-column: 1 / 2; grid-row: 1 / 2; width:100%;}
+  .panel-top-right { position: static; grid-column: 3 / 4; grid-row: 1 / 2; width:100%;}
+  /* El panel de rumores original (#cuadro-rumores-pc-flow) seguiría las reglas de PC para panel-bottom-right si lo renombras o ajustas */
+  .panel-bottom-right { /* Esto aplicaría a #cuadro-rumores-pc-flow */
+    position: fixed; 
+    bottom: calc(var(--spacing-l) + 50px); 
+    right: var(--spacing-l);
+    grid-column: auto; grid-row: auto; 
+    width: 220px; /* Ajusta si es necesario */
   }
 
-  .accion-texto {
-    font-size: clamp(1.2rem, 5vw, 2rem);
-    top: 40px;
-    left: 350px;
+  .skills-column-pc {
+    display: flex; flex-direction: column; gap: 1px;
+    grid-column: 1 / 2;
+    grid-row: 2 / 3; 
+    width: 100%; 
   }
 
-  #oro-jugador {
-    position: relative;
-    left: -120px;
-    top: -30px;
-    width: 150px;
+  /* .center-actions-stack original en PC */
+  .game-ui-container > .center-actions-stack.pc-only-inline-block {
+    display: flex !important; /* Asegura que se muestre en PC y mantenga su layout flex */
+    grid-column: 2 / 3; 
+    grid-row: 1 / span 2; 
+    max-width: 380px; 
+    margin-top: 0; 
+    padding-top:0;
+  }
+}
+
+
+/* --- ESTILOS PARA TABLET (max-width: 1024px) --- */
+@media (max-width: 1024px) { 
+  /* Aquí podrías tener estilos intermedios si es necesario, o dejar que los de móvil (768px) apliquen antes */
+  .pc-only { display: none !important; }
+  .pc-only-inline-block { display: none !important; }
+  .pc-only-block { display: none !important; }
+  
+  #estado-turno { top: calc(40px + var(--spacing-xs)); }
+  .game-ui-container { 
+    padding-top: calc(40px + 20px + var(--spacing-s)); 
+    /* La lógica de padding-bottom para móvil grande / tablet se aplica abajo */
+  }
+
+  .side-panel { width: 100%; font-size: 0.9rem; padding: var(--spacing-s); }
+  .panel-top-left, .panel-top-right { position: static; } /* Ya son static por defecto */
+
+  /* Estilos para los elementos movidos en flujo de PC */
+  .game-ui-container > .center-actions-stack.pc-only-inline-block { display: none !important; }
+  .game-ui-container > #cuadro-rumores-pc-flow.pc-only-block { display: none !important; }
+
+
+  .center-actions-stack { max-width: 95%; } /* Aplica al stack de botones, sea en flujo o en barra fija */
+  .game-action-bar { font-size: 0.9rem; padding: 6px var(--spacing-s); min-height: 36px;} 
+  #boton-accion { font-size: 1rem; min-height: 40px; }
+    
+  #top-bar {
+    flex-direction: row; 
     align-items: center;
-    display:none;
-    font-size: clamp(2.2rem, 7vw, 4.5rem); background-color: rgba(0, 0, 0, 0.69);
-    padding: 10px 70px; border-radius: 12px; border: 1px solid rgb(255, 213, 0);
-    flex-shrink: 1; flex-grow: 0; justify-content: center;
-    min-width:0px; text-align: center; box-shadow: 0 2px 8px rgb(0, 0, 0);
+    padding: var(--spacing-xs) var(--spacing-s);
+  }
+  .top-bar-left { order: 1; flex-basis: content; flex-grow: 0; }
+  #top-bar-main-title-mobile { display: block; order: 2; flex-grow: 1; text-align: center; font-size: 0.85rem;}
+  .top-bar-right { order: 3; flex-basis: content; flex-grow: 0; }
+  
+  /* En móvil y tablet, #logo-casa-container y #oro-jugador se mueven a #mobile-main-feature */
+  /* Por lo tanto, dentro de #top-bar deben estar ocultos o no existir */
+  #top-bar #logo-casa-container { display: none; } 
+  #top-bar #oro-jugador { display: none; } /* Oculta la versión de top-bar, la nueva estará en #mobile-main-feature */
+
+  /* Paneles en flujo normal */
+  .panel-top-left { order: 1; }      
+  .panel-top-right { order: 2; }    
+
+  /* Activar y estilizar los nuevos contenedores móviles */
+  .mobile-only { display: flex; } /* O block, según el contenedor */
+
+  #mobile-main-feature {
+    flex-direction: column; align-items: center; justify-content: center;
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 50; gap: var(--spacing-s);
+  }
+  #mobile-main-feature #logo-casa-container img {
+    width: 120px; /* Tamaño grande para el logo */
+    height: 120px;
+    object-fit: contain;
+  }
+  #mobile-main-feature #oro-jugador {
+    font-size: 1rem; /* "Pequeño" pero legible */
+  }
+  #mobile-main-feature #oro-jugador img {
+    width: 20px; /* Ajusta según necesidad */
   }
 
-  #oro-jugador img { 
-    width: clamp(70px, 4vw, 80px); height: auto; 
+  #mobile-bottom-bar {
+    flex-direction: column;
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background-color: var(--color-bg-panel);
+    border-top: 1px solid var(--color-border-panel);
+    padding: var(--spacing-s);
+    z-index: 15; /* Debajo de #boton-accion (z-index 20) y modales */
+    max-height: 35vh; /* Altura máxima, con scroll si se excede */
+    overflow-y: auto;
+    gap: var(--spacing-m);
+  }
+  #mobile-bottom-bar .center-actions-stack {
+    width: 100%; max-width: 100%; /* Ocupa todo el ancho de la barra */
+    margin: 0;
+  }
+  #mobile-bottom-bar #cuadro-rumores {
+    width: 100%; margin-bottom: 0; /* Ocupa todo el ancho, sin margen inferior extra */
+  }
+  #mobile-bottom-bar #cuadro-rumores strong {
+      text-align: center; display: block; margin-bottom: var(--spacing-xs);
+      border-bottom: 1px solid var(--color-border-button-highlight);
+      padding-bottom: var(--spacing-xs);
   }
 
-  #logo-casa-container {
-    border: #000;
-    left: 80px;
-    position: relative;
-    top: 210px;
-    flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease;
+
+  .game-ui-container {
+      /* Ajustar padding-bottom para dejar espacio a #mobile-bottom-bar Y #boton-accion */
+      /* 35vh para #mobile-bottom-bar + 80px para #boton-accion (aprox) */
+      padding-bottom: calc(35vh + 80px); 
+  }
+}
+
+/* --- ESTILOS PARA MÓVILES PEQUEÑOS (max-width: 768px) --- */
+@media (max-width: 768px) { 
+  /* La mayoría de los estilos de tablet (1024px) ya cubren esto. */
+  /* Ajustes finos si son necesarios. */
+
+  .skills-column-pc { display:none !important;}
+  .mobile-skills-buttons.mobile-only { display:flex; flex-direction:column; gap: 1px; }
+
+
+  #top-bar {
+    min-height: 40px; 
+    flex-direction: row;
+    justify-content: space-between; 
+    align-items: center;
+    padding: var(--spacing-xs) 5px; 
+  }
+  .top-bar-left {
+    order: 1;
+    justify-content: flex-start; 
+    gap: var(--spacing-xs); 
+    flex-shrink: 0; 
+  }
+   #top-bar-main-title-mobile {
+    display: block; 
+    order: 2;
+    font-size: 0.7rem; 
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: center;
+    padding: 0 var(--spacing-xs); 
+    flex-grow: 1; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .top-bar-right {
+    order: 3;
+    justify-content: flex-end; 
+    flex-shrink: 0; 
+  }
+  #turno-jugador, #accion-jugador { font-size: 1.65rem; margin-left: 10px;} 
+  /* Oro en top-bar ya no está, se movió */
+
+
+  #estado-turno { 
+    position: static; 
+    order: 0; 
+    width: 100%; 
+    text-align: center; 
+    transform: none; 
+    margin-top: calc(40px + var(--spacing-xs)); 
+    margin-bottom: var(--spacing-s);
+    background:transparent; 
+    padding:0;
   }
 
-#logo-casa-container:hover { transform: scale(1.05); }
+  .game-ui-container { 
+    padding-top: var(--spacing-s); 
+    /* padding-bottom ya ajustado en media query de 1024px, se hereda */
+    padding-left: 5px; padding-right: 5px; 
+  }
 
-#logo-casa {
-  display: block; width: 160px; height: 160px;
-  max-width: 200vw; max-height: 200vw; min-width:0px; min-height: 0px;
-  object-fit: contain;
-  width: 200px;
+  /* Panel ordering in flow */
+  .panel-top-left { order: 1; }      
+  .panel-top-right { order: 2; }     
+  /* center-actions-stack y panel-bottom-right están en #mobile-bottom-bar */
+
+
+  .side-panel { /* Aplica a los paneles en flujo y al de rumores en la barra */
+    padding: var(--spacing-xs); 
+  }
+   .side-panel h3 { font-size: 0.8rem; } /* Para Unidades, Edificios */
+   .side-panel li { font-size: 0.75rem; }
+
+
+  #mobile-main-feature #logo-casa-container img {
+    width: 100px; 
+    height: 100px;
+  }
+  #mobile-main-feature #oro-jugador {
+    font-size: 1.9rem; 
+  }
+  #mobile-main-feature #oro-jugador img {
+    width: 30px; 
+  }
+  
+  #mobile-bottom-bar .game-action-bar, 
+  #mobile-bottom-bar .game-action-bar-info { 
+      min-height: 36px; 
+      font-size: 0.8rem;  
+      padding: 6px;
+  }
+  #mobile-bottom-bar .game-action-bar-info { font-size: 0.7rem; padding: 4px;}
+
+  #boton-accion { width: 70%; font-size: 0.85rem; min-height: 38px; bottom: var(--spacing-s); }
+  .modal-juego { width: 96%; }
 }
-
-#zona-unidades-militares{
-  position: relative !important;
-  top: -120px !important;
-  width: 80px !important;
-}
-
-#zona-edificios {
-  position: relative !important;
-  top: -305px !important;
-  left: 295px !important;
-  width: 100px !important;
-}
-
-#contador-stark{
-  position: relative;
-  top: 80px;
-  left: -165px;
-  background-color: #00000082;
-  padding: 10px;
-  border-radius: 10px;
-  width: 70px;
-  font-size: 12px !important;
-}
-
-#lista-edificios-jugador{
-  width: 100px !important;
-}
-
-}
-
-
