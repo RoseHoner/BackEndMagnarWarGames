@@ -216,6 +216,7 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   levasStarkUsadas: false,
   refuerzoTullyUsadoEsteTurno: false,
 
+
 };
 
   });
@@ -225,6 +226,130 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
 // Cuando un cliente se conecta por socket
 io.on('connection', (socket) => {
   console.log(`🔌 Connect: ${socket.id}`);
+
+  socket.on("tyrell-revuelta-campesina", ({ partida, nombre, casaObjetivo, tropasGanadas }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador || jugador.casa !== "Tyrell") return;
+
+  jugador.tropas = (jugador.tropas || 0) + tropasGanadas;
+
+  // El jugador objetivo pierde tropas y territorios (pedimos luego por modal)
+  const socketObjetivo = Object.entries(room.playerSockets).find(([nombreJ, _]) =>
+    room.estadoJugadores[nombreJ]?.casa === casaObjetivo
+  );
+  if (socketObjetivo) {
+    const [nombreObjetivo, idSocket] = socketObjetivo;
+    io.to(idSocket).emit("abrir-modal-revuelta-perdidas", {
+      casaAtacante: "Tyrell"
+    });
+  }
+
+  const territoriosRivales = Object.keys(room.estadoTerritorios).filter(
+  t => room.estadoTerritorios[t].propietario === casaObjetivo
+);
+
+const idSocketTyrell = room.playerSockets[nombre];
+if (idSocketTyrell) {
+  io.to(idSocketTyrell).emit("mostrar-modal-territorios-revuelta", {
+    territorios: territoriosRivales
+  });
+}
+
+
+  // Actualizar estado
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
+  // Pasar acción
+  if (!room.jugadoresAccionTerminada.includes(nombre)) {
+    room.jugadoresAccionTerminada.push(nombre);
+  }
+
+  const total = room.players.length;
+  if (room.jugadoresAccionTerminada.length === total) {
+    room.jugadoresAccionTerminada = [];
+    room.accionActual += 1;
+    if (room.accionActual > 4) {
+      room.accionActual = 1;
+      room.turnoActual += 1;
+    }
+
+    // reset del flag
+    for (const j of Object.values(room.estadoJugadores)) {
+      j.revueltaTyrellUsadaEsteTurno = false;
+    }
+
+    io.to(partida).emit("avanzar-accion", {
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  }
+});
+
+
+socket.on("tyrell-confirmar-territorios-revuelta", ({ partida, nombre, casaObjetivo, territorios }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  if (!territorios || !Array.isArray(territorios)) return;
+
+  territorios.forEach(nombreT => {
+    const territorio = room.estadoTerritorios[nombreT];
+    if (territorio && territorio.propietario === casaObjetivo) {
+      territorio.propietario = "Tyrell";
+    }
+  });
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
+socket.on("tyrell-revuelta-perdidas", ({ partida, nombre, perdidas, territoriosPerdidos }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador) return;
+
+  // restar tropas
+  for (const tipo in perdidas) {
+  const cantidad = parseInt(perdidas[tipo]) || 0;
+
+  // Solo restamos si el jugador tiene esa unidad definida
+  if (jugador.hasOwnProperty(tipo)) {
+    jugador[tipo] = Math.max(0, jugador[tipo] - cantidad);
+  }
+}
+
+
+  // cambiar propietario
+  for (const t of territoriosPerdidos) {
+    if (room.estadoTerritorios[t]?.propietario === jugador.casa) {
+      room.estadoTerritorios[t].propietario = "Tyrell";
+    }
+  }
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+
 
   socket.on('greyjoy-saquear', ({ partida, nombre, oro }) => {
   const room = rooms[partida];

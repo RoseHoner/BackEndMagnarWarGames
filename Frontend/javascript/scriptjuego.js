@@ -30,6 +30,12 @@ window.esAtaqueNorteStark = false;
 let jinetesPendientes = 0;
 let ataquePendiente = null;
 
+const TODAS_LAS_CASAS = [
+  "Stark", "Tully", "Arryn", "Lannister", "Tyrell",
+  "Baratheon", "Martell", "Targaryen", "Greyjoy"
+];
+
+
 
 const RUMORES_POR_CASA = {
   Stark: ["Camino del Silencio", "Aliento de los Antiguos", "Cornamenta de Skagos"],
@@ -433,6 +439,47 @@ function renderizarModalPerdidasAtaque(jugadorData) {
   abrirModal('modal-perdidas-ataque');
 }
 
+function renderizarInputsPerdidasRevuelta() {
+  const contenedor = document.getElementById('lista-perdidas-revuelta');
+  contenedor.innerHTML = '';
+
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador) return;
+
+  const unidades = [
+  { key: 'tropas', nombre: 'Tropas normales' },
+  { key: 'mercenarios', nombre: 'Mercenarios' },
+  { key: 'elite', nombre: 'Mercenarios de élite' },
+  { key: 'caballeros', nombre: 'Caballeros' },
+  { key: 'huargos', nombre: 'Huargos' },
+  { key: 'unicornios', nombre: 'Unicornios' },
+  { key: 'murcielagos', nombre: 'Murciélagos' },
+  { key: 'guardiareal', nombre: 'Guardia Real' },
+  { key: 'tritones', nombre: 'Tritones' },
+  { key: 'venadosblancos', nombre: 'Venados Blancos' },
+  { key: 'martilladores', nombre: 'Martilladores' },
+  { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa' },
+  { key: 'guardiadelalba', nombre: 'Guardia del Alba' },
+  { key: 'barcos', nombre: 'Barcos' },
+  { key: 'barcolegendario', nombre: 'Barco Legendario' },
+  { key: 'jinete', nombre: 'Jinetes' },
+  { key: 'dragon', nombre: 'Dragones' },
+];
+ // Usa el mismo array de unidades
+  unidades.forEach(({ key, nombre }) => {
+    const cantidad = jugador[key] ?? 0;
+    if (cantidad > 0) {
+      const div = document.createElement('div');
+      div.classList.add('campo-formulario');
+      div.innerHTML = `
+        <label for="perdida-${key}">${nombre} (Tienes ${cantidad}):</label>
+        <input type="number" id="perdida-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
+      `;
+      contenedor.appendChild(div);
+    }
+  });
+}
+
 
 function renderizarInputsPerdidas() {
   const contenedor = document.getElementById('lista-perdidas-por-unidad');
@@ -705,6 +752,18 @@ if (btnKraken) {
     btnKraken.style.display = 'none';
   }
 }
+
+const btnRevuelta = document.getElementById('btn-revuelta-campesina');
+if (btnRevuelta) {
+  const jugador = gameState.jugadores?.[nombre];
+  const tieneRumor = jugador?.rumoresDesbloqueados?.includes("Levantamiento del Pueblo");
+  const tieneSepto = Object.values(gameState.territorios || {}).some(
+    t => t.propietario === "Tyrell" && t.edificios.includes("Septo")
+  );
+  btnRevuelta.style.display = (casa === "Tyrell" && tieneRumor && tieneSepto && !jugador?.revueltaTyrellUsadaEsteTurno)
+    ? "inline-block" : "none";
+}
+
 
 
 
@@ -1734,6 +1793,72 @@ if (btnLevasStark) {
   });
 }
 
+setupListener('btn-revuelta-campesina', 'click', () => {
+  const select = document.getElementById("select-casa-revuelta");
+  select.innerHTML = `<option value="">-- Elige casa --</option>`;
+
+  const TODAS_LAS_CASAS = [
+    "Stark", "Tully", "Arryn", "Lannister", "Tyrell",
+    "Baratheon", "Martell", "Targaryen", "Greyjoy"
+  ];
+
+  TODAS_LAS_CASAS.forEach(casa => {
+    const option = document.createElement("option");
+    option.value = casa;
+    option.textContent = casa;
+    select.appendChild(option);
+  });
+
+  abrirModal("modal-revuelta-tyrell");
+});
+
+
+
+setupListener("btn-cancelar-revuelta-tyrell", "click", () => {
+  cerrarModal("modal-revuelta-tyrell");
+});
+
+document.getElementById("btn-confirmar-territorios-revuelta")?.addEventListener("click", () => {
+  const seleccionados = Array.from(
+    document.querySelectorAll("#lista-territorios-revuelta input:checked")
+  ).map(e => e.value);
+
+  socket.emit("tyrell-confirmar-territorios-revuelta", {
+    partida,
+    nombre,
+    casaObjetivo: window.casaObjetivoRevuelta,
+    territorios: seleccionados
+  });
+
+  cerrarModal("modal-territorios-revuelta");
+});
+
+
+document.getElementById("btn-confirmar-revuelta-tyrell")?.addEventListener("click", () => {
+  const casaObjetivo = document.getElementById("select-casa-revuelta").value;
+  const tropasGanadas = parseInt(document.getElementById("input-tropas-revuelta").value);
+
+  if (!casaObjetivo || isNaN(tropasGanadas) || tropasGanadas <= 0) {
+    alert("Selecciona una casa y una cantidad válida");
+    return;
+  }
+
+  socket.emit("tyrell-revuelta-campesina", {
+    partida,
+    nombre,
+    casaObjetivo,
+    tropasGanadas
+  });
+
+  cerrarModal("modal-revuelta-tyrell");
+
+  // Guardar temporalmente la casa atacada para usarla después en el modal de territorio
+  window.casaObjetivoRevuelta = casaObjetivo;
+});
+
+
+
+
 setupListener('btn-ritual-kraken-greyjoy', 'click', () => {
   abrirModal('modal-ritual-kraken');
 });
@@ -1917,6 +2042,18 @@ document.getElementById('btn-hijo-no').addEventListener('click', () => {
     finalizarFaseNeutralYEmitir();
   }
 });
+
+function poblarSelectConCasas(idSelect) {
+  const select = document.getElementById(idSelect);
+  select.innerHTML = '<option value="">-- Elige casa --</option>';
+  Object.values(gameState.jugadores || {}).forEach(jugador => {
+    const option = document.createElement("option");
+    option.value = jugador.casa;
+    option.textContent = jugador.casa;
+    select.appendChild(option);
+  });
+}
+
 
 function mostrarModalEclosion() {
   if (huevosPorEclosionar <= 0) return finalizarFaseNeutralYEmitir();
@@ -3354,6 +3491,33 @@ socket.on('error-accion', (mensaje) => {
     }
 });
 
+socket.on("mostrar-modal-territorios-revuelta", ({ territorios }) => {
+  const contenedor = document.getElementById("lista-territorios-revuelta");
+  contenedor.innerHTML = "";
+
+  territorios.forEach(nombre => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <input type="checkbox" value="${nombre}" id="check-${nombre}">
+      <label for="check-${nombre}">${nombre}</label>
+    `;
+    contenedor.appendChild(div);
+  });
+
+  abrirModal("modal-territorios-revuelta");
+});
+
+
+socket.on("abrir-modal-revuelta-perdidas", ({ casaAtacante }) => {
+  renderizarInputsPerdidasRevuelta();
+  poblarTerritoriosCheckbox();
+  abrirModal("modal-perdidas-revuelta");
+
+  nombreObjetivoRevuelta = nombre;
+});
+
+
+
 socket.on('mostrar-modal-robo-moral', () => {
   const casas = [
     "Stark", "Lannister", "Targaryen", "Baratheon", "Greyjoy",
@@ -4275,6 +4439,47 @@ function poblarTerritoriosEnSelect(idSelect) {
       select.appendChild(option);
     });
 }
+
+function poblarTerritoriosCheckbox() {
+  const cont = document.getElementById("lista-territorios-checkbox");
+  cont.innerHTML = '';
+  const misTerritorios = Object.values(gameState.territorios).filter(t => t.propietario === casa);
+  misTerritorios.forEach(t => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <label><input type="checkbox" value="${t.nombre}"> ${t.nombre}</label>
+    `;
+    cont.appendChild(div);
+  });
+}
+
+function confirmarPerdidasRevuelta() {
+  const perdidas = {};
+  const inputs = document.querySelectorAll('#lista-perdidas-revuelta input');
+
+  inputs.forEach(input => {
+    const tipo = input.id.replace('perdida-', '');
+    const cantidad = parseInt(input.value) || 0;
+    if (cantidad > 0) {
+      perdidas[tipo] = cantidad;
+    }
+  });
+
+  const territoriosSeleccionados = Array.from(document.querySelectorAll('#lista-territorios-checkbox input:checked'))
+    .map(el => el.value);
+
+  socket.emit("tyrell-revuelta-perdidas", {
+    partida,
+    nombre,
+    perdidas,
+    territoriosPerdidos: territoriosSeleccionados
+  });
+
+  cerrarModal("modal-perdidas-revuelta");
+}
+
+
+
 
 function poblarEdificiosEnSelect(idSelect) {
   const select = document.getElementById(idSelect);

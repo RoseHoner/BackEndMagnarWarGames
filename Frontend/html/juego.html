@@ -181,6 +181,42 @@
   <button id="btn-sobornar-soldados" class="btn-accion-juego" style="display: none;">🪙 Sobornar Soldados</button>
   <button id="btn-saquear-greyjoy" class="btn-accion-juego" style="display: none;">⚓ Saquear</button>
   <button id="btn-ritual-kraken-greyjoy" class="btn-accion-juego" style="display: none;">🐙 Ritual de Sal</button>
+  <button id="btn-revuelta-campesina" class="btn-accion-juego" style="display: none;">🌾 Iniciar Revuelta Campesina</button>
+
+<div id="modal-revuelta-tyrell" class="modal-juego" style="display: none;">
+  <h2>🌾 Revuelta Campesina</h2>
+  <label>¿A qué casa inicias la revuelta?</label>
+  <select id="select-casa-revuelta"></select>
+
+  <label>¿Cuántas tropas ganas?</label>
+  <input type="number" id="input-tropas-revuelta" min="1" value="1" />
+
+  <div class="botones-modal">
+    <button id="btn-confirmar-revuelta-tyrell" class="btn-confirmar">✔️ Confirmar</button>
+    <button id="btn-cancelar-revuelta-tyrell">Cancelar</button>
+  </div>
+</div>
+
+<div id="modal-perdidas-revuelta" class="modal-juego" style="display: none;">
+  <h2>⚠️ Has sido víctima de una revuelta</h2>
+  <div id="lista-perdidas-revuelta"></div>
+  <h3>¿Qué territorios pierdes?</h3>
+  <div id="lista-territorios-checkbox"></div>
+  <button onclick="confirmarPerdidasRevuelta()">✔️ Confirmar pérdidas</button>
+</div>
+
+
+<div id="modal-territorios-revuelta" class="modal-juego" style="display: none;">
+  <h2>🌾 ¿Qué territorios le quitas?</h2>
+  <div id="lista-territorios-revuelta" class="lista-checkbox"></div>
+
+  <div class="botones-modal">
+    <button id="btn-confirmar-territorios-revuelta" class="btn-confirmar">✔️ Confirmar</button>
+    <button onclick="cerrarModal('modal-territorios-revuelta')" class="btn-cancelar">Cancelar</button>
+  </div>
+</div>
+
+
 
 
     <!-- Modal Organizar Torneo -->
