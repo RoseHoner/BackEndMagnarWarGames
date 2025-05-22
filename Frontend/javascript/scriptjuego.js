@@ -15,6 +15,10 @@ window.refuerzoTullyConfirmado = false;
 
 let alianzaDeSangrePendiente = false;
 
+let barcosPerdidosPendientes = 0;
+let transferenciasBarcos = [];
+
+
 
 let contadorAccionesNorte = 0;
 let tropasPerdidas = 0;
@@ -1990,60 +1994,71 @@ if (btnConfirmarLevas) {
         });
 
         setupListener('btn-confirmar-perdidas-ataque', 'click', () => {
-          console.log("PENES GIGANTES DIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOS")
-          const perdidas = {};
-          const jugador = gameState?.jugadores?.[nombre];
-          if (!jugador) return;
-        
-          const unidades = [
-            'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
-            'barcos', 'catapulta', 'torre', 'escorpion',
-            'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
-            'barcolegendario', 'tritones','barcocorsario','venadosblancos','martilladores',
-            'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
-          ];
-        
-          for (const key of unidades) {
-  const input = document.getElementById(`perdida-${key}`);
-  if (!input) continue;
-  const cantidad = parseInt(input.value) || 0;
+  console.log("PENES GIGANTES DIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOS")
+  const perdidas = {};
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador) return;
 
-  // ⚓ Si es Greyjoy y tritones, lo tratamos como cantidad total
-  if (key === "tritones" && casa === "Greyjoy") {
-    perdidas[key] = `tritones-final:${cantidad}`;
-    continue;
+  const unidades = [
+    'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
+    'barcos', 'catapulta', 'torre', 'escorpion',
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
+    'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
+    'barcolegendario', 'tritones','barcocorsario','venadosblancos','martilladores',
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
+  ];
+
+  for (const key of unidades) {
+    const input = document.getElementById(`perdida-${key}`);
+    if (!input) continue;
+    const cantidad = parseInt(input.value) || 0;
+
+    if (key === "tritones" && casa === "Greyjoy") {
+      perdidas[key] = `tritones-final:${cantidad}`;
+      continue;
+    }
+
+    if (cantidad < 0 || cantidad > (jugador[key] || 0)) {
+      return alert(`Cantidad inválida para ${key}`);
+    }
+    if (cantidad > 0) perdidas[key] = cantidad;
   }
 
-  if (cantidad < 0 || cantidad > (jugador[key] || 0)) {
-    return alert(`Cantidad inválida para ${key}`);
+  // ⚓ TRANSFERENCIA DE BARCOS SI SE PIERDEN
+  const barcosPerdidos = perdidas.barcos || 0;
+  if (barcosPerdidos > 0) {
+    cerrarModal('modal-fase-neutral');
+    barcosPerdidosPendientes = barcosPerdidos;
+    transferenciasBarcos = [];
+    poblarCasasBarco();
+    mostrarModalTransferenciaBarco();
+
+    // Guardamos perdidas para emitir después
+    window._perdidasAtaquePendientes = perdidas;
+    window._debeEmitirAtaque = true;
+    return;
   }
-  if (cantidad > 0) perdidas[key] = cantidad;
-}
 
+  const perdidasJinetes = parseInt(document.getElementById("perdida-jinete")?.value) || 0;
+  if (
+    casa === "Targaryen" &&
+    gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+    perdidasJinetes > 0
+  ) {
+    jinetesPendientes = perdidasJinetes;
+    mostrarReemplazoJinete();
+  }
 
-          const perdidasJinetes = parseInt(document.getElementById("perdida-jinete")?.value) || 0;
+  socket.emit('perdidas-en-batalla', {
+    partida,
+    nombre,
+    perdidas,
+    esSaqueoGreyjoy: true
+  });
 
-if (
-  casa === "Targaryen" &&
-  gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
-  perdidasJinetes > 0
-) {
-  jinetesPendientes = perdidasJinetes;
-  mostrarReemplazoJinete();
-}
-        
-          socket.emit('perdidas-en-batalla', {
-  partida,
-  nombre,
-  perdidas,
-  esSaqueoGreyjoy: true // ⚓ marcar que es saqueo
+  cerrarModal('modal-perdidas-ataque');
 });
 
-
-        
-          cerrarModal('modal-perdidas-ataque');
-        });
 
         const btnStarkAtacar = document.getElementById("btn-stark-atacar");
 
@@ -2371,64 +2386,92 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
         setupListener('btn-ok-modal-territorios', 'click', () => cerrarModal('modal-mis-territorios'));
         
         setupListener('btn-confirmar-perdidas-neutral', 'click', () => {
-          perdidasPorUnidad = {};
-          const jugador = gameState?.jugadores?.[nombre];
-          if (!jugador) return;
-        
-          const unidades = [
-            'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
-            'barcos', 'catapulta', 'torre', 'escorpion',
-            'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
-            'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
-            'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-            'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
-          ];
-        
-          let total = 0;
-        
-          for (const key of unidades) {
-  const el = document.getElementById(`perdidas-${key}`);
-  if (!el) continue;
-  const cantidad = Math.max(0, parseInt(el.value) || 0);
-  const tiene = jugador[key] ?? 0;
+  perdidasPorUnidad = {};
+  const jugador = gameState?.jugadores?.[nombre];
+  if (!jugador) return;
 
-  // 👇 Si es Greyjoy y estamos con tritones, interpretamos como total final
-  if (key === "tritones" && casa === "Greyjoy") {
-    perdidasPorUnidad[key] = `tritones-final:${cantidad}`;
-    continue;
-  }
+  const unidades = [
+    'tropas', 'tropasBlindadas', 'mercenarios', 'elite',
+    'barcos', 'catapulta', 'torre', 'escorpion',
+    'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
+    'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
+    'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
+  ];
 
-  if (cantidad > tiene) return alert(`No puedes perder más de ${tiene} ${key}`);
-  if (cantidad > 0) perdidasPorUnidad[key] = cantidad;
-  total += cantidad;
-}
+  let total = 0;
 
+  for (const key of unidades) {
+    const el = document.getElementById(`perdidas-${key}`);
+    if (!el) continue;
+    const cantidad = Math.max(0, parseInt(el.value) || 0);
+    const tiene = jugador[key] ?? 0;
 
-          const perdidasJinetes = parseInt(document.getElementById("perdidas-jinete")?.value) || 0;
-
-if (
-  casa === "Targaryen" &&
-  gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
-  perdidasJinetes > 0
-) {
-  jinetesPendientes = perdidasJinetes;
-  mostrarReemplazoJinete();
-}
-
-if (casa === "Baratheon" && gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Llama de R'hllor") && gameState?.jugadores?.[nombre]?.sacerdotizaroja === 0) {
-      socket.emit("baratheon-reclutar-sacerdotizaroja", {
-        partida,
-        nombre,
-        cantidad:1,
-      });
+    if (key === "tritones" && casa === "Greyjoy") {
+      perdidasPorUnidad[key] = `tritones-final:${cantidad}`;
+      continue;
     }
 
-    verificarHuargosStark();
+    if (cantidad > tiene) return alert(`No puedes perder más de ${tiene} ${key}`);
+    if (cantidad > 0) perdidasPorUnidad[key] = cantidad;
+    total += cantidad;
+  }
+
+  // 🔥 Aquí insertamos lo de los barcos perdidos
+  const barcosPerdidos = perdidasPorUnidad.barcos || 0;
+
+document.getElementById('fase-neutral-paso1').style.display = 'none';
+document.getElementById('fase-neutral-paso2').style.display = 'block';
+
+// Si hay barcos, mostramos el modal encima
+if (barcosPerdidos > 0) {
+  barcosPerdidosPendientes = barcosPerdidos;
+  transferenciasBarcos = [];
+  poblarCasasBarco();
+
+  setTimeout(() => {
+    mostrarModalTransferenciaBarco();
+  }, 300); // pequeño delay para asegurar que el paso 2 se ve debajo
+}
+
+// Emitimos ya las pérdidas para que el backend lo procese
+socket.emit("actualizar-perdidas-neutral", {
+  partida,
+  nombre,
+  perdidas,
+  perdidasPorUnidad,
+  territoriosPerdidos: [],
+  nuevoPropietarioPorTerritorio: {}
+});
 
 
-          document.getElementById('fase-neutral-paso1').style.display = 'none';
-          document.getElementById('fase-neutral-paso2').style.display = 'block';
-        });
+
+  // 🐴 Jinete Fuego Heredado
+  const perdidasJinetes = parseInt(document.getElementById("perdidas-jinete")?.value) || 0;
+  if (
+    casa === "Targaryen" &&
+    gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+    perdidasJinetes > 0
+  ) {
+    jinetesPendientes = perdidasJinetes;
+    mostrarReemplazoJinete();
+  }
+
+  // 🔥 Sacerdotiza Roja Baratheon
+  if (casa === "Baratheon" && gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Llama de R'hllor") && gameState?.jugadores?.[nombre]?.sacerdotizaroja === 0) {
+    socket.emit("baratheon-reclutar-sacerdotizaroja", {
+      partida,
+      nombre,
+      cantidad:1,
+    });
+  }
+
+  verificarHuargosStark();
+
+  document.getElementById('fase-neutral-paso1').style.display = 'none';
+  document.getElementById('fase-neutral-paso2').style.display = 'block';
+});
+
         
         
 
@@ -3433,40 +3476,54 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
   ];
 
   for (const key of unidades) {
-  const input = document.getElementById(`perdidas-def-${key}`);
-  if (!input) continue;
-  const valor = parseInt(input.value) || 0;
+    const input = document.getElementById(`perdidas-def-${key}`);
+    if (!input) continue;
+    const valor = parseInt(input.value) || 0;
 
-  // 💀 Si es Greyjoy y son tritones, el número es la cantidad final
-  if (key === "tritones" && casa === "Greyjoy") {
-    perdidas[key] = `tritones-final:${valor}`;
-    continue;
+    if (key === "tritones" && casa === "Greyjoy") {
+      perdidas[key] = `tritones-final:${valor}`;
+      continue;
+    }
+
+    if (valor > 0) perdidas[key] = valor;
   }
 
-  if (valor > 0) perdidas[key] = valor;
-}
+  // 🔥 INSERTAMOS LA LÓGICA DE TRANSFERENCIA DE BARCOS
+  const barcosPerdidos = perdidas.barcos || 0;
+  if (barcosPerdidos > 0) {
+    cerrarModal('modal-fase-neutral');
+    barcosPerdidosPendientes = barcosPerdidos;
+    transferenciasBarcos = [];
+    poblarCasasBarco();
+    mostrarModalTransferenciaBarco();
 
+    // Guardamos perdidas para emitir después de terminar la transferencia
+    window._perdidasDefensorPendientes = perdidas;
+    window._debeEmitirDefensor = true;
+    return; // detenemos aquí y continuamos después
+  }
 
-  // Detectar jinete perdido si eres Targaryen con Fuego Heredado
-const perdidasJinetes = parseInt(document.getElementById("perdidas-def-jinete")?.value) || 0;
-
-if (
-  casa === "Targaryen" &&
-  gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
-  perdidasJinetes > 0
-) {
-  jinetesPendientes = perdidasJinetes;
-  mostrarReemplazoJinete();
-}
-
+  // 🐉 Targaryen Fuego Heredado
+  const perdidasJinetes = parseInt(document.getElementById("perdidas-def-jinete")?.value) || 0;
+  if (
+    casa === "Targaryen" &&
+    gameState?.jugadores?.[nombre]?.rumoresDesbloqueados?.includes("Fuego Heredado") &&
+    perdidasJinetes > 0
+  ) {
+    jinetesPendientes = perdidasJinetes;
+    mostrarReemplazoJinete();
+  }
 
   cerrarModal('modal-perdidas-defensor');
-    if (casa === "Arryn") {
+
+  if (casa === "Arryn") {
     abrirModal('modal-caballero-batalla-arryn');
   }
+
   socket.emit('perdidas-defensor', { partida, nombre, perdidas });
   window.refuerzoTullyConfirmado = false;
 });
+
 
 
 document.getElementById('btn-confirmar-soborno-final-lannister')?.addEventListener('click', () => {
@@ -4064,6 +4121,45 @@ const preciosReclutas = {
 
   // Si aún puede ganar rumor, mostramos el modal
   document.getElementById("modal-ganar-rumor").style.display = "block";
+}
+
+function poblarCasasBarco() {
+  const select = document.getElementById('select-casa-barco');
+  select.innerHTML = '<option value="">-- Nadie (se pierde) --</option>';
+  Object.values(gameState.jugadores || {}).forEach(j => {
+    if (j.casa !== casa) {
+      const option = document.createElement("option");
+      option.value = j.casa;
+      option.textContent = j.casa;
+      select.appendChild(option);
+    }
+  });
+}
+
+function mostrarModalTransferenciaBarco() {
+  abrirModal('modal-barco-perdido-transferencia');
+}
+
+function confirmarTransferenciaBarco() {
+  const casaElegida = document.getElementById('select-casa-barco').value;
+  transferenciasBarcos.push(casaElegida); // "" significa que se elimina
+
+  cerrarModal('modal-barco-perdido-transferencia');
+  barcosPerdidosPendientes--;
+
+  if (barcosPerdidosPendientes > 0) {
+    setTimeout(() => {
+      poblarCasasBarco();
+      mostrarModalTransferenciaBarco();
+    }, 300);
+  } else {
+    // Aquí ya puedes emitir al backend o continuar el flujo normal
+    socket.emit("transferencia-barcos", {
+      partida,
+      nombre,
+      transferencias: transferenciasBarcos
+    });
+  }
 }
 
 

@@ -2650,6 +2650,28 @@ socket.on("transferencia-oro", ({ partida, nombre, casaDestino, cantidad }) => {
   });
 });
 
+socket.on("transferencia-barcos", ({ partida, nombre, transferencias }) => {
+  const room = rooms[partida];
+  if (!room) return;
+
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador) return;
+
+  for (const destino of transferencias) {
+    if (destino === "") continue; // barco se elimina
+    const receptor = Object.values(room.estadoJugadores).find(j => j.casa === destino);
+    if (receptor) receptor.barcos = (receptor.barcos || 0) + 1;
+  }
+
+  // Emitimos el estado actualizado
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
 
 socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, reclutarNorte }) => {
 
