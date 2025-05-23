@@ -348,17 +348,24 @@ function renderizarModalPerdidasDefensor() {
   ];
 
   unidades.forEach(({ key, nombre }) => {
-    const cantidad = jugador[key] ?? 0;
-    if (cantidad > 0) {
-      const div = document.createElement('div');
-      div.classList.add('campo-formulario');
-      div.innerHTML = `
-        <label for="perdidas-def-${key}">${nombre} (Tienes ${cantidad}):</label>
-        <input type="number" id="perdidas-def-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
-      `;
-      contenedor.appendChild(div);
-    }
-  });
+  const cantidad = jugador[key] ?? 0;
+  if (cantidad > 0) {
+    const div = document.createElement('div');
+    div.classList.add('campo-formulario');
+
+    // Texto personalizado para Tritones
+    const labelText = key === 'tritones'
+      ? '¿Cuántos Tritones Tienes ahora? 🧜‍♂️'
+      : `${nombre} (Tienes ${cantidad}):`;
+
+    div.innerHTML = `
+      <label for="perdidas-def-${key}">${labelText}</label>
+      <input type="number" id="perdidas-def-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
+    `;
+    contenedor.appendChild(div);
+  }
+});
+
 
 if (casa === "Tully" && gameState.jugadores?.[nombre] && !gameState.jugadores?.[nombre].refuerzoTullyUsadoEsteTurno && !window.refuerzoTullyConfirmado) {
 
@@ -432,17 +439,23 @@ function renderizarModalPerdidasAtaque(jugadorData) {
   ];
 
   unidades.forEach(({ key, nombre }) => {
-    const cantidad = jugadorData[key] ?? 0;
-    if (cantidad > 0) {
-      const div = document.createElement('div');
-      div.classList.add('campo-formulario');
-      div.innerHTML = `
-        <label for="perdida-${key}">${nombre} (Tienes ${cantidad}):</label>
-        <input type="number" id="perdida-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
-      `;
-      contenedor.appendChild(div);
-    }
-  });
+  const cantidad = jugadorData[key] ?? 0;
+  if (cantidad > 0) {
+    const div = document.createElement('div');
+    div.classList.add('campo-formulario');
+
+    const labelText = key === 'tritones'
+      ? '¿Cuántos Tritones Tienes ahora? 🧜‍♂️'
+      : `${nombre} (Tienes ${cantidad}):`;
+
+    div.innerHTML = `
+      <label for="perdida-${key}">${labelText}</label>
+      <input type="number" id="perdida-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
+    `;
+    contenedor.appendChild(div);
+  }
+});
+
 
   abrirModal('modal-perdidas-ataque');
 }
@@ -513,41 +526,49 @@ function renderizarInputsPerdidas() {
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
     { key: 'jinete', nombre: 'Jinetes' },
-    { key: 'kraken', nombre: 'Kraken'},
-    { key: 'huargos', nombre: 'Huargos'},
-    { key: 'unicornios', nombre: 'Unicornios'},
+    { key: 'kraken', nombre: 'Kraken' },
+    { key: 'huargos', nombre: 'Huargos' },
+    { key: 'unicornios', nombre: 'Unicornios' },
     { key: 'murcielagos', nombre: 'Murciélagos' },
     { key: 'guardiareal', nombre: 'Guardia Real' },
-    { key: 'barcolegendario', nombre: 'Barco Legendario'},
-    { key: 'tritones', nombre: 'Tritones'},
-    { key: 'barcocorsario', nombre: 'Barco Corsario'},
-    { key: 'venadosblancos', nombre: 'Venados Blancos'},
-    { key: 'martilladores', nombre: 'Martilladores'},
-    { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
-    { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
-    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
-    { key: 'barbaros', nombre: 'Barbaros'},
-    { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
-
-
+    { key: 'barcolegendario', nombre: 'Barco Legendario' },
+    { key: 'tritones', nombre: 'Tritones' },
+    { key: 'barcocorsario', nombre: 'Barco Corsario' },
+    { key: 'venadosblancos', nombre: 'Venados Blancos' },
+    { key: 'martilladores', nombre: 'Martilladores' },
+    { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa' },
+    { key: 'guardiadelalba', nombre: 'Guardia del Alba' },
+    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja' },
+    { key: 'barbaros', nombre: 'Bárbaros' },
+    { key: 'caballerosdelaguila', nombre: 'Caballeros del Águila' },
   ];
 
   unidades.forEach(({ key, nombre }) => {
     const cantidad = jugador[key] ?? 0;
     if (cantidad <= 0) return;
 
+    // Texto personalizado para Tritones
+    const labelText = key === 'tritones'
+      ? '¿Cuántos Tritones Tienes ahora? 🧜‍♂️'
+      : `${nombre} (Tienes ${cantidad}):`;
+
     const div = document.createElement('div');
     div.classList.add('campo-formulario');
     div.innerHTML = `
-      <label for="perdidas-${key}">${nombre} (Tienes ${cantidad}):</label>
-      <input type="number" id="perdidas-${key}" min="0" max="${cantidad}" value="0" style="width: 100%;">
+      <label for="perdidas-${key}">${labelText}</label>
+      <input 
+        type="number" 
+        id="perdidas-${key}" 
+        min="0" 
+        max="${cantidad}" 
+        value="0" 
+        style="width: 100%;"
+      >
     `;
     contenedor.appendChild(div);
   });
-
-
-
 }
+
 
 
 function elegirAsedioGratis(tipo) {
@@ -1169,16 +1190,34 @@ function siguienteAccion() { // Para el botón principal 'Terminar Acción'
 
 // --- Lógica Modal Batalla ---
 function poblarTerritoriosAtacables() {
+
+  const ordenCasas = [
+    "Stark", "Arryn", "Greyjoy", "Tully",
+    "Lannister", "Tyrell", "Baratheon",
+    "Martell", "Targaryen"
+  ];
+
     if (!gameState || !gameState.territorios) return;
     const selectEl = document.getElementById('select-territorio-atacado');
     if (!selectEl) return console.error("Select territorios atacables no encontrado.");
     selectEl.innerHTML = '<option value="">-- Selecciona --</option>';
-    Object.values(gameState.territorios)
-        .filter(t => t.propietario && t.propietario !== casa)
-        .sort((a, b) => a.nombre.localeCompare(b.nombre))
-        .forEach(t => {
-            selectEl.appendChild(new Option(`${t.nombre} (${t.propietario})`, t.nombre));
-        });
+     Object.values(gameState.territorios)
+    .filter(t => t.propietario && t.propietario !== casa)
+    .sort((a, b) => {
+      // 1) por índice de casa
+      const ia = ordenCasas.indexOf(a.propietario);
+      const ib = ordenCasas.indexOf(b.propietario);
+      if (ia !== ib) return ia - ib;
+      // 2) si es la misma casa, por nombre
+      return a.nombre.localeCompare(b.nombre);
+    })
+    .forEach(t => {
+      const option = new Option(
+        `${t.nombre} (${t.propietario})`,
+        t.nombre
+      );
+      selectEl.appendChild(option);
+    });
 }
 function ajustarPerdidas(inputId, cantidad) {
     const input = document.getElementById(inputId);
@@ -2612,13 +2651,26 @@ validarOroSoborno();
         
         
         function poblarSelectTerritorioAtaque() {
+  const ordenCasas = [
+    "Stark", "Arryn", "Greyjoy", "Tully",
+    "Lannister", "Tyrell", "Baratheon",
+    "Martell", "Targaryen"
+  ];
   const select1 = document.getElementById('select-territorio-ataque1');
   const select2 = document.getElementById('select-territorio-ataque2');
   if (!select1 || !select2 || !gameState?.territorios) return;
 
+  // Filtramos y ordenamos atacables
   const atacables = Object.values(gameState.territorios)
-    .filter(t => t.propietario && t.propietario !== casa);
+    .filter(t => t.propietario && t.propietario !== casa)
+    .sort((a, b) => {
+      const ia = ordenCasas.indexOf(a.propietario);
+      const ib = ordenCasas.indexOf(b.propietario);
+      if (ia !== ib) return ia - ib;
+      return a.nombre.localeCompare(b.nombre);
+    });
 
+  // Poblamos ambos selects con la lista ya ordenada
   [select1, select2].forEach(select => {
     select.innerHTML = '<option value="">-- Selecciona --</option>';
     atacables.forEach(t => {
@@ -2650,24 +2702,21 @@ validarOroSoborno();
     { key: 'jinete', nombre: 'Jinetes' },
     { key: 'militantesFe', nombre: 'Militantes de la Fe' },
     { key: 'arquero', nombre: 'Arqueros' },
-    { key: 'kraken', nombre: 'Kraken'},
-    { key: 'huargos', nombre: 'Huargos'},
-    { key: 'unicornios', nombre: 'Unicornios'},
+    { key: 'kraken', nombre: 'Kraken' },
+    { key: 'huargos', nombre: 'Huargos' },
+    { key: 'unicornios', nombre: 'Unicornios' },
     { key: 'murcielagos', nombre: 'Murciélagos' },
     { key: 'guardiareal', nombre: 'Guardia Real' },
-    { key: 'barcolegendario', nombre: 'Barco Legendario'},
-    { key: 'tritones', nombre: 'Tritones'},
-    { key: 'barcocorsario', nombre: 'Barco Corsario'},
-    { key: 'venadosblancos', nombre: 'Venados Blancos'},
-    { key: 'martilladores', nombre: 'Martilladores'},
-    { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa'},
-    { key: 'guardiadelalba', nombre: 'Guardia del Alba'},
-    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
-    { key: 'barbaros', nombre: 'Barbaros'},
-    { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
-    
-
-
+    { key: 'barcolegendario', nombre: 'Barco Legendario' },
+    { key: 'tritones', nombre: 'Tritones' },
+    { key: 'barcocorsario', nombre: 'Barco Corsario' },
+    { key: 'venadosblancos', nombre: 'Venados Blancos' },
+    { key: 'martilladores', nombre: 'Martilladores' },
+    { key: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa' },
+    { key: 'guardiadelalba', nombre: 'Guardia del Alba' },
+    { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja' },
+    { key: 'barbaros', nombre: 'Bárbaros' },
+    { key: 'caballerosdelaguila', nombre: 'Caballeros del Águila' },
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -2683,6 +2732,7 @@ validarOroSoborno();
     }
   });
 }
+
 
 
 
