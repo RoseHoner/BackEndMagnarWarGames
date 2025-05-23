@@ -3245,21 +3245,21 @@ jugador.oro = Math.max(0, jugador.oro - cantidad * costoSoborno);
   });
   
 
-  socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
-    const room = rooms[partida];
-    if (!room || !room.estadoJugadores?.[nombre]) return;
-    if (!["catapulta", "torre", "escorpion"].includes(tipo)) return;
-  
-    const jugador = room.estadoJugadores[nombre];
-    jugador[tipo] = (jugador[tipo] || 0) + 1;
-  
-    io.to(partida).emit('actualizar-estado-juego', {
-      territorios: room.estadoTerritorios,
-      jugadores: room.estadoJugadores,
-      turno: room.turnoActual,
-      accion: room.accionActual
-    });
+  // Tras procesar 'recompensa-asedio'
+socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  jugador[tipo] = (jugador[tipo] || 0) + 1;
+  // Emitimos estado completo
+  io.to(partida).emit('actualizar-estado-juego', {
+    territorios: room.estadoTerritorios,
+    jugadores:  room.estadoJugadores,
+    turno:      room.turnoActual,
+    accion:     room.accionActual
   });
+});
+
   
 
   // Cuando un jugador se desconecta
