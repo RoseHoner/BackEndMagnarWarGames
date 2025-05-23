@@ -316,9 +316,9 @@
         <h3>Soldado</h3>
         <img src="../imgs/reclutas/soldado.png" alt="Soldado" style="width: 80px;">
         <div class="control-numero">
-          <button onclick="ajustarCantidad('soldado', -1)">-</button>
-          <span id="cantidad-soldado">0</span>
-          <button onclick="ajustarCantidad('soldado', 1)">+</button>
+          <button class="btn-control" onclick="ajustarCantidad('soldado', -1)">–</button>
+     <span id="cantidad-soldado">0</span>
+     <button class="btn-control" onclick="ajustarCantidad('soldado', 1)">+</button>
         </div>
         <p>Coste: 4 oro</p>
       </div>
@@ -328,9 +328,9 @@
         <h3>Mercenario</h3>
         <img src="../imgs/reclutas/mercenario.png" alt="Mercenario" style="width: 80px;">
         <div class="control-numero">
-          <button onclick="ajustarCantidad('mercenario', -1)">-</button>
+          <button class="btn-control" onclick="ajustarCantidad('mercenario', -1)">-</button>
           <span id="cantidad-mercenario">0</span>
-          <button onclick="ajustarCantidad('mercenario', 1)">+</button>
+          <button class="btn-control" onclick="ajustarCantidad('mercenario', 1)">+</button>
         </div>
         <p>Coste: 5 oro</p>
       </div>
@@ -340,21 +340,30 @@
         <h3>Mercenario de élite</h3>
         <img src="../imgs/reclutas/elite.png" alt="Mercenario élite" style="width: 80px;">
         <div class="control-numero">
-          <button onclick="ajustarCantidad('elite', -1)">-</button>
+          <button class="btn-control" onclick="ajustarCantidad('elite', -1)">-</button>
           <span id="cantidad-elite">0</span>
-          <button onclick="ajustarCantidad('elite', 1)">+</button>
+          <button class="btn-control" onclick="ajustarCantidad('elite', 1)">+</button>
         </div>
         <p>Coste: 7 oro</p>
       </div>
 
     </div>
   
-    <div style="margin-top: 20px; text-align: center;">
-      <p>Total de oro requerido: <span id="costo-total-recluta">0</span> <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline"></p>
-      <button class="btn-confirmar" onclick="confirmarReclutamiento()">✔️ Reclutar</button>
-      <button class="btn-cancelar" onclick="cerrarModal('modal-reclutar')">✖️ Cancelar</button>
-      <p id="mensaje-reclutamiento" style="color: red; margin-top: 10px;"></p>
-    </div>
+    <!-- Coste -->
+<p style="margin-top: 1rem; text-align: center;">
+  Total de oro requerido: <span id="costo-total-recluta">0</span>
+  <img src="../imgs/Interfaz/oro.png" alt="oro" class="icono-inline">
+</p>
+
+<!-- Botones con estilo modal -->
+<div class="botones-modal">
+  <button class="btn-confirmar" onclick="confirmarReclutamiento()">✔️ Reclutar</button>
+  <button class="btn-cancelar" onclick="cerrarModal('modal-reclutar')">✖️ Cancelar</button>
+</div>
+
+<!-- Mensaje de error -->
+<p id="mensaje-reclutamiento" style="color: red; margin-top: 10px; text-align: center;"></p>
+
   </div>
     <!-- Fin Modal Reclutar -->
 

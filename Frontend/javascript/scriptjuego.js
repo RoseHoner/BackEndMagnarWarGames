@@ -551,11 +551,16 @@ function renderizarInputsPerdidas() {
 
 
 function elegirAsedioGratis(tipo) {
-    if (!["catapulta", "torre", "escorpion"].includes(tipo)) return;
-    console.log(`[Asedio Gratis] Elegido: ${tipo}`);
-    socket.emit('recompensa-asedio', { partida, nombre, tipo });
-    cerrarModal('modal-elegir-asedio');
-  }
+  if (!["catapulta", "torre", "escorpion"].includes(tipo)) return;
+  // Emitimos al servidor
+  socket.emit('recompensa-asedio', { partida, nombre, tipo });
+  // Actualizamos localmente (para no tener que esperar al round-trip)
+  const jugador = gameState.jugadores[nombre];
+  jugador[tipo] = (jugador[tipo] || 0) + 1;
+  actualizarUnidadesMilitares();
+  cerrarModal('modal-elegir-asedio');
+}
+
   
 
 function getListaCasasPosibles() {
@@ -1556,6 +1561,11 @@ function confirmarConstruir() {
   }
 
   cerrarModal('modal-construir');
+
+  // SI construyó un taller de asedio, abrimos inmediatamente el modal de elección
+  if (edificio1 === "Taller de maquinaria de asedio" || edificio2 === "Taller de maquinaria de asedio") {
+    abrirModal('modal-elegir-asedio');
+  }
 }
 
 
@@ -2814,9 +2824,9 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
             <h3>Arquero</h3>
             <img src="../imgs/reclutas/soldado.png" alt="Arquero" style="width: 80px;">
             <div class="control-numero">
-              <button onclick="ajustarCantidad('arquero', -1)">-</button>
+              <button class="btn-control" onclick="ajustarCantidad('arquero', -1)">-</button>
               <span id="cantidad-arquero">0</span>
-              <button onclick="ajustarCantidad('arquero', 1)">+</button>
+              <button class="btn-control" onclick="ajustarCantidad('arquero', 1)">+</button>
             </div>
             <p>Coste: 6 oro</p>
           `;
@@ -2849,9 +2859,9 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
               <h3>Caballero</h3>
               <img src="../imgs/reclutas/caballero.png" alt="Caballero" style="width: 80px;">
               <div class="control-numero">
-                <button onclick="ajustarCantidad('caballero', -1)">-</button>
+                <button class="btn-control" onclick="ajustarCantidad('caballero', -1)">-</button>
                 <span id="cantidad-caballero">0</span>
-                <button onclick="ajustarCantidad('caballero', 1)">+</button>
+                <button class="btn-control" onclick="ajustarCantidad('caballero', 1)">+</button>
               </div>
               <p>Coste: 10 oro</p>
             `;
@@ -2868,9 +2878,9 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
               <h3>Soldado con Armadura</h3>
               <img src="../imgs/reclutas/soldado.png" alt="Soldado Blindado" style="width: 80px;">
               <div class="control-numero">
-                <button onclick="ajustarCantidad('soldadoBlindado', -1)">-</button>
+                <button class="btn-control" onclick="ajustarCantidad('soldadoBlindado', -1)">-</button>
                 <span id="cantidad-soldadoBlindado">0</span>
-                <button onclick="ajustarCantidad('soldadoBlindado', 1)">+</button>
+                <button class="btn-control" onclick="ajustarCantidad('soldadoBlindado', 1)">+</button>
               </div>
               <p>Coste: 6 oro</p>
             `;
@@ -2887,9 +2897,9 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
               <h3>Armadura (Convertir Tropas)</h3>
               <img src="../imgs/reclutas/soldado.png" alt="Armadura" style="width: 80px;">
               <div class="control-numero">
-                <button onclick="ajustarCantidad('armadura', -1)">-</button>
+                <button class="btn-control" onclick="ajustarCantidad('armadura', -1)">-</button>
                 <span id="cantidad-armadura">0</span>
-                <button onclick="ajustarCantidad('armadura', 1)">+</button>
+                <button class="btn-control" onclick="ajustarCantidad('armadura', 1)">+</button>
               </div>
               <p>Coste: 6 oro</p>
             `;
@@ -2906,9 +2916,9 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
               <h3>Arquero</h3>
               <img src="../imgs/reclutas/soldado.png" alt="Arquero" style="width: 80px;">
               <div class="control-numero">
-                <button onclick="ajustarCantidad('arquero', -1)">-</button>
+                <button class="btn-control" onclick="ajustarCantidad('arquero', -1)">-</button>
                 <span id="cantidad-arquero">0</span>
-                <button onclick="ajustarCantidad('arquero', 1)">+</button>
+                <button class="btn-control" onclick="ajustarCantidad('arquero', 1)">+</button>
               </div>
               <p>Coste: 6 oro</p>
             `;
@@ -2939,9 +2949,9 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
             <h3>Soldado con Armadura</h3>
             <img src="../imgs/reclutas/soldado.png" alt="Soldado Blindado" style="width: 80px;">
             <div class="control-numero">
-              <button onclick="ajustarCantidad('soldadoBlindado', -1)">-</button>
+              <button class="btn-control" onclick="ajustarCantidad('soldadoBlindado', -1)">-</button>
               <span id="cantidad-soldadoBlindado">0</span>
-              <button onclick="ajustarCantidad('soldadoBlindado', 1)">+</button>
+              <button class="btn-control" onclick="ajustarCantidad('soldadoBlindado', 1)">+</button>
             </div>
             <p>Coste: 6 oro</p>
           `;
@@ -2957,9 +2967,9 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
     <h3>Armadura (Convertir Tropas)</h3>
     <img src="../imgs/reclutas/soldado.png" alt="Armadura" style="width: 80px;">
     <div class="control-numero">
-      <button onclick="ajustarCantidad('armadura', -1)">-</button>
+      <button class="btn-control" onclick="ajustarCantidad('armadura', -1)">-</button>
       <span id="cantidad-armadura">0</span>
-      <button onclick="ajustarCantidad('armadura', 1)">+</button>
+      <button class="btn-control" onclick="ajustarCantidad('armadura', 1)">+</button>
     </div>
     <p>Coste: 6 oro</p>
   `;
@@ -3146,9 +3156,9 @@ function agregarReclutaBarcoSiAplica() {
       <h3>Barco</h3>
       <img src="../imgs/reclutas/barco.png" alt="Barco" style="width: 80px;">
       <div class="control-numero">
-        <button onclick="ajustarCantidad('barco', -1)">-</button>
+        <button class="btn-control" onclick="ajustarCantidad('barco', -1)">-</button>
         <span id="cantidad-barco">0</span>
-        <button onclick="ajustarCantidad('barco', 1)">+</button>
+        <button class="btn-control" onclick="ajustarCantidad('barco', 1)">+</button>
       </div>
       <p>Coste: 20 oro</p>
     `;
@@ -3170,9 +3180,9 @@ if (casa === "Martell" && tienePuerto && tieneRumorCorsarios) {
     <h3>Barco Corsario</h3>
     <img src="../imgs/reclutas/barco.png" alt="Barco Corsario" style="width: 80px;">
     <div class="control-numero">
-      <button onclick="ajustarCantidad('barcocorsario', -1)">-</button>
+      <button class="btn-control" onclick="ajustarCantidad('barcocorsario', -1)">-</button>
       <span id="cantidad-barcocorsario">0</span>
-      <button onclick="ajustarCantidad('barcocorsario', 1)">+</button>
+      <button class="btn-control" onclick="ajustarCantidad('barcocorsario', 1)">+</button>
     </div>
     <p>Coste: 25 oro</p>
   `;
@@ -3207,9 +3217,9 @@ const tieneTaller = Object.values(gameState.territorios).some(
         <h3>${nombre}</h3>
         <img src="../imgs/reclutas/${imagen}" alt="${nombre}" style="width: 80px;">
         <div class="control-numero">
-          <button onclick="ajustarCantidad('${tipo}', -1)">-</button>
+          <button class="btn-control" onclick="ajustarCantidad('${tipo}', -1)">-</button>
           <span id="cantidad-${tipo}">0</span>
-          <button onclick="ajustarCantidad('${tipo}', 1)">+</button>
+          <button class="btn-control" onclick="ajustarCantidad('${tipo}', 1)">+</button>
         </div>
         <p>Coste: ${costo} oro</p>
       `;
@@ -3233,9 +3243,9 @@ if (casa === "Tully") {
       <h3>Arquero</h3>
       <img src="../imgs/reclutas/soldado.png" alt="Arquero" style="width: 80px;">
       <div class="control-numero">
-        <button onclick="ajustarCantidad('arquero', -1)">-</button>
+        <button class="btn-control" onclick="ajustarCantidad('arquero', -1)">-</button>
         <span id="cantidad-arquero">0</span>
-        <button onclick="ajustarCantidad('arquero', 1)">+</button>
+        <button class="btn-control" onclick="ajustarCantidad('arquero', 1)">+</button>
       </div>
       <p>Coste: 6 oro</p>
     `;
@@ -3272,9 +3282,9 @@ if (!tieneAcademia) return;
     <h3>Caballero</h3>
     <img src="../imgs/reclutas/caballero.png" alt="Caballero" style="width: 80px;">
     <div class="control-numero">
-      <button onclick="ajustarCantidad('caballero', -1)">-</button>
+      <button class="btn-control" onclick="ajustarCantidad('caballero', -1)">-</button>
       <span id="cantidad-caballero">0</span>
-      <button onclick="ajustarCantidad('caballero', 1)">+</button>
+      <button class="btn-control" onclick="ajustarCantidad('caballero', 1)">+</button>
     </div>
     <p>Coste: 10 oro</p>
   `;
@@ -3295,9 +3305,9 @@ function agregarSacerdoteLuzSiBaratheon() {
       <h3>Sacerdote de Luz</h3>
       <img src="../imgs/reclutas/sacerdote.png" alt="Sacerdote de Luz" style="width: 80px;">
       <div class="control-numero">
-        <button onclick="ajustarCantidad('sacerdoteLuz', -1)">-</button>
+        <button class="btn-control" onclick="ajustarCantidad('sacerdoteLuz', -1)">-</button>
         <span id="cantidad-sacerdoteLuz">0</span>
-        <button onclick="ajustarCantidad('sacerdoteLuz', 1)">+</button>
+        <button class="btn-control" onclick="ajustarCantidad('sacerdoteLuz', 1)">+</button>
       </div>
       <p>Coste: 20 oro</p>
     `;
@@ -3337,9 +3347,9 @@ function agregarReclutaAsedioSiAplica() {
             <h3>${nombre}</h3>
             <img src="../imgs/reclutas/${imagen}" alt="${nombre}" style="width: 80px;">
             <div class="control-numero">
-              <button onclick="ajustarCantidad('${tipo}', -1)">-</button>
+              <button class="btn-control" onclick="ajustarCantidad('${tipo}', -1)">-</button>
               <span id="cantidad-${tipo}">0</span>
-              <button onclick="ajustarCantidad('${tipo}', 1)">+</button>
+              <button class="btn-control" onclick="ajustarCantidad('${tipo}', 1)">+</button>
             </div>
             <p>Coste: ${costo} oro</p>
         `;

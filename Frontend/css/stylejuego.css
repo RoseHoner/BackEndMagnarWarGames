@@ -228,6 +228,66 @@ p { margin-bottom: var(--spacing-m); color: var(--color-text-secondary); }
 .botones-modal .btn-confirmar:hover { background-color: #314a2a !important; border-color: #25381f !important; }
 .botones-modal .btn-cancelar { background-color: var(--color-accent-red); border-color: #5f1a1a !important; color: var(--color-text-title); }
 .botones-modal .btn-cancelar:hover { background-color: #651a1a !important; border-color: #4d1414 !important; }
+
+/* Contenedor de número +/– */
+.control-numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-s);
+  margin: var(--spacing-s) 0;
+}
+
+/* Botones “+” y “–” */
+.btn-control {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: var(--color-bg-button);
+  border: 1px solid var(--color-border-button-outer);
+  border-radius: var(--border-radius-subtle);
+  color: var(--color-text-button);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-control:hover {
+  background-color: var(--color-bg-button-hover);
+  border-color: var(--color-border-button-highlight);
+  color: var(--color-text-title);
+}
+
+/* El número central */
+.control-numero span {
+  min-width: 24px;
+  text-align: center;
+  font-family: var(--font-family-button);
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+/* Opcional: estilizar cada tarjeta de recluta */
+.recluta-box {
+  background-color: var(--color-bg-panel);
+  border: 1px solid var(--color-border-panel);
+  border-radius: var(--border-radius-subtle);
+  padding: var(--spacing-s);
+  text-align: center;
+  width: 120px;
+}
+.recluta-box h3 {
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.9rem;
+  color: var(--color-text-title);
+}
+.recluta-box p {
+  margin-top: var(--spacing-xs);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+
 /* FIN MODAL STYLES */
 
 
@@ -364,7 +424,7 @@ p { margin-bottom: var(--spacing-m); color: var(--color-text-secondary); }
 
   #mobile-main-feature {
     flex-direction: column; align-items: center; justify-content: center;
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    position: fixed; top: 50%; left: 50%; transform: translate(150%, -260%);
     z-index: 50; gap: var(--spacing-s);
   }
   #mobile-main-feature #logo-casa-container img {
