@@ -96,6 +96,28 @@ p { margin-bottom: var(--spacing-m); color: var(--color-text-secondary); }
   left: 50%; transform: translateX(-50%); z-index: 99; white-space: nowrap;
 }
 
+/* Modal transparente de espera */
+#modal-espera-accion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#modal-espera-accion .modal-contenido-central {
+  background: #222;
+  color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+
 .pc-only { display: none; } 
 .pc-only-inline-block { display: none; } /* Helper for elements that are inline-block on PC */
 .pc-only-block { display: none; } /* Helper for elements that are block on PC */

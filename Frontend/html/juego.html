@@ -58,8 +58,6 @@
              </div>
             <button id="btn-stark-atacar1" class="btn-accion-juego game-action-bar" style="display: none;">🧊 Atacar en el norte</button>
             <button id="btn-stark-mover1" class="btn-accion-juego game-action-bar" style="display: none;">➡️ Mover en el norte</button>
-            <button id="btn-stark-reorganizar1" class="btn-accion-juego game-action-bar" style="display: none;">🔄 Reorganizar en el norte</button>
-            <button id="btn-stark-reclutar1" class="btn-accion-juego game-action-bar" style="display: none;">➕ Reclutar en el norte</button>
             <!-- Botón duplicado eliminado -->
             <button id="btn-levas-stark1" class="btn-accion-juego game-action-bar" style="display: none;">🛡️ Levantamiento de Levas</button>
             <button id="btn-organizar-torneo1" class="btn-accion-juego game-action-bar" style="display: none;">🏇 Organizar Torneo</button>
@@ -91,8 +89,6 @@
              </div>
             <button id="btn-stark-atacar" class="btn-accion-juego game-action-bar" style="display: none;">🧊 Atacar en el norte</button>
             <button id="btn-stark-mover" class="btn-accion-juego game-action-bar" style="display: none;">➡️ Mover en el norte</button>
-            <button id="btn-stark-reorganizar" class="btn-accion-juego game-action-bar" style="display: none;">🔄 Reorganizar en el norte</button>
-            <button id="btn-stark-reclutar" class="btn-accion-juego game-action-bar" style="display: none;">➕ Reclutar en el norte</button>
             <!-- Botón duplicado eliminado -->
             <button id="btn-levas-stark" class="btn-accion-juego game-action-bar" style="display: none;">🛡️ Levantamiento de Levas</button>
             <button id="btn-organizar-torneo" class="btn-accion-juego game-action-bar" style="display: none;">🏇 Organizar Torneo</button>
@@ -275,7 +271,6 @@
 
   <div class="botones-modal">
     <button id="btn-confirmar-territorios-revuelta" class="btn-confirmar">✔️ Confirmar</button>
-    <button onclick="cerrarModal('modal-territorios-revuelta')" class="btn-cancelar">Cancelar</button>
   </div>
 </div>
 
@@ -346,6 +341,7 @@
         </div>
         <p>Coste: 7 oro</p>
       </div>
+
 
     </div>
   
@@ -434,6 +430,14 @@
       <img src="../imgs/reclutas/escorpion.png" style="width: 80px;">
       <p>Escorpión</p>
     </div>
+  </div>
+</div>
+
+<!-- Modal Esperando a los demás -->
+<div id="modal-espera-accion" style="display: none; z-index: 100000;">
+  <div class="modal-contenido-central">
+    <h2>✅ Acción realizada</h2>
+    <p>⌛ Esperando a los demás jugadores...</p>
   </div>
 </div>
 

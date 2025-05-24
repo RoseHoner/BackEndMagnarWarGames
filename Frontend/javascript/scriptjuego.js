@@ -107,6 +107,7 @@ const COSTOS_BASE_UI = {
     'Puerto Fluvial': 30, // Tully
     'caballero': 10, // Arryn (Reclutable con Academia)
     'sacerdoteLuz': 20, // Baratheon (Reclutable)
+    'sacerdoteSal': 20,
     // Añadir costos base para otras unidades reclutables de facción si aplica
 };
 const EDIFICIOS_PRODUCCION = ['Granja', 'Cantera', 'Mina', 'Aserradero'];
@@ -345,6 +346,7 @@ function renderizarModalPerdidasDefensor() {
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
     { key: 'barbaros', nombre: 'Barbaros'},
     { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
+    { key: 'sacerdoteSal', nombre: 'SacerdoteSal' },
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -434,6 +436,7 @@ function renderizarModalPerdidasAtaque(jugadorData) {
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
     { key: 'barbaros', nombre: 'Barbaros'},
     { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
+    { key: 'sacerdoteSal', nombre: 'SacerdoteSal' },
 
 
   ];
@@ -541,6 +544,7 @@ function renderizarInputsPerdidas() {
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja' },
     { key: 'barbaros', nombre: 'Bárbaros' },
     { key: 'caballerosdelaguila', nombre: 'Caballeros del Águila' },
+    { key: 'sacerdoteSal', nombre: 'SacerdoteSal' },
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -580,6 +584,7 @@ function elegirAsedioGratis(tipo) {
   jugador[tipo] = (jugador[tipo] || 0) + 1;
   actualizarUnidadesMilitares();
   cerrarModal('modal-elegir-asedio');
+  terminarAccionEspecifica('Construir');
 }
 
   
@@ -609,6 +614,7 @@ function actualizarUnidadesMilitares() {
       { tipo: 'arquero', nombre: 'Arquero', icono: 'soldado.png' },
       { tipo: 'jinete', nombre: 'Jinete', icono: 'soldado.png' }, 
       { tipo: 'huevos', nombre: 'Huevo de Dragón', icono: 'dragon.png' },
+      { tipo: 'sacerdoteSal', nombre: 'Sacerdote de Sal', icono: 'sacerdote.png' },
 
     ];
     
@@ -650,6 +656,7 @@ unidadesBasicas.forEach(u => {
         { tipo: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja', icono:'sacerdotizaroja.png'},
         { tipo: 'barbaros', nombre: 'Barbaros', icono:'barbaros.png'},
         { tipo: 'caballerosdelaguila', nombre: 'Caballeros del Aguila', icono:"caballerosdelaguila.png"},
+        
 
     ];
 
@@ -747,17 +754,7 @@ if (btnTorneo) {
         const nombresAccion = ["Acción 1", "Acción 2", "Acción 3", "Fase Neutral"];
         accionEl.textContent = nombresAccion[gameState.accion - 1] || `Acción ${gameState.accion}`;
     }
-    
-     // Actualizar estado de espera general
-     if (estadoTurnoEl) {
-        const listos = gameState.jugadoresAccionTerminada?.length || 0;
-        const total = Object.keys(gameState.jugadores || {}).length;
-        if (gameState.fase === 'Accion' && listos > 0 && listos < total && !gameState.jugadoresAccionTerminada?.includes(nombre)) {
-             estadoTurnoEl.textContent = `⌛ Esperando a ${total - listos} jugador(es)...`;
-        } else {
-             estadoTurnoEl.textContent = ""; // Limpiar si no aplica
-        }
-     }
+  
 
 
      // Mostrar botones especiales de Lannister
@@ -784,14 +781,23 @@ if (btnSaqueo) {
 }
 
 const btnKraken = document.getElementById('btn-ritual-kraken-greyjoy');
-if (btnKraken) {
-  const jugador = gameState.jugadores?.[nombre];
-  if (casa === "Greyjoy" && (jugador?.kraken || 0) === 0) {
-    btnKraken.style.display = 'inline-block';
-  } else {
-    btnKraken.style.display = 'none';
-  }
-}
+ if (btnKraken) {
+   const jugador = gameState.jugadores?.[nombre];
+  // Solo mostrar si eres Greyjoy, tienes al menos un Sacerdote de Sal y aún no has invocado al kraken
+   if (
+     casa === "Greyjoy" &&
+     (jugador?.sacerdoteSal || 0) > 0 &&
+     (jugador?.kraken || 0) === 0
+   ) {
+     btnKraken.style.display = 'inline-block';
+   } else {
+     btnKraken.style.display = 'none';
+   }
+ }
+
+
+
+
 
 const btnRevuelta = document.getElementById('btn-revuelta-campesina');
 if (btnRevuelta) {
@@ -861,40 +867,6 @@ if (btnLevas) {
 
 
 
-const btnReorganizar = document.getElementById('btn-reorganizar');
-const btnReorganizarStark = document.getElementById('btn-stark-reorganizar');
-
-if (btnReorganizar && btnReorganizarStark) {
-  if (turnoReorganizarUsado === null || accionReorganizarUsado === null) {
-    btnReorganizar.style.display = 'inline-block';
-    if (gameState.casaJugadorActual === "Stark") {
-      btnReorganizarStark.style.display = 'inline-block';
-    } else {
-      btnReorganizarStark.style.display = 'none';
-    }
-  } else {
-    const turnoDisponible = turnoReorganizarUsado + 2;
-    const debeMostrar = (
-      gameState.turno === turnoDisponible && gameState.accion === 1
-    );
-
-    if (debeMostrar) {
-      btnReorganizar.style.display = 'inline-block';
-      if (gameState.casaJugadorActual === "Stark") {
-        btnReorganizarStark.style.display = 'inline-block';
-      } else {
-        btnReorganizarStark.style.display = 'none';
-      }
-      turnoReorganizarUsado = null;
-      accionReorganizarUsado = null;
-    } else {
-      btnReorganizar.style.display = 'none';
-      btnReorganizarStark.style.display = 'none';
-    }
-  }
-}
-
-
 
 
 
@@ -928,13 +900,7 @@ const esStark = casa === "Stark";
 
 const btnStarkAtacar = document.getElementById('btn-stark-atacar');
 const btnStarkMover = document.getElementById('btn-stark-mover');
-const btnStarkReorganizar = document.getElementById('btn-stark-reorganizar');
-const btnStarkReclutar = document.getElementById('btn-stark-reclutar');
 
-btnStarkReclutar?.addEventListener('click', () => {
-  modoReclutarNorte = true;
-  abrirModal('modal-reclutar');
-});
 
 
 if (esStark) {
@@ -942,7 +908,6 @@ if (esStark) {
 
 
   btnStarkMover?.addEventListener('click', incrementarContadorNorte);
-  btnStarkReorganizar?.addEventListener('click', incrementarContadorNorte);
 } else {
   ocultarBotonesStark(); // si no es Stark, asegurarse que no se vean
 }
@@ -957,20 +922,6 @@ if (divContador && spanContador) {
     spanContador.textContent = contadorAccionesNorte;
   } else {
     divContador.style.display = 'none';
-  }
-}
-
-// Sincronizar visibilidad del botón "Organizar en el Norte" con el botón "Organizar"
-const btnOrganizar = document.getElementById('btn-reorganizar');
-const btnNorteOrganizar = document.getElementById('btn-stark-reorganizar');
-
-// Sincronizar visibilidad del botón "Organizar en el Norte" con el botón "Organizar", pero SOLO si eres Stark
-if (btnOrganizar && btnNorteOrganizar) {
-  const estaVisible = btnOrganizar.style.display !== 'none';
-  if (casa === "Stark") {
-    btnNorteOrganizar.style.display = estaVisible ? 'inline-block' : 'none';
-  } else {
-    btnNorteOrganizar.style.display = 'none';
   }
 }
 
@@ -1070,8 +1021,6 @@ function incrementarContadorNorte() {
   if (contadorAccionesNorte >= 2) {
     document.getElementById('btn-stark-atacar').style.display = 'none'
     document.getElementById('btn-stark-mover').style.display = 'none'
-    document.getElementById('btn-stark-reorganizar').style.display = 'none'
-    document.getElementById('btn-stark-reclutar').style.display = 'none'
   } else{
     mostrarBotonesStark()
   }
@@ -1082,16 +1031,12 @@ function incrementarContadorNorte() {
 function ocultarBotonesStark() {
   document.getElementById('btn-stark-atacar').style.display = 'none'
   document.getElementById('btn-stark-mover').style.display = 'none'
-  document.getElementById('btn-stark-reorganizar').style.display = 'none'
-  document.getElementById('btn-stark-reclutar').style.display = 'none'
 }
 
 function mostrarBotonesStark() {
   if ('Stark' == casa) {
     document.getElementById('btn-stark-atacar').style.display = 'flex'
   document.getElementById('btn-stark-mover').style.display = 'flex'
-  document.getElementById('btn-stark-reorganizar').style.display = 'flex'
-  document.getElementById('btn-stark-reclutar').style.display = 'flex'
   }
   
 }
@@ -1153,15 +1098,18 @@ function cerrarModal(modalId) {
 // --- Funciones Lógica de Acciones y Botones ---
 
 function terminarAccionEspecifica(tipoAccion) {
-    if (!partida || !nombre || gameState?.fase === 'Neutral') return;
+  if (!partida || !nombre || gameState?.fase === 'Neutral') return;
 
-    console.log(`[${nombre}] Acción '${tipoAccion}' realizada. Emitiendo 'accion-terminada'...`);
-    socket.emit('accion-terminada', { partida, nombre });
-    deshabilitarBotonesAccion(true); // Deshabilitar todos mientras espera
-    // Actualizar UI para mostrar espera
-    const estadoTurnoEl = document.getElementById('estado-turno');
-    if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
+  console.log(`[${nombre}] Acción '${tipoAccion}' realizada. Emitiendo 'accion-terminada'...`);
+  socket.emit('accion-terminada', { partida, nombre });
+
+  // Mostrar el modal de espera
+  abrirModal('modal-espera-accion');
+
+  deshabilitarBotonesAccion(true);
+  document.getElementById('estado-turno').textContent = "⌛ Esperando otros jugadores...";
 }
+
 
 function deshabilitarBotonesAccion(deshabilitar) {
      const container = document.getElementById('acciones-container');
@@ -1415,6 +1363,7 @@ function confirmarReclutar() {
     console.log(`[Reclutar] Emitiendo: ${cantidad} ${tipoUnidad} en ${territorio}`);
     socket.emit('solicitud-reclutamiento', { partida, nombre, territorio, tipoUnidad, cantidad });
     cerrarModal('modal-reclutar');
+    terminarAccionEspecifica('Reclutar');
 }
 
 
@@ -1600,11 +1549,16 @@ function confirmarConstruir() {
   }
 
   cerrarModal('modal-construir');
+  
+  
 
   // SI construyó un taller de asedio, abrimos inmediatamente el modal de elección
   if (edificio1 === "Taller de maquinaria de asedio" || edificio2 === "Taller de maquinaria de asedio") {
     abrirModal('modal-elegir-asedio');
+  } else {
+    terminarAccionEspecifica('Construir');
   }
+
 }
 
 
@@ -1748,6 +1702,7 @@ misTerritorios.forEach(t => {
     const mantenimientosacerdotizaroja = jugador.sacerdotizaroja || 0;
     const mantenimientobarbaros = jugador.barbaros || 0;
     const mantenimientocaballerosdelaguila = jugador.caballerosdelaguila || 0;
+    const mantenimientosacerdotesal = jugador.sacerdoteSal || 0;
     
 
 
@@ -1755,7 +1710,7 @@ misTerritorios.forEach(t => {
     mantenimientoDragones + mantenimientoSacerdotes + mantenimientoCaballeros + mantenimientoHuargos
     + mantenimientoUnicornios + mantenimientomurcielagos + mantenimientoguardiareal + mantenimientobarcolegendario
     + mantenimientobarcocorsario + mantenimientovenadosblancos + mantenimientomartilladores + mantenimientocaballerosdelarosa
-    + mantenimientoguardiadelalba + mantenimientosacerdotizaroja + mantenimientobarbaros + mantenimientocaballerosdelaguila;
+    + mantenimientoguardiadelalba + mantenimientosacerdotizaroja + mantenimientobarbaros + mantenimientocaballerosdelaguila + mantenimientosacerdotesal;
 
 
     let oroEstimado = Math.max(0, oroTotalTurno + oroPorMinas + oroPorAserraderos + oroPorCanteras + oroPorGranjas + oroPorPuertos - mantenimientoTotal);
@@ -1955,6 +1910,7 @@ document.getElementById("btn-confirmar-territorios-revuelta")?.addEventListener(
   });
 
   cerrarModal("modal-territorios-revuelta");
+  terminarAccionEspecifica('revuelta');
 });
 
 
@@ -1994,7 +1950,6 @@ setupListener('btn-si-ritual-kraken', 'click', () => {
 
 setupListener('btn-no-ritual-kraken', 'click', () => {
   cerrarModal('modal-ritual-kraken');
-  terminarAccionEspecifica("Ritual de Sal (sin éxito)");
 });
 
 
@@ -2009,6 +1964,7 @@ setupListener('btn-confirmar-saqueo', 'click', () => {
 
   socket.emit('greyjoy-saquear', { partida, nombre, oro });
   cerrarModal('modal-saqueo-greyjoy');
+  terminarAccionEspecifica('Saqueo');
 });
 
 
@@ -2022,6 +1978,7 @@ if (btnConfirmarLevas) {
 
     socket.emit('levas-stark', { partida, nombre, cantidad });
     cerrarModal('modal-levas-stark');
+    terminarAccionEspecifica('LevasStark');
   });
 }
 
@@ -2055,6 +2012,7 @@ if (btnConfirmarLevas) {
     'kraken','huargos','unicornios','murcielagos','guardiareal','jinete',
     'barcolegendario', 'tritones','barcocorsario','venadosblancos','martilladores',
     'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
+    ,'sacerdoteSal'
   ];
 
   for (const key of unidades) {
@@ -2262,6 +2220,7 @@ function finalizarFaseNeutralYEmitir() {
           socket.emit('tyrell-obtener-tecnologia', { partida, nombre, edificio, territorio });
           document.getElementById('btn-obtener-tecnologia').style.display = 'none';
           cerrarModal('modal-tecnologia-trirren');
+          terminarAccionEspecifica('Obtener Tecnología');
         });
         
         
@@ -2279,6 +2238,7 @@ function finalizarFaseNeutralYEmitir() {
           if (cantidad <= 0) return alert("Debes ingresar al menos 1 caballero.");
           socket.emit('organizar-torneo-arryn', { partida, nombre, cantidad });
           cerrarModal('modal-torneo-arryn');
+          terminarAccionEspecifica('torneo');
         });
 
         setupListener('btn-confirmar-robo-tropas', 'click', () => {
@@ -2325,6 +2285,7 @@ function finalizarFaseNeutralYEmitir() {
             agregarReclutaAsedioSiAplica();
             agregarCaballeroSiArrynConAcademia();
             agregarSacerdoteLuzSiBaratheon(); // << Añade esto
+            agregarSacerdoteSalSiGreyjoy();
             agregarSoldadoBlindadoSiLannisterConArmeria();
             agregarArquerosSiTullyConArqueria(); // 👈 añadir esto después de las demás funciones
             agregarUnidadesEspecialesSiTyrellTieneTecnologia();
@@ -2369,20 +2330,6 @@ function finalizarFaseNeutralYEmitir() {
   terminarAccionEspecifica('Reorganizar');
 });
 
-setupListener('btn-stark-reorganizar', 'click', () => {
-  const turno = gameState?.turno || 1;
-  const accion = gameState?.accion || 1;
-  turnoReorganizarUsado = turno;
-  accionReorganizarUsado = accion;
-
-  const btnReorganizar = document.getElementById('btn-reorganizar');
-  const btnStarkReorganizar = document.getElementById('btn-stark-reorganizar');
-  if (btnReorganizar) btnReorganizar.style.display = 'none';
-  if (btnStarkReorganizar) btnStarkReorganizar.style.display = 'none';
-
-  socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
-});
-
 
 
         
@@ -2402,6 +2349,7 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
   });
 
   cerrarModal('modal-casarse-targaryen');
+  terminarAccionEspecifica('casarse');
 });
 
         
@@ -2448,7 +2396,8 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'jinete','kraken','huargos','unicornios','murcielagos','guardiareal',
     'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila',
+    'sacerdoteSal'
   ];
 
   let total = 0;
@@ -2538,7 +2487,7 @@ socket.emit("actualizar-perdidas-neutral", {
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero','kraken',
     'huargos','unicornios','murcielagos','guardiareal', 'barcolegendario','tritones',
     'barcocorsario','venadosblancos','martilladores','caballerosdelarosa','guardiadelalba','sacerdotizaroja'
-    ,'barbaros','caballerosdelaguila'
+    ,'barbaros','caballerosdelaguila','sacerdoteSal'
   ];
 
   claves.forEach(key => {
@@ -2548,6 +2497,7 @@ socket.emit("actualizar-perdidas-neutral", {
   });
 
   cerrarModal('modal-lannister-perdidas');
+  terminarAccionEspecifica('dobleimpuestos');
   socket.emit('doble-impuestos-completo', { partida, nombre, perdidas });
 });
 
@@ -2717,6 +2667,7 @@ validarOroSoborno();
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja' },
     { key: 'barbaros', nombre: 'Bárbaros' },
     { key: 'caballerosdelaguila', nombre: 'Caballeros del Águila' },
+    { key: 'sacerdoteSal', nombre: 'Sacerdote de Sal' },
   ];
 
   unidades.forEach(({ key, nombre }) => {
@@ -2758,7 +2709,8 @@ function confirmarAtaqueSimple() {
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken', 'huargos', 'unicornios', 'murcielagos', 'guardiareal', 'jinete',
     'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila',
+    'sacerdoteSal'
   ];
 
   unidades.forEach(key => {
@@ -2841,9 +2793,12 @@ function confirmarAtaqueSimple() {
   if (window.esAtaqueNorteStark) {
     incrementarContadorNorte();
     window.esAtaqueNorteStark = false;
+  } else {
+    terminarAccionEspecifica('Batalla');
   }
 
   cerrarModal('modal-ataque-simple');
+
 
   if (casa === "Arryn") {
     abrirModal('modal-caballero-batalla-arryn');
@@ -3365,6 +3320,30 @@ function agregarSacerdoteLuzSiBaratheon() {
   }
 }
 
+function agregarSacerdoteSalSiGreyjoy() {
+  const cont = document.getElementById('contenedor-reclutas');
+  if (!cont || casa !== "Greyjoy") return;
+  // Ya agregado?
+  if (cont.querySelector('.recluta-box[data-tipo="sacerdoteSal"]')) return;
+
+  const div = document.createElement('div');
+  div.className = 'recluta-box';
+  div.dataset.tipo = 'sacerdoteSal';
+  div.dataset.costo = '20';
+  div.innerHTML = `
+    <h3>Sacerdote de Sal</h3>
+    <img src="../imgs/reclutas/sacerdote_sal.png" alt="Sacerdote de Sal" style="width: 80px;">
+    <div class="control-numero">
+      <button class="btn-control" onclick="ajustarCantidad('sacerdoteSal', -1)">-</button>
+      <span id="cantidad-sacerdoteSal">0</span>
+      <button class="btn-control" onclick="ajustarCantidad('sacerdoteSal', 1)">+</button>
+    </div>
+    <p>Coste: 20 oro</p>
+  `;
+  cont.appendChild(div);
+}
+
+
 
 function agregarReclutaAsedioSiAplica() {
     const contenedor = document.getElementById('contenedor-reclutas');
@@ -3545,7 +3524,8 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     'caballero', 'sacerdotes', 'dragones', 'militantesFe', 'arquero',
     'kraken','huargos','unicornios','murcielagos','guardiareal', 'jinete',
     'barcolegendario','tritones','barcocorsario','venadosblancos','martilladores',
-    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila'
+    'caballerosdelarosa','guardiadelalba','sacerdotizaroja','barbaros','caballerosdelaguila',
+    'sacerdoteSal'
   ];
 
   for (const key of unidades) {
@@ -3581,7 +3561,7 @@ document.getElementById('btn-confirmar-perdidas-defensor')?.addEventListener('cl
     barcosPerdidosPendientes = barcosPerdidos;
     transferenciasBarcos = [];
     poblarCasasBarco();
-      mostrarModalTransferenciaBarco();
+    mostrarModalTransferenciaBarco();
   }
 
   // ⚔️ Si es casa Arryn, mostrar caballeros si aplica
@@ -3601,6 +3581,7 @@ document.getElementById('btn-confirmar-soborno-final-lannister')?.addEventListen
 
   cerrarModal('modal-soborno-final-lannister');
   socket.emit('lannister-soborno-final', { partida, nombre, perdidas, gano });
+  terminarAccionEspecifica('Soborno');
 });
 
 document.getElementById('btn-confirmar-soborno-defensor')?.addEventListener('click', () => {
@@ -3910,13 +3891,13 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         console.warn("Recibido 'avanzar-accion' pero gameState local es nulo. Esperando estado completo.");
         // Podríamos almacenar temporalmente nuevoEstado y aplicarlo cuando llegue gameState
     }
+
+    cerrarModal('modal-espera-accion');
     if (casa === "Stark") {
   contadorAccionesNorte = 0;
   if (casa === "Stark") {
   document.getElementById('btn-stark-atacar')?.style.setProperty('display', 'inline-block');
   document.getElementById('btn-stark-mover')?.style.setProperty('display', 'inline-block');
-  document.getElementById('btn-stark-reorganizar')?.style.setProperty('display', 'inline-block');
-  document.getElementById('btn-stark-reclutar')?.style.setProperty('display', 'inline-block');
 }
 
   const spanContador = document.getElementById('valor-contador-stark');
@@ -3943,8 +3924,7 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         // Reiniciar pasos del modal
          document.getElementById('btn-stark-atacar').style.display = 'none'
   document.getElementById('btn-stark-mover').style.display = 'none'
-  document.getElementById('btn-stark-reorganizar').style.display = 'none'
-  document.getElementById('btn-stark-reclutar').style.display = 'none'
+
     
         renderizarInputsPerdidas();
         abrirModal('modal-fase-neutral');
@@ -4149,6 +4129,7 @@ const preciosReclutas = {
     torre: 20,
     escorpion: 20,
     sacerdoteLuz: 20,
+    sacerdoteSal:20,
     caballero: 10,
     soldadoBlindado: 10,
     armadura: 6,
@@ -4169,6 +4150,7 @@ const preciosReclutas = {
     torre: 0,
     escorpion: 0,
     sacerdoteLuz: 0,
+    sacerdoteSal:0,
     soldadoBlindado: 0,
     armadura: 0,
     arquero: 0,
@@ -4782,6 +4764,7 @@ function confirmarReclutarCaballerosDelAguila() {
     { key: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja'},
     { key: 'barbaros', nombre: 'Barbaros'},
     { key: 'caballerosdelaguila', nombre: 'Caballeros del Aguila'},
+    { key: 'sacerdoteSal', nombre: 'Sacerdote de Sal' },
 
 
   ];
@@ -4971,6 +4954,7 @@ for (const tipo in unidadesValidas) {
   
     actualizarInfoJugador();
     cerrarModal('modal-reclutar');
+    terminarAccionEspecifica('reclutar');
 
     if (modoReclutarNorte) {
   incrementarContadorNorte();
