@@ -38,11 +38,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
+  overflow-y: hidden;
   color: var(--color-text-primary); background-color: var(--color-bg-main);
   background-image: url('../input_file_0.png'); 
   background-size: cover; background-position: center; background-repeat: no-repeat;
   min-height: 100vh; font-family: var(--font-family-main); overflow-x: hidden; line-height: 1.5;
-  overflow-y: hidden;
 }
 
 h1,h2,h3,h4,h5,h6 { font-family: var(--font-family-title); color: var(--color-text-title); text-shadow: var(--text-shadow-strong); margin-bottom: var(--spacing-m); font-weight: 600; }
@@ -127,7 +127,8 @@ p { margin-bottom: var(--spacing-m); color: var(--color-text-secondary); }
   padding-top: calc(40px + 20px + var(--spacing-m)); 
   padding-left: var(--spacing-l); padding-right: var(--spacing-l);
   padding-bottom: 80px; /* Espacio para #boton-accion fijo. Se aumentará para móvil. */
-  min-height: 100vh; position: relative;
+  overflow-y: auto;
+  max-height: calc(115vh);
   display: flex; 
   flex-direction: column; 
 }

@@ -2653,16 +2653,16 @@ ingreso += canteras * (esGreyjoy ? 8 : 5);
             const escorpiones = jugador.escorpion || 0;
             const costoMaquinas = catapultas * 1 + torres * 1 + escorpiones * 1; // o el coste de mantenimiento que quieras
 
-            const costoTropas = (j.tropas || 0) + (j.mercenarios || 0) + (j.elite || 0) + (j.militantesFe || 0);
+            const costoTropas = (jugador.tropas || 0) + (jugador.mercenarios || 0) + (jugador.elite || 0) + (jugador.militantesFe || 0);
 
             const barcos = jugador.barcos || 0;
             const costoBarcos = barcos * 2;
             const dragones = jugador.dragones || 0;
             const costoDragones = dragones * 5;
-            const costoSacerdotes = j.sacerdotes || 0;
-            const caballeros = j.caballero || 0;
+            const costoSacerdotes = jugador.sacerdotes || 0;
+            const caballeros = jugador.caballero || 0;
 const costoCaballeros = caballeros * 1;
-const costosacerdotesal = j.sacerdoteSal || 0;
+const costosacerdotesal = jugador.sacerdoteSal || 0;
 
 
             jugador.oro = Math.max(0, jugador.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costosacerdotesal);
