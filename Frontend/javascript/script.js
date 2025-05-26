@@ -32,40 +32,39 @@ socket.on('disconnect', (reason) => {
 
 // Función que se ejecuta cuando haces clic en el botón "Crear Partida"
 function crearPartida() {
-  const nombreInput = document.getElementById('nombre');     // Campo nombre del jugador
-  const partidaInput = document.getElementById('partida');   // Campo nombre de la partida
-  const claveInput = document.getElementById('clave');       // Campo clave (puede estar vacío)
-
-  // Comprobamos que los campos existen en el HTML
-  if (!nombreInput || !partidaInput || !claveInput) {
-      console.error("Error: No se encontraron los elementos del formulario (nombre, partida, clave).");
-      alert("Error interno: Faltan elementos en la página.");
-      return;
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) {
+    alert("Por favor ingresa tu nombre.");
+    return;
   }
-
-  const nombre = nombreInput.value.trim();     // Quitamos espacios
-  const partida = partidaInput.value.trim();   // Quitamos espacios
-  const clave = claveInput.value;              // No usamos trim porque puede estar vacía
-
-  // Validamos que el jugador ha escrito nombre y nombre de partida
-  if (!nombre || !partida) {
-     alert("Por favor, ingresa tu nombre y un nombre para la partida.");
-     return;
-  }
-
-  // Mostramos por consola que vamos a crear partida
-  console.log(`[Index] Intentando crear partida: Usuario=${nombre}, Partida=${partida}, Clave=${clave ? '***' : '(ninguna)'}`);
-
-  // Guardamos el nombre del jugador en el navegador para usarlo luego
   localStorage.setItem('nombreJugador', nombre);
 
-  // Enviamos al servidor que queremos crear una partida
-  socket.emit('crear-partida', { nombre, partida, clave });
+  // Generador de IDs aleatorios de 10 caracteres
+  function generarIdAleatorio(long) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let s = "";
+    for (let i = 0; i < long; i++) {
+      s += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return s;
+  }
 
-  // Redirigimos al lobby con los datos como parámetros en la URL
-  // El parámetro 'host=true' indica que este jugador es el creador
-  const params = new URLSearchParams({ nombre, partida, clave, host: 'true' });
-  window.location.href = `html/lobby.html?${params.toString()}`;
+  // Intentar hasta encontrar un ID libre
+  function intentarCrear() {
+    const partidaId = generarIdAleatorio(10);
+    socket.emit('verificar-partida', partidaId, ({ exists }) => {
+      if (exists) {
+        // ya existe, volvemos a intentar
+        intentarCrear();
+      } else {
+        // ID libre: creamos y redirigimos
+        socket.emit('crear-partida', { nombre, partida: partidaId, clave: "" });
+   // Redirigimos a la ruta bonita
+   window.location.href = `/lobby/${partidaId}`;
+      }
+    });
+  }
+  intentarCrear();
 }
 
 // Función que se ejecuta cuando haces clic en el botón "Unirse a Partida"

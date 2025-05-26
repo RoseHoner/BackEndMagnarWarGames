@@ -54,6 +54,18 @@ const RUMORES_POR_CASA = {
 };
 
 
+// ─── PARÁMETROS desde PATH y localStorage ───
+const segments = window.location.pathname.split('/');
+const partida  = segments[segments.length - 1];
+const nombre   = localStorage.getItem('nombreJugador');
+const casa     = localStorage.getItem('casaJugador');
+
+if (!partida || !nombre || !casa) {
+  alert("Error: Faltan datos esenciales para iniciar el juego.");
+  window.location.href = '/';
+  throw new Error("Faltan datos esenciales para iniciar el juego.");
+}
+
 
 
 // --- Conexión Socket.IO ---
@@ -66,12 +78,11 @@ const socket = io(BACKEND_URL, {
 
 
 
+
+
 // --- Parámetros URL ---
 // Extrae parámetros de la URL como partida, nombre y casa
-const params = new URLSearchParams(window.location.search);
-const partida = params.get('partida');
-const nombre = params.get('nombre');
-const casa = params.get('casa'); // Casa asignada a este jugador
+
 
 // --- Estado Local del Juego (Reflejo del Servidor) ---
 // Este objeto se llenará con los datos enviados por el servidor
@@ -1805,13 +1816,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("==========================================");
     console.log("DOM Cargado. Iniciando scriptjuego.js...");
 
-    // 1. Validar Datos Iniciales (nombre, casa, partida)
-    if (!nombre || !casa || !partida) {
-        console.error("¡CRÍTICO! Faltan datos URL (nombre, casa, partida). Redirigiendo a inicio.");
-        alert("Error: Faltan datos esenciales para iniciar el juego.");
-        window.location.href = 'index.html';
-        return;
-    }
     console.log(`Datos OK: Jugador=${nombre}, Casa=${casa}, Partida=${partida}`);
 
     // 2. Configurar UI Inicial básica (fondo, logo)
@@ -3695,6 +3699,8 @@ document.querySelectorAll('input[name="resultado-ataque2"]').forEach(radio => {
 });
 
 
+// Al final de document.addEventListener('DOMContentLoaded', …)
+socket.emit('pedir-estado', { partida, nombre });
 
 
 
@@ -4012,7 +4018,6 @@ window.toggleSelectPropietario = function(nombreTerritorio) {
 // Listener PRINCIPAL para recibir y aplicar el estado del juego
 // Recibe y actualiza el estado del juego completo desde el servidor
 socket.on('actualizar-estado-juego', (estadoRecibido) => {
-  
 
     console.log("[Cliente] Recibido 'actualizar-estado-juego'");
     // console.log(estadoRecibido); // Descomentar para depurar el estado recibido
@@ -4033,14 +4038,8 @@ socket.on('actualizar-estado-juego', (estadoRecibido) => {
 
     renderizarRumoresDesbloqueados();
 
-    
-
-    
-
-
-    
-
-
+    console.log(gameState)
+    console.log(gameState.jugadores)
     // Validar que el gameState recibido es usable
     if (!gameState.jugadores || !gameState.territorios || !gameState.jugadores[nombre]) {
         console.error("El estado recibido no contiene la información mínima necesaria (jugadores, territorios, datos propios).");

@@ -37,16 +37,25 @@ window.casas = casas; // Hacer accesible globalmente para actualizarLista
 
 function iniciarJuego() {
     if (!partida || !esHost) return;
-    console.log(`[Cliente ${nombre}] Intentando iniciar juego en ${partida}`);
+    // 1) Guardamos casa en localStorage
+    const miCasa = casasActuales[nombre];
+    localStorage.setItem('casaJugador', miCasa);
+    // 2) Pedimos al servidor que inicie el juego para todos
     socket.emit('iniciar-juego', { partida });
+    console.log(`[Cliente ${nombre}] Lanzado 'iniciar-juego' en ${partida}`);
 }
 
+
 function configurarDesdeURL() {
-    const params = new URLSearchParams(window.location.search);
-    partida = params.get('partida');
-    clave = params.get('clave');
-    let nombreDesdeURL = params.get('nombre');
-    esHost = params.get('host') === 'true';
+    // URL: /lobby/<partida>
+   const segmentos = window.location.pathname.split('/');
+   // Asumimos que el segmento justo después de "lobby" es el ID
+   const idx = segmentos.indexOf('lobby');
+   partida = (idx !== -1 && segmentos[idx+1]) || null;
+   // ya no usamos clave
+
+   // Leemos el nombre previamente guardado (si existe)
+   let nombreDesdeURL = localStorage.getItem('nombreJugador');
 
     if (nombreDesdeURL) {
         nombre = nombreDesdeURL;
@@ -77,43 +86,61 @@ function manejarVisibilidadInicial() {
 }
 
 function unirse() {
-  const inputNombreElement = document.getElementById('nombre');
-  const inputNombre = inputNombreElement.value.trim();
-  if (!inputNombre) {
-      alert('Por favor, ingresa tu nombre para unirte.');
-      return;
+  const inputEl = document.getElementById('nombre');
+  const intento = inputEl.value.trim();
+  if (!intento) {
+    alert('Por favor ingresa tu nombre para unirte.');
+    return;
   }
-  nombre = inputNombre;
-  localStorage.setItem('nombreJugador', nombre);
 
-  const nuevaURL = new URL(window.location);
-  nuevaURL.searchParams.set('nombre', nombre);
-  window.history.replaceState({}, '', nuevaURL);
-
-  document.getElementById('form-nombre').style.display = 'none';
-  conectarAlLobby();
+  // Llamamos al servidor para comprobar duplicados
+  socket.emit('comprobar-nombre', { partida, nombre: intento }, ({ exists }) => {
+    if (exists) {
+      alert('Ese nombre ya está en uso. Elige otro distinto.');
+      inputEl.value = '';
+      inputEl.focus();
+    } else {
+      // Nombre libre: guardamos y entramos al lobby
+      nombre = intento;
+      localStorage.setItem('nombreJugador', nombre);
+      window.history.replaceState({}, '', `/lobby/${partida}`);
+      document.getElementById('form-nombre').style.display = 'none';
+      conectarAlLobby();
+    }
+  });
 }
 
 function conectarAlLobby() {
   if (!nombre || !partida) {
-      console.error("Intento de conexión sin nombre o partida");
-      alert("Error: Falta nombre o identificador de partida. Volviendo al inicio.");
-      window.location.href = 'index.html';
-      return;
+    console.error("Intento de conexión sin nombre o partida");
+    alert("Error: Falta nombre o identificador de partida. Volviendo al inicio.");
+    window.location.href = 'index.html';
+    return;
   }
 
   document.getElementById('lobby').style.display = 'block';
   const linkInput = document.getElementById('link-invitacion');
-  const urlInvitacion = new URL(window.location);
-  urlInvitacion.searchParams.delete('nombre');
-  urlInvitacion.searchParams.delete('host');
-  linkInput.value = urlInvitacion.toString();
+  const url = `${window.location.origin}/lobby/${partida}`;
+  linkInput.value = url;
+
+  // 🆕 Generar el QR
+  const qrContainer = document.getElementById('qr-code');
+  qrContainer.innerHTML = ""; // limpiar por si ya existe uno
+  new QRCode(qrContainer, {
+    text: url,
+    width: 128,
+    height: 128,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
 
   renderizarCasas();
 
   console.log(`[Cliente ${nombre}] Emitiendo 'unirse-partida' a ${partida}`);
   socket.emit('unirse-partida', { nombre, partida, clave });
 }
+
 
 function copiarLink() {
   const input = document.getElementById('link-invitacion');
@@ -180,6 +207,8 @@ function seleccionarCasa(nombreCasa) {
       console.log(`[Cliente ${nombre}] Emitiendo selección de ${nombreCasa}`);
       socket.emit('elegir-casa', { partida, nombre, casa: nombreCasa });
       casaSeleccionadaLocalmente = nombreCasa; // Actualiza estado local inmediatamente (optimista)
+      // 👉 Guardamos la casa en localStorage igual que el host
+        localStorage.setItem('casaJugador', nombreCasa);
     }
     // La actualización visual final se hará cuando llegue 'casas-actualizadas'
     actualizarVisualizacionCasas(); // Actualiza la UI localmente de forma optimista
@@ -303,6 +332,18 @@ socket.on('error', (mensaje) => {
    }
 });
 
+socket.on('partida-cerrada', () => {
+  alert("El host ha salido. La partida ha sido eliminada.");
+  // Volvemos al inicio
+  window.location.href = '/';
+});
+
+socket.on('host-info', hostName => {
+  esHost = (nombre === hostName);
+  console.log(`[Lobby] Host= ${hostName}. ¿Soy host? ${esHost}`);
+  actualizarVisualizacionCasas(); // Habilita o deshabilita el botón según corresponda
+});
+
 socket.on('jugadores-actualizados', (listaJugadores) => {
   console.log("[Cliente] Recibido 'jugadores-actualizados':", listaJugadores);
   jugadoresActuales = listaJugadores; // Actualiza variable global
@@ -318,18 +359,11 @@ socket.on('casas-actualizadas', (casasRecibidas) => {
     actualizarVisualizacionCasas();
 });
 
-socket.on('juego-iniciado', ({ gameState }) => { // Recibe el gameState inicial
-    console.log("[Cliente] Recibido 'juego-iniciado'. Redirigiendo...");
-    // Ya no necesitamos guardar en localStorage aquí, el juego pedirá el estado al servidor
-    const miNombre = nombre;
-    const miCasa = casasActuales[nombre]; // Obtener la casa confirmada por el servidor
-
-    if (miNombre && miCasa && partida) {
-        window.location.href = `juego.html?nombre=${encodeURIComponent(miNombre)}&casa=${encodeURIComponent(miCasa)}&partida=${encodeURIComponent(partida)}`;
-    } else {
-        console.error("[Cliente] No se pudo redirigir a juego.html: faltan datos.", { miNombre, miCasa, partida });
-        alert("Error al iniciar el juego. Faltan datos.");
-    }
+socket.on('juego-iniciado', () => {
+  // Redirigimos a la ruta bonita: /juego/<partida>
+  localStorage.setItem('casaJugador', casaSeleccionadaLocalmente);
+  window.location.href = `${window.location.origin}/juego/${partida}`;
+  
 });
 
 // --- Inicialización al Cargar la Página ---

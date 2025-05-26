@@ -1,4 +1,5 @@
 // Importamos los módulos necesarios
+const path = require('path');
 const express = require('express'); // Framework web para Node.js
 const http = require('http'); // Para crear el servidor HTTP
 const { Server } = require('socket.io'); // Para comunicación en tiempo real
@@ -8,10 +9,30 @@ const cors = require('cors'); // Permitir conexiones entre dominios diferentes (
 const app = express();
 app.use(cors()); // Permitimos cualquier origen (útil en desarrollo)
 
-app.get('/', (req, res) => {
-  res.send('Servidor backend funcionando');
-});
 
+ // Servir estáticos de la carpeta Frontend
+ // Ahora definimos frontPath apuntando a ../Frontend
+ const frontPath = path.join(__dirname, '..', 'Frontend');
+ app.use(express.static(frontPath));
+
+
+// Ruta “bonita” para el lobby: /lobby/ABC123
+ // Cámbialo a esto, usando frontPath:
+ app.get('/lobby/:partida', (req, res) => {
+   res.sendFile(path.join(
+     frontPath,
+     'html',
+     'lobby.html'
+   ));
+ });
+
+ app.get('/juego/:partida', (req, res) => {
+  res.sendFile(path.join(
+    frontPath,     // ../Frontend
+    'html',        // si tu juego está en Frontend/html/
+    'juego.html'
+  ));
+});
 
 // Creamos el servidor HTTP y lo conectamos con socket.io
 const server = http.createServer(app);
@@ -228,7 +249,22 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
 
 // Cuando un cliente se conecta por socket
 io.on('connection', (socket) => {
+  
   console.log(`🔌 Connect: ${socket.id}`);
+
+  // Permitir al cliente verificar si un ID de sala ya existe
+  socket.on('verificar-partida', (partidaId, callback) => {
+    const exists = !!rooms[partidaId];
+    callback({ exists });
+  });
+
+
+   // Verificar si un nombre ya está en uso en esa partida
+ socket.on('comprobar-nombre', ({ partida, nombre }, callback) => {
+   const room = rooms[partida];
+   const exists = room ? room.players.includes(nombre) : false;
+   callback({ exists });
+ });
 
   socket.on("tyrell-revuelta-campesina", ({ partida, nombre, casaObjetivo, tropasGanadas }) => {
   const room = rooms[partida];
@@ -449,7 +485,6 @@ socket.on('targaryen-eclosionar-huevo', ({ partida, nombre }) => {
 
 
   socket.on('ataque-coordinado', ({ partida, nombre, casaAtacante, aliados, territorios }) => {
-    console.log("PENEEEEEEEEEEEEEEEEEEEEEEEEEE DIOOOOOOOOOOOOOOOS")
     const room = rooms[partida];
     if (!room) return;
 
@@ -496,7 +531,6 @@ for (const casaAliada of aliados) {
   });
 
   socket.on('perdidas-en-batalla', ({ partida, nombre, perdidas, esSaqueoGreyjoy }) => {
-    console.log("gracias por este pene")
     const room = rooms[partida];
     if (!room) return;
   
@@ -518,8 +552,6 @@ for (const key in perdidas) {
   
     // Aplicar las pérdidas recibidas
     // Si es Targaryen y tiene Fuego Heredado y va a perder jinetes, avisamos al cliente antes
-    console.log(jugador.casa,jugador.rumoresDesbloqueados?.includes("Fuego Heredado"),perdidas.jinete)
-    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 if (
   jugador.casa === "Targaryen" &&
   jugador.rumoresDesbloqueados?.includes("Fuego Heredado") &&
@@ -1285,7 +1317,6 @@ if (j.casa === "Martell" && j.rumoresDesbloqueados?.includes("Mercancía de Somb
       edificiosProduccion += t.edificios.filter(e => ["Mina", "Cantera", "Aserradero", "Granja"].includes(e)).length;
     }
   }
-  console.log(edificiosProduccion)
   ingreso += edificiosProduccion * 10;
 }
 
@@ -1565,16 +1596,17 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
   
   
 
-  // Crear una nueva partida
-  socket.on('crear-partida', ({ partida, clave }) => {
-    if (rooms[partida]) return; // Si ya existe, no se crea otra vez
+  // Crear una nueva partida y asignar host
+  socket.on('crear-partida', ({ nombre, partida, clave }) => {
+    if (rooms[partida]) return;
     rooms[partida] = {
       password: clave,
       players: [],
       casas: {},
-      playerSockets: {}
+      playerSockets: {},
+      host: nombre            // ← guardamos quién la creó
     };
-    console.log(`[Lobby] Partida '${partida}' creada.`);
+    console.log(`[Lobby] Partida '${partida}' creada por ${nombre}.`);
   });
 
   // Unirse a una partida ya existente
@@ -1585,11 +1617,13 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
         password: clave,
         players: [],
         casas: {},
-        playerSockets: {}
+        playerSockets: {},
+        host: nombre
       };
     }
 
     const room = rooms[partida];
+    room.host = room.host || nombre;
     if (!room.players.includes(nombre)) room.players.push(nombre);
     room.playerSockets[nombre] = socket.id;
 
@@ -1602,6 +1636,10 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
 
     // Avisamos a todos los jugadores del lobby del nuevo jugador
     io.to(partida).emit('jugadores-actualizados', room.players);
+
+  
+    // Avisar a todos quién es el host
+   io.to(partida).emit('host-info', room.host);
   });
 
   // Cuando un jugador elige una casa
@@ -1637,6 +1675,9 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
     const room = rooms[partida];
     if (!room) return;
 
+
+    room.started = true;
+  
     // Inicializamos estado de juego
     room.estadoTerritorios = inicializarEstadoTerritorios();
     room.estadoJugadores = inicializarEstadoJugadores(room.players, room.casas);
@@ -1734,7 +1775,6 @@ socket.on('targaryen-activar-alianza-sangre', ({ partida, nombre, casaElegida })
 
   // Registro de una batalla
   socket.on('registrar-batalla', (data) => {
-    console.log("super pene")
     const { partida, atacante, casaAtacante, territorioAtacado, resultado, perdidasAtacante, perdidasDefensor } = data;
     const room = rooms[partida];
     if (!room || !room.estadoTerritorios || !room.estadoJugadores) return;
@@ -2988,9 +3028,48 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
   
 
   // Cuando un jugador se desconecta
-  socket.on('disconnect', (reason) => {
-    console.log(`❌ Desconectado: ${socket.id} (${reason})`);
-  });
+  // index.js (servidor)
+socket.on('disconnect', (reason) => {
+  console.log(`❌ Desconectado: ${socket.id} (${reason})`);
+
+  for (const partidaId of Object.keys(rooms)) {
+    const room = rooms[partidaId];
+    const nombreSaliente = Object.entries(room.playerSockets)
+      .find(([jug, sid]) => sid === socket.id)?.[0];
+    if (!nombreSaliente) continue;
+
+    if (nombreSaliente === room.host) {
+      // Host  
+      if (!room.started) {
+        io.to(partidaId).emit('partida-cerrada');
+        delete rooms[partidaId];
+        console.log(`[Lobby] Host salió, partida '${partidaId}' eliminada.`);
+      } else {
+        io.to(partidaId).emit('host-desconectado');
+        console.log(`[Juego] Host desconectado en '${partidaId}', la partida continúa.`);
+      }
+    } else {
+      // Jugador normal
+      if (!room.started) {
+        // Antes de empezar: lo quitamos completamente
+        room.players = room.players.filter(j => j !== nombreSaliente);
+        delete room.playerSockets[nombreSaliente];
+        delete room.casas[nombreSaliente];
+        io.to(partidaId).emit('jugadores-actualizados', room.players);
+        io.to(partidaId).emit('casas-actualizadas',  room.casas);
+        console.log(`[Lobby] Jugador '${nombreSaliente}' salió de '${partidaId}'.`);
+      } else {
+        // Durante el juego: solo borramos el socket, para permitir reconexión
+        delete room.playerSockets[nombreSaliente];
+        console.log(`[Juego] Jugador '${nombreSaliente}' perdió conexión, esperando reconexión.`);
+      }
+    }
+
+    break; // un socket solo pertenece a una sala
+  }
+});
+
+
 });
 
 // Arrancamos el servidor en el puerto 3000 o el que esté en las variables de entorno

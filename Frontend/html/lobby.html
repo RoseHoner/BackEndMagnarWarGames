@@ -18,6 +18,9 @@
     <h1>Lobby de la Partida</h1>
     <h2 id="partida-nombre"></h2>
 
+
+    <div id="qr-code" style="margin-top: 15px;"></div>
+
     <p>
       Link de invitación:<br>
       <input id="link-invitacion" readonly style="width: 80%; padding: 5px;" />
@@ -30,12 +33,14 @@
     <div id="seleccion-casa" style="margin-top: 30px;">
       <h3>Elige tu casa</h3>
       <div id="casas-container"></div>
-      <button id="boton-jugar" style="display: none; margin-top: 20px;" onclick="iniciarJuego()">
+      <button id="boton-jugar" onclick="iniciarJuego()" style="display:none;">
         🎮 Empezar partida
       </button>
+
     </div>
   </div>
 
   <script src="../javascript/lobbyscript.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 </html>
