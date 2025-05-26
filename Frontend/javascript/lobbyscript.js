@@ -373,3 +373,25 @@ document.addEventListener('DOMContentLoaded', () => {
         manejarVisibilidadInicial();
     }
 });
+
+// Manejar el modal del QR
+document.addEventListener('click', function (e) {
+  if (e.target.closest('#qr-code')) {
+    const url = `${window.location.origin}/lobby/${partida}`;
+    const qrGrande = document.getElementById('qr-grande');
+    qrGrande.innerHTML = '';
+    new QRCode(qrGrande, {
+      text: url,
+      width: 256,
+      height: 256,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    document.getElementById('qr-modal').style.display = 'flex';
+  }
+});
+
+document.querySelector('#qr-modal .close').addEventListener('click', () => {
+  document.getElementById('qr-modal').style.display = 'none';
+});
