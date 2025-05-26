@@ -1,26 +1,37 @@
+:root {
+  --color-bg-main: #0c0a08;
+  --color-text-title: #e8d8b8;
+  --color-text-primary: #d4c2a2;
+  --color-text-secondary: #988870;
+  --color-accent-gold: #f5c555;
+  --color-accent-red: #a83f3f;
+  --color-accent-green: #6a8c58;
+  --color-border-button-highlight: #ad8f63;
+  --font-family-title: "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --text-shadow-strong: 1px 1px 2px rgba(0,0,0,0.9);
+}
+
+
+
 /* --- Estilos Generales del Body --- */
 body {
-  color: white;
+  color: var(--color-text-primary);
   margin: 0;
   padding: 20px;
   text-align: center;
-  /* 1. Color de fondo de respaldo */
-  background-color: #37474F; /* Otro tono de gris azulado */
-  /* 2. Imagen de fondo y sus propiedades clave para adaptabilidad */
+  background-color: var(--color-bg-main);
   background-image: url('../imgs/mapa/mapafinal.jpeg');
-  background-size: cover;             /* Cubrir el área */
-  background-position: center center; /* Centrar la imagen */
-  background-repeat: no-repeat;       /* No repetir */
-  /* background-attachment: fixed; */ /* LÍNEA QUITADA/COMENTADA */
-  /* 3. Asegurar altura mínima */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   min-height: 100vh;
-  /* 4. Resto de estilos */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-family-title);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 
 
 /* --- Contenedor Principal del Lobby --- */
@@ -72,8 +83,11 @@ body {
 
 /* --- Títulos y Textos del Lobby --- */
 h1, h2, h3 {
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+  font-family: var(--font-family-title);
+  color: var(--color-text-title);
+  text-shadow: var(--text-shadow-strong);
 }
+
 h1 {
     margin-bottom: 15px;
 }
@@ -212,27 +226,26 @@ button[onclick="copiarLink()"] {
 .casa.disabled:hover {
     transform: scale(0.95);
 }
-
-/* --- Botón Empezar Partida --- */
-#boton-jugar {
-  padding: 12px 30px;
-  font-size: 18px;
+#boton-jugar,
+#form-nombre button,
+button[onclick="copiarLink()"] {
+  background-color: var(--color-bg-button, #080706);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-title);
+  border: 1px solid var(--color-border-button-highlight);
+  border-radius: 6px;
   font-weight: bold;
-  cursor: pointer;
-  border: none;
-  border-radius: 8px;
-  background-color: #e63946;
-  color: white;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 20px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.8px;
+  padding: 12px 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
-#boton-jugar:hover {
-  background-color: #d62828;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+#boton-jugar:hover,
+#form-nombre button:hover,
+button[onclick="copiarLink()"]:hover {
+  background-color: #1f1b17;
+  color: var(--color-text-title);
 }
 #boton-jugar:active {
     transform: translateY(0);

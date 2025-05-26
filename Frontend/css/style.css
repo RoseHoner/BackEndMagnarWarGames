@@ -1,24 +1,29 @@
+:root {
+  --color-bg-main: #0c0a08;
+  --color-text-title: #e8d8b8;
+  --color-text-primary: #d4c2a2;
+  --color-border-button-highlight: #ad8f63;
+  --font-family-title: "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --text-shadow-strong: 1px 1px 2px rgba(0,0,0,0.9);
+}
 /* --- Estilos Generales del Body --- */
+
+
+
 body {
-  margin: 0;
-  padding: 0;
-  /* 1. Color de fondo de respaldo */
-  background-color: #263238; /* Un gris azulado oscuro, ajústalo a tu gusto */
-  /* 2. Imagen de fondo y sus propiedades clave para adaptabilidad */
+  background-color: var(--color-bg-main);
   background-image: url('../imgs/mapa/mapafinal.jpeg');
-  background-size: cover;             /* Cubrir el área */
-  background-position: center center; /* Centrar la imagen */
-  background-repeat: no-repeat;       /* No repetir */
-  /* background-attachment: fixed; */ /* LÍNEA QUITADA/COMENTADA */
-  /* 3. Asegurar altura mínima */
-  min-height: 100vh; /* Usa min-height para asegurar que cubre toda la altura */
-  /* 4. Resto de estilos */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  font-family: var(--font-family-title);
+  color: var(--color-text-primary);
   display: flex;
   justify-content: center;
   align-items: center;
-  box-sizing: border-box;
 }
+
 
 /* --- Contenedor Principal (Formulario) --- */
 #overlay {
@@ -53,12 +58,15 @@ body {
 
 /* --- Título Principal --- */
 #overlay h1 {
-  color: white;
-  margin-top: 0;
-  margin-bottom: 30px;
+  font-family: var(--font-family-title);
+  color: var(--color-text-title);
+  text-shadow: var(--text-shadow-strong);
   font-size: 2.2em;
   font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 30px;
 }
+
 
 /* --- Contenedores de Label + Input --- */
 #overlay > div {
@@ -91,6 +99,15 @@ body {
   transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
+#overlay input[type="text"] {
+  background-color: #080706;
+  border: 1px solid #2c251e;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-title);
+  padding: 10px;
+}
+
+
 #overlay input[type="text"]:focus,
 #overlay input[type="password"]:focus {
   outline: none;
@@ -100,18 +117,21 @@ body {
 
 /* --- Botones --- */
 #overlay button {
-  width: 100%;
-  padding: 12px 20px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 8px;
-  font-size: 1.05em;
-  font-weight: bold;
-  cursor: pointer;
+  background-color: #080706;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-button-highlight);
+  font-family: var(--font-family-title);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: background-color 0.3s ease, transform 0.1s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  padding: 12px 20px;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+#overlay button:hover {
+  background-color: #1f1b17;
+  color: var(--color-text-title);
 }
 
 /* Botón Primario (Crear Partida) */
