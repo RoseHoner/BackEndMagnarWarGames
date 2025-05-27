@@ -1111,7 +1111,6 @@ function terminarAccionEspecifica(tipoAccion) {
   if (!partida || !nombre || gameState?.fase === 'Neutral') return;
 
   console.log(`[${nombre}] Acción '${tipoAccion}' realizada. Emitiendo 'accion-terminada'...`);
-  socket.emit('accion-terminada', { partida, nombre });
 
   // Mostrar el modal de espera
   abrirModal('modal-espera-accion');
