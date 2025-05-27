@@ -44,10 +44,23 @@ const io = new Server(server, {
 });
 
 // 📦 Pool global de conexiones MySQL
-const db = mysql.createPool({
-  uri: process.env.DATABASE_URL,
-  connectionLimit: 10
-});
+// 📦 Pool global de conexiones MySQL o dummy en local
+let db;
+if (process.env.DATABASE_URL) {
+  db = mysql.createPool({
+    uri: process.env.DATABASE_URL,
+    connectionLimit: 10
+  });
+} else {
+  console.log('⚠️  MySQL deshabilitado: no hay DATABASE_URL');
+  // Simula un pool con un método query que no hace nada
+  db = {
+    query: async () => {
+      return [[], []];
+    }
+  };
+}
+
 
 
 // Diccionario donde guardaremos todas las partidas creadas

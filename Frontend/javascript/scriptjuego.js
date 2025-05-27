@@ -617,15 +617,15 @@ function actualizarUnidadesMilitares() {
     lista.innerHTML = ''; // Limpiamos la lista
 
     const unidadesBasicas = [
-      { tipo: 'tropas', nombre: 'Tropa', icono: 'soldado.png' },
-      { tipo: 'tropasBlindadas', nombre: 'Tropa con Armadura', icono: 'soldado.png' },
-      { tipo: 'mercenarios', nombre: 'Mercenario', icono: 'mercenario.png' },
-      { tipo: 'elite', nombre: 'Mercenario de élite', icono: 'elite.png' },
-      { tipo: 'militantesFe', nombre: 'Militante de la Fe', icono: 'soldado.png' },
-      { tipo: 'arquero', nombre: 'Arquero', icono: 'soldado.png' },
-      { tipo: 'jinete', nombre: 'Jinete', icono: 'soldado.png' }, 
-      { tipo: 'huevos', nombre: 'Huevo de Dragón', icono: 'dragon.png' },
-      { tipo: 'sacerdoteSal', nombre: 'Sacerdote de Sal', icono: 'sacerdote.png' },
+      { tipo: 'tropas', nombre: 'Tropa', icono: 'ic_tropa.png' },
+      { tipo: 'tropasBlindadas', nombre: 'Tropa con Armadura', icono: 'ic_tropa_armour.png' },
+      { tipo: 'mercenarios', nombre: 'Mercenario', icono: 'ic_mercenarios.png' },
+      { tipo: 'elite', nombre: 'Mercenario de élite', icono: 'ic_mercenarios_elite.png' },
+      { tipo: 'militantesFe', nombre: 'Militante de la Fe', icono: 'ic_militante.png' },
+      { tipo: 'arquero', nombre: 'Arquero', icono: 'ic_arqueros.png' },
+      { tipo: 'jinete', nombre: 'Jinete', icono: 'ic_jinete_dragon.png' }, 
+      { tipo: 'huevos', nombre: 'Huevo de Dragón', icono: 'ic_huevo.png' },
+      { tipo: 'sacerdoteSal', nombre: 'Sacerdote de Sal', icono: 'ic_sacerdote_sal.png' },
 
     ];
     
@@ -635,7 +635,7 @@ unidadesBasicas.forEach(u => {
   if (cantidad > 0) {
     const li = document.createElement('li');
     li.innerHTML = `
-      <img src="../imgs/reclutas/${u.icono}" alt="${u.nombre}" style="width: 24px; vertical-align: middle; margin-right: 6px;">
+      <img src="../imgs/iconos/unidades/${u.icono}" alt="${u.nombre}" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 6px;">
       <span style="color: white;">${u.nombre} x${cantidad}</span>
     `;
     lista.appendChild(li);
@@ -644,29 +644,28 @@ unidadesBasicas.forEach(u => {
 
 
     const unidades = [
-        { tipo: 'dragones', nombre: 'Dragón', icono: 'dragon.png' },
-        
-        { tipo: 'barcos', nombre: 'Barco', icono: 'barco.png' },
-        { tipo: 'catapulta', nombre: 'Catapulta', icono: 'catapulta.png' },
-        { tipo: 'torre', nombre: 'Torre de Asedio', icono: 'torre.png' },
-        { tipo: 'escorpion', nombre: 'Escorpión', icono: 'escorpion.png' },
-        { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'sacerdote.png' },
-        { tipo: 'caballero', nombre: 'Caballero', icono: 'caballero.png' },
-        { tipo: 'kraken', nombre: 'Kraken', icono: 'kraken.png' },
-        { tipo: 'huargos', nombre: 'Huargos', icono: 'huargo.png'},
-        { tipo: 'unicornios', nombre: 'unicornios', icono: 'unicornios.png'},
-        { tipo: 'murcielagos', nombre: 'murcielagos', icono: 'murcielagos.png'},
-        { tipo: 'guardiareal', nombre: 'Guardia Real', icono: 'guardiareal.png' },
-        { tipo: 'barcolegendario', nombre: 'Barco Legendario', icono: 'barcolegendario.png'},
-        { tipo: 'tritones', nombre: 'Tritones', icono:'tritones.png'},
-        { tipo: 'barcocorsario', nombre: 'Barco Corsario', icono:'barcocorsario.png'},
-        { tipo: 'venadosblancos', nombre: 'Venados Blancos', icono:'venadosblancos.png'},
-        { tipo: 'martilladores', nombre: 'Martilladores', icono:'martilladores.png'},
-        { tipo: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa', icono:'caballerosdelarosa.png'},
-        { tipo: 'guardiadelalba', nombre: 'Guardia del Alba', icono:'guardiadelalba.png'},
-        { tipo: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja', icono:'sacerdotizaroja.png'},
-        { tipo: 'barbaros', nombre: 'Barbaros', icono:'barbaros.png'},
-        { tipo: 'caballerosdelaguila', nombre: 'Caballeros del Aguila', icono:"caballerosdelaguila.png"},
+        { tipo: 'dragones', nombre: 'Dragón', icono: 'ic_dragon.png' },
+        { tipo: 'barcos', nombre: 'Barco', icono: 'ic_barco.png' },
+        { tipo: 'catapulta', nombre: 'Catapulta', icono: 'ic_catapulta.png' },
+        { tipo: 'torre', nombre: 'Torre de Asedio', icono: 'ic_torre_asedio.png' },
+        { tipo: 'escorpion', nombre: 'Escorpión', icono: 'ic_lanzavirotes.png' },
+        { tipo: 'sacerdotes', nombre: 'Sacerdote de Luz', icono: 'ic_sacerdote_luz.png' },
+        { tipo: 'caballero', nombre: 'Caballero', icono: 'ic_caballero.png' },
+        { tipo: 'kraken', nombre: 'Kraken', icono: 'ic_kraken.png' },
+        { tipo: 'huargos', nombre: 'Huargos', icono: 'ic_huargos.png'},
+        { tipo: 'unicornios', nombre: 'unicornios', icono: 'ic_unicornio.png'},
+        { tipo: 'murcielagos', nombre: 'murcielagos', icono: 'ic_murcielago.png'},
+        { tipo: 'guardiareal', nombre: 'Guardia Real', icono: 'ic_guardia real.png' },
+        { tipo: 'barcolegendario', nombre: 'Barco Legendario', icono: 'ic_barco_pirata.png'},
+        { tipo: 'tritones', nombre: 'Tritones', icono:'ic_tritones.png'},
+        { tipo: 'barcocorsario', nombre: 'Barco Corsario', icono:'ic_corsario.png'},
+        { tipo: 'venadosblancos', nombre: 'Venados Blancos', icono:'ic_venado_blanco.png'},
+        { tipo: 'martilladores', nombre: 'Martilladores', icono:'ic_martilladores.png'},
+        { tipo: 'caballerosdelarosa', nombre: 'Caballeros de la Rosa', icono:'ic_cab_rosa.png'},
+        { tipo: 'guardiadelalba', nombre: 'Guardia del Alba', icono:'ic_guardia_alba.png'},
+        { tipo: 'sacerdotizaroja', nombre: 'Sacerdotiza Roja', icono:'ic_sacerdotisa_roja.png'},
+        { tipo: 'barbaros', nombre: 'Barbaros', icono:'ic_barbaros.png'},
+        { tipo: 'caballerosdelaguila', nombre: 'Caballeros del Aguila', icono:"ic_cab_aguila.png"},
         
 
     ];
@@ -676,7 +675,7 @@ unidadesBasicas.forEach(u => {
         if (cantidad > 0) {
             const li = document.createElement('li');
             li.innerHTML = `
-                <img src="../imgs/reclutas/${u.icono}" alt="${u.nombre}" style="width: 24px; vertical-align: middle; margin-right: 6px;">
+                <img src="../imgs/iconos/unidades/${u.icono}" alt="${u.nombre}" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 6px;">
                 <span style="color: white;">${u.nombre} x${cantidad}</span>
             `;
             lista.appendChild(li);
