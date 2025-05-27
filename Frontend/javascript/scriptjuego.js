@@ -1991,7 +1991,6 @@ if (btnConfirmarLevas) {
         
         setupListener('btn-no-tecnologia', 'click', () => {
           cerrarModal('modal-pregunta-tecnologia');
-          terminarAccionEspecifica("Obtener Tecnología (sin usar)");
         });
 
         setupListener('btn-confirmar-perdidas-ataque', 'click', () => {
