@@ -1622,9 +1622,9 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
   // 🔥 Inserta en la tabla partidas
   try {
     await db.query(
-      'INSERT INTO `Partidas` (`nombre`,`nombre_delhost`,`fecha_creacion`) VALUES (?, ?, CURDATE())',
-      [partida, nombre]
-    );
+    'INSERT INTO `Partidas` (`nombre`,`nombre_delhost`,`fecha_creacion`,`estado`) VALUES (?, ?, CURDATE(), ?)',
+    [partida, nombre, 'Lobby']
+  );
     console.log('✅ Partida registrada en la BD');
   } catch (err) {
     console.error('❌ Error guardando partida en BD:', err);
@@ -1694,7 +1694,7 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
   
 
   // El host inicia el juego
-  socket.on('iniciar-juego', ({ partida }) => {
+  socket.on('iniciar-juego', async ({ partida }) => {
     const room = rooms[partida];
     if (!room) return;
 
@@ -1707,6 +1707,12 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     room.turnoActual = 1;
     room.accionActual = 1;
     room.jugadoresAccionTerminada = [];
+
+    // 🔄 Actualiza el estado en la BD
+   await db.query(
+     'UPDATE `Partidas` SET `estado` = ? WHERE `nombre` = ?',
+     ['En Partida', partida]
+   );
 
     console.log(`[Juego] Juego iniciado en ${partida}`);
     io.to(partida).emit('juego-iniciado', { ok: true });
