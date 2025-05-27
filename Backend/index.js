@@ -1625,7 +1625,6 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
   'INSERT INTO `Partidas` (`nombre`,`nombre_delhost`) VALUES (?, ?)',
   [partida, nombre]
 );
-
     console.log('✅ Partida registrada en la BD');
   } catch (err) {
     console.error('❌ Error guardando partida en BD:', err);
@@ -3053,7 +3052,7 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
 
   // Cuando un jugador se desconecta
   // index.js (servidor)
-socket.on('disconnect', (reason) => {
+socket.on('disconnect', async (reason) => {
   console.log(`❌ Desconectado: ${socket.id} (${reason})`);
 
   for (const partidaId of Object.keys(rooms)) {
@@ -3066,8 +3065,18 @@ socket.on('disconnect', (reason) => {
       // Host  
       if (!room.started) {
         io.to(partidaId).emit('partida-cerrada');
-        delete rooms[partidaId];
-        console.log(`[Lobby] Host salió, partida '${partidaId}' eliminada.`);
+          // 🔥 Borra de la BD
+          try {
+            await db.query(
+              'DELETE FROM `Partidas` WHERE `nombre` = ?',
+              [partidaId]
+            );
+            console.log(`✅ Registro de partida '${partidaId}' eliminado de la BD`);
+          } catch (err) {
+            console.error(`❌ Error eliminando partida '${partidaId}' de la BD:`, err);
+          }
+          delete rooms[partidaId];
+          console.log(`[Lobby] Host salió, partida '${partidaId}' eliminada.`);
       } else {
         io.to(partidaId).emit('host-desconectado');
         console.log(`[Juego] Host desconectado en '${partidaId}', la partida continúa.`);
