@@ -39,6 +39,23 @@ const TODAS_LAS_CASAS = [
   "Baratheon", "Martell", "Targaryen", "Greyjoy"
 ];
 
+// mapear nombre de edificio → nombre de fichero PNG
+const iconosEdificio = {
+  'Granja':    'ic_granja.png',
+  'Cantera':   'ic_cantera.png',
+  'Mina':      'ic_mina.png',
+  'Aserradero':'ic_aserra.png',
+  'Castillo':  'ic_castillo.png',
+  'Puerto':    'ic_puerto.png',
+  'Taller de maquinaria de asedio': 'ic_talle_maq.png',
+  'Atalayas':  'ic_atalaya.png',
+  'Academia de Caballería': 'ic_acadedmia_cab.png',
+  'Armeria':    'ic_armeria.png',
+  'Arqueria':    'ic_arqueria.png',
+  'Foso':    'ic_foso.png',
+  'Puerto Fluvial':    'ic_puerto_fluvial.png',
+  'Septo':    'ic_septo.png',
+};
 
 
 const RUMORES_POR_CASA = {
@@ -635,7 +652,7 @@ unidadesBasicas.forEach(u => {
   if (cantidad > 0) {
     const li = document.createElement('li');
     li.innerHTML = `
-      <img src="../imgs/iconos/unidades/${u.icono}" alt="${u.nombre}" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 6px;">
+      <img src="../imgs/iconos/unidades/${u.icono}" alt="${u.nombre}" style="width: 60px; height: 60px; vertical-align: middle; margin-right: 6px;">
       <span style="color: white;">${u.nombre} x${cantidad}</span>
     `;
     lista.appendChild(li);
@@ -675,7 +692,7 @@ unidadesBasicas.forEach(u => {
         if (cantidad > 0) {
             const li = document.createElement('li');
             li.innerHTML = `
-                <img src="../imgs/iconos/unidades/${u.icono}" alt="${u.nombre}" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 6px;">
+                <img src="../imgs/iconos/unidades/${u.icono}" alt="${u.nombre}" style="width: 60px; height: 60px; vertical-align: middle; margin-right: 6px;">
                 <span style="color: white;">${u.nombre} x${cantidad}</span>
             `;
             lista.appendChild(li);
@@ -1051,28 +1068,41 @@ function mostrarBotonesStark() {
 }
 
 function actualizarEdificiosJugador() {
-    const lista = document.getElementById('lista-edificios-jugador');
-    if (!lista || !gameState || !gameState.territorios || !casa) return;
+  const lista = document.getElementById('lista-edificios-jugador');
+  lista.innerHTML = '';
+  const territoriosCasa = Object.values(gameState.territorios)
+    .filter(t => t.propietario === casa && t.edificios?.length);
 
-    lista.innerHTML = '';
+  if (!territoriosCasa.length) {
+    lista.innerHTML = '<li style="color: #ccc; font-size: 0.9rem;">(Ningún edificio)</li>';
+    return;
+  }
 
-    const territoriosCasa = Object.values(gameState.territorios)
-        .filter(t => t.propietario === casa && Array.isArray(t.edificios) && t.edificios.length > 0);
-
-    if (territoriosCasa.length === 0) {
-        lista.innerHTML = '<li style="color: #ccc; font-size: 0.9rem;">(Ningún edificio)</li>';
-        return;
-    }
-
-    territoriosCasa.forEach(t => {
-        const li = document.createElement('li');
-        li.style.marginBottom = '10px';
-        li.innerHTML = `<strong style="color: #66f;">${t.nombre}</strong><ul style="margin: 5px 0 10px 15px;">` +
-            t.edificios.map(ed => `<li style="font-size: 0.9rem;">🏗️ ${ed}</li>`).join('') +
-            `</ul>`;
-        lista.appendChild(li);
-    });
+  territoriosCasa.forEach(t => {
+    const li = document.createElement('li');
+    li.style.marginBottom = '10px';
+    li.innerHTML = `
+      <strong style="color: #66f;">${t.nombre}</strong>
+      <ul style="margin: 5px 0 10px 15px;">
+        ${t.edificios.map(ed => {
+          const icono = iconosEdificio[ed] || 'default.png';
+          return `
+            <li style="font-size: 0.9rem;">
+              <img
+                src="../imgs/iconos/construcciones/${icono}"
+                alt="${ed}"
+                class="building-icon" style="width: 40px; height: 40px;"
+              >
+              ${ed}
+            </li>
+          `;
+        }).join('')}
+      </ul>
+    `;
+    lista.appendChild(li);
+  });
 }
+
 
 
 
