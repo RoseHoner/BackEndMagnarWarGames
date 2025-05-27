@@ -748,7 +748,6 @@ function actualizarTurnoAccionUI() {
     if (!gameState) return;
     const turnoEl = document.getElementById('turno-jugador');
     const accionEl = document.getElementById('accion-jugador');
-    const estadoTurnoEl = document.getElementById('estado-turno');
 
     const btnTorneo = document.getElementById('btn-organizar-torneo');
 if (btnTorneo) {
@@ -1118,7 +1117,6 @@ function terminarAccionEspecifica(tipoAccion) {
   abrirModal('modal-espera-accion');
 
   deshabilitarBotonesAccion(true);
-  document.getElementById('estado-turno').textContent = "⌛ Esperando otros jugadores...";
 }
 
 
@@ -1143,8 +1141,6 @@ function siguienteAccion() { // Para el botón principal 'Terminar Acción'
     deshabilitarBotonesAccion(true); // Deshabilitar todos mientras espera
     // Actualizar UI para mostrar espera
     const botonPrincipal = document.getElementById('boton-accion');
-     const estadoTurnoEl = document.getElementById('estado-turno');
-    if (estadoTurnoEl) estadoTurnoEl.textContent = "⌛ Esperando otros jugadores...";
 }
 
 // --- Lógica Modal Batalla ---
@@ -3968,7 +3964,6 @@ socket.on('lannister-impuestos-usados', ({ oroGanado }) => {
 
 
 socket.on('estado-espera-jugadores', (mensaje) => {
-    const estadoTurnoEl = document.getElementById('estado-turno');
     // Mostrar mensaje de espera solo si este jugador *no* ha terminado su acción aún
      if (estadoTurnoEl && gameState && gameState.fase === 'Accion' && !gameState.jugadoresAccionTerminada?.includes(nombre)) {
         estadoTurnoEl.textContent = mensaje;
