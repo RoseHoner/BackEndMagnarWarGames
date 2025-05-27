@@ -1110,12 +1110,17 @@ function cerrarModal(modalId) {
 function terminarAccionEspecifica(tipoAccion) {
   if (!partida || !nombre || gameState?.fase === 'Neutral') return;
 
-  console.log(`[${nombre}] Acción '${tipoAccion}' realizada. Emitiendo 'accion-terminada'...`);
+  console.log(`[${nombre}] Acción '${tipoAccion}' realizada.`);
 
-  // Mostrar el modal de espera
+  // Mostrar modal de espera y deshabilitar botones
   abrirModal('modal-espera-accion');
-
   deshabilitarBotonesAccion(true);
+
+  // Emitir evento solo para mover o reorganizar
+  if (tipoAccion === 'Mover/Atacar' || tipoAccion === 'Reorganizar') {
+    console.log(`Emitiendo 'accion-terminada' para ${tipoAccion}`);
+    socket.emit('accion-terminada', { partida, nombre});
+  }
 }
 
 
@@ -1131,6 +1136,7 @@ function deshabilitarBotonesAccion(deshabilitar) {
          botonPrincipal.disabled = deshabilitar || gameState?.fase === 'Neutral' || gameState?.jugadoresAccionTerminada?.includes(nombre);
      }
 }
+
 
 // --- Lógica Modal Batalla ---
 function poblarTerritoriosAtacables() {
@@ -1899,7 +1905,7 @@ document.getElementById("btn-confirmar-territorios-revuelta")?.addEventListener(
   });
 
   cerrarModal("modal-territorios-revuelta");
-  terminarAccionEspecifica('revuelta');
+  terminarAccionEspecifica('revuelta')
 });
 
 

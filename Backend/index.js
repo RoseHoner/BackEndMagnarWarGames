@@ -316,6 +316,28 @@ if (idSocketTyrell) {
     accion: room.accionActual
   });
 
+});
+
+
+socket.on("tyrell-confirmar-territorios-revuelta", ({ partida, nombre, casaObjetivo, territorios }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  if (!territorios || !Array.isArray(territorios)) return;
+
+  territorios.forEach(nombreT => {
+    const territorio = room.estadoTerritorios[nombreT];
+    if (territorio && territorio.propietario === casaObjetivo) {
+      territorio.propietario = "Tyrell";
+    }
+  });
+
+  io.to(partida).emit("actualizar-estado-juego", {
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+
   // Pasar acción
   if (!room.jugadoresAccionTerminada.includes(nombre)) {
     room.jugadoresAccionTerminada.push(nombre);
@@ -341,27 +363,6 @@ if (idSocketTyrell) {
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
   }
-});
-
-
-socket.on("tyrell-confirmar-territorios-revuelta", ({ partida, nombre, casaObjetivo, territorios }) => {
-  const room = rooms[partida];
-  if (!room) return;
-  if (!territorios || !Array.isArray(territorios)) return;
-
-  territorios.forEach(nombreT => {
-    const territorio = room.estadoTerritorios[nombreT];
-    if (territorio && territorio.propietario === casaObjetivo) {
-      territorio.propietario = "Tyrell";
-    }
-  });
-
-  io.to(partida).emit("actualizar-estado-juego", {
-    territorios: room.estadoTerritorios,
-    jugadores: room.estadoJugadores,
-    turno: room.turnoActual,
-    accion: room.accionActual
-  });
 });
 
 
