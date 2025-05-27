@@ -1622,9 +1622,10 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
   // 🔥 Inserta en la tabla partidas
   try {
     await db.query(
-      'INSERT INTO partidas (nombre, nombre_delhost) VALUES (?, ?)',
-      [partida, nombre]
-    );
+  'INSERT INTO `Partidas` (`nombre`,`nombre_delhost`) VALUES (?, ?)',
+  [partida, nombre]
+);
+
     console.log('✅ Partida registrada en la BD');
   } catch (err) {
     console.error('❌ Error guardando partida en BD:', err);
