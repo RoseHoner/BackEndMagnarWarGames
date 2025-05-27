@@ -4,6 +4,9 @@ const express = require('express'); // Framework web para Node.js
 const http = require('http'); // Para crear el servidor HTTP
 const { Server } = require('socket.io'); // Para comunicación en tiempo real
 const cors = require('cors'); // Permitir conexiones entre dominios diferentes (frontend y backend)
+require('dotenv').config();              // <- carga .env
+const mysql = require('mysql2/promise'); // <- driver MySQL
+
 
 // Creamos la aplicación Express
 const app = express();
@@ -39,6 +42,13 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*' } // Aceptamos conexiones desde cualquier sitio (desarrollo)
 });
+
+// 📦 Pool global de conexiones MySQL
+const db = mysql.createPool({
+  uri: process.env.DATABASE_URL,
+  connectionLimit: 10
+});
+
 
 // Diccionario donde guardaremos todas las partidas creadas
 const rooms = {};
@@ -1597,17 +1607,30 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
   
 
   // Crear una nueva partida y asignar host
-  socket.on('crear-partida', ({ nombre, partida, clave }) => {
-    if (rooms[partida]) return;
-    rooms[partida] = {
-      password: clave,
-      players: [],
-      casas: {},
-      playerSockets: {},
-      host: nombre            // ← guardamos quién la creó
-    };
-    console.log(`[Lobby] Partida '${partida}' creada por ${nombre}.`);
-  });
+  // Crear una nueva partida, asignar host y guardarla en MySQL
+socket.on('crear-partida', async ({ nombre, partida, clave }) => {
+  if (rooms[partida]) return;
+  rooms[partida] = {
+    password: clave,
+    players: [],
+    casas: {},
+    playerSockets: {},
+    host: nombre
+  };
+  console.log(`[Lobby] Partida '${partida}' creada por ${nombre}.`);
+
+  // 🔥 Inserta en la tabla partidas
+  try {
+    await db.query(
+      'INSERT INTO partidas (nombre, nombre_delhost) VALUES (?, ?)',
+      [partida, nombre]
+    );
+    console.log('✅ Partida registrada en la BD');
+  } catch (err) {
+    console.error('❌ Error guardando partida en BD:', err);
+  }
+});
+
 
   // Unirse a una partida ya existente
   socket.on('unirse-partida', ({ nombre, partida, clave }) => {
