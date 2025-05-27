@@ -1132,16 +1132,6 @@ function deshabilitarBotonesAccion(deshabilitar) {
      }
 }
 
-function siguienteAccion() { // Para el botón principal 'Terminar Acción'
-    if (!partida || !nombre || gameState?.fase === 'Neutral') return;
-
-    console.log(`[${nombre}] Botón 'Terminar Acción' presionado. Emitiendo 'accion-terminada'...`);
-    socket.emit('accion-terminada', { partida, nombre });
-    deshabilitarBotonesAccion(true); // Deshabilitar todos mientras espera
-    // Actualizar UI para mostrar espera
-    const botonPrincipal = document.getElementById('boton-accion');
-}
-
 // --- Lógica Modal Batalla ---
 function poblarTerritoriosAtacables() {
 

@@ -229,8 +229,6 @@
 <div id="modal-perdidas-revuelta" class="modal-juego" style="display: none;">
   <h2>⚠️ Has sido víctima de una revuelta</h2>
   <div id="lista-perdidas-revuelta"></div>
-  <h3>¿Qué territorios pierdes?</h3>
-  <div id="lista-territorios-checkbox"></div>
   <button onclick="confirmarPerdidasRevuelta()">✔️ Confirmar pérdidas</button>
 </div>
 
@@ -240,7 +238,7 @@
   <div id="lista-territorios-revuelta" class="lista-checkbox"></div>
 
   <div class="botones-modal">
-    <button id="btn-confirmar-territorios-revuelta" class="btn-confirmar">✔️ Confirmar</button>
+    <button onclick="confirmarPerdidasRevuelta()" id="btn-confirmar-territorios-revuelta" class="btn-confirmar">✔️ Confirmar</button>
   </div>
 </div>
 
@@ -995,6 +993,6 @@
   
   
   
-  <script defer src="../javascript/scriptjuego.js?v=11"></script>
+  <script defer src="../javascript/scriptjuego.js?v=12"></script>
 </body>
 </html>
