@@ -4,37 +4,48 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Magnar WarGames</title>
+  <!-- Enlace al CSS principal -->
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  
-  <div id="overlay">
-    <div id="intro-logo">
-      <img src="imgs/logos/magnar_wargames.png" alt="Logo del juego" style="width: 250px;
-      padding: 5px;
-      background-color: rgba(0, 0, 0, 0.4);
-      border: 2px solid white;
-      border-radius: 15px;
-      box-shadow: 0 0 20px rgba(255,255,255,0.3);" />
-    </div>
-    <img src="imgs/logos/magnar_wargames.png" alt="Logo del juego" style="width: 250px;
-      padding: 5px;
-      background-color: rgba(0, 0, 0, 0.4);
-      border: 2px solid white;
-      border-radius: 15px;
-      box-shadow: 0 0 20px rgba(255,255,255,0.3);" />
-    <h1>Guerras de Poniente</h1>
 
-  
-   <div>
-     <label>Lord/Lady:</label>
-     <input type="text" id="nombre" placeholder="Tu nombre" />
-   </div>
-   <button onclick="crearPartida()">Crear Partida</button>
+  <!-- ============================================= -->
+  <!-- Pantalla de introducción con logo animado      -->
+  <!-- Se muestra al cargar y desaparece tras 5s      -->
+  <!-- ============================================= -->
+  <div id="intro-logo">
+    <img src="imgs/logos/magnar_wargames.png" alt="Logo del juego" />
   </div>
 
+  <!-- ============================================= -->
+  <!-- Overlay principal: formulario de inicio        -->
+  <!-- ============================================= -->
+  <div id="overlay">
 
+    <!-- Logo dentro del overlay para reforzar marca -->
+    <img src="imgs/logos/magnar_wargames.png" alt="Logo del juego" />
+
+    <!-- Título de la pantalla de inicio -->
+    <h1>Guerras de Poniente</h1>
+
+    <!-- Grupo: etiqueta + campo de texto para nombre -->
+    <div>
+      <label for="nombre">Lord/Lady:</label>
+      <input type="text" id="nombre" placeholder="Tu nombre" />
+    </div>
+
+    <!-- Botón: lanza la función crearPartida() al hacer clic -->
+    <button onclick="crearPartida()">Crear Partida</button>
+
+  </div>
+
+  <!-- ============================================= -->
+  <!-- Scripts externos                              -->
+  <!-- - Socket.IO para comunicación en tiempo real  -->
+  <!-- - script.js: lógica de juego y conexión       -->
+  <!-- ============================================= -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="javascript/script.js?v=10"></script>
+
 </body>
 </html>

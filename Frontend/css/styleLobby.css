@@ -1,87 +1,117 @@
+/*===============================================
+=            Variables CSS Globales             =
+================================================*/
 :root {
+  /* Color de fondo principal de la página */
   --color-bg-main: #0c0a08;
+
+  /* Color de títulos principales */
   --color-text-title: #e8d8b8;
+
+  /* Color de texto general */
   --color-text-primary: #d4c2a2;
-  --color-text-secondary: #988870;
-  --color-accent-gold: #f5c555;
-  --color-accent-red: #a83f3f;
-  --color-accent-green: #6a8c58;
+
+  /* Color para borde de botones destacables */
   --color-border-button-highlight: #ad8f63;
+
+  /* Tipografía principal para títulos y textos */
   --font-family-title: "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+
+  /* Sombra fuerte para textos importantes */
   --text-shadow-strong: 1px 1px 2px rgba(0,0,0,0.9);
 }
 
-
-
-/* --- Estilos Generales del Body --- */
+/*===============================================
+=            Estilos Generales BODY             =
+================================================*/
 body {
-  color: var(--color-text-primary);
-  margin: 0;
-  padding: 20px;
-  text-align: center;
+  /* Fondo oscuro con imagen de mapa centrada y cubierta */
   background-color: var(--color-bg-main);
   background-image: url('../imgs/mapa/mapafinal.jpeg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  min-height: 100vh;
-  font-family: var(--font-family-title);
+
+  /* Margenes y padding para contener el diseño */
+  margin: 0;
+  padding: 20px;
   box-sizing: border-box;
+
+  /* Tipografía y color de texto */
+  font-family: var(--font-family-title);
+  color: var(--color-text-primary);
+
+  /* Centrado vertical y horizontal del contenido */
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
+  min-height: 100vh;
 }
 
-
-
-/* --- Contenedor Principal del Lobby --- */
+/*===============================================
+=          Contenedor Principal del Lobby        =
+================================================*/
 #lobby {
+  /* Fondo semitransparente para resaltar contenido */
   background-color: rgba(0, 0, 0, 0.5);
+
+  /* Espaciado interno y bordes redondeados */
   padding: 20px 30px;
   border-radius: 15px;
-  margin-top: 20px;
+
+  /* Tamaño máximo y sombra para elevar */
   max-width: 900px;
   width: 90%;
+  margin-top: 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
-/* --- Formulario de Nombre (si se muestra) --- */
+/*===============================================
+=             Formulario de Nombre              =
+================================================*/
 #form-nombre {
-    background-color: rgba(0, 0, 0, 0.7);
-    padding: 30px;
-    border-radius: 10px;
-    margin-top: 50px;
-    display: inline-block;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 30px;
+  border-radius: 10px;
+  margin-top: 50px;
+  display: inline-block;
 }
+
 #form-nombre h2 {
-    margin-top: 0;
-    color: #eee;
+  margin-top: 0;
+  color: #eee;
 }
+
 #form-nombre input[type="text"] {
+  width: 100%;
   padding: 10px 15px;
-  margin-top: 10px;
-  margin-bottom: 15px;
+  margin: 10px 0 15px;
   border: 1px solid #555;
   border-radius: 5px;
   background-color: #333;
   color: white;
   font-size: 16px;
 }
+
 #form-nombre button {
-    padding: 10px 25px;
-    font-size: 16px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background-color: #4CAF50;
-    color: white;
-    transition: background-color 0.3s ease;
-}
-#form-nombre button:hover {
-    background-color: #45a049;
+  padding: 10px 25px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #4CAF50;
+  color: white;
+  transition: background-color 0.3s ease;
 }
 
-/* --- Títulos y Textos del Lobby --- */
+#form-nombre button:hover {
+  background-color: #45a049;
+}
+
+/*===============================================
+=            Títulos y Encabezados              =
+================================================*/
 h1, h2, h3 {
   font-family: var(--font-family-title);
   color: var(--color-text-title);
@@ -89,18 +119,22 @@ h1, h2, h3 {
 }
 
 h1 {
-    margin-bottom: 15px;
-}
-h2#partida-nombre {
-    color: #ddd;
-    font-size: 1.2em;
-    margin-bottom: 25px;
+  margin-bottom: 15px;
 }
 
-/* --- Link de Invitación --- */
-#lobby p {
-    margin-bottom: 20px;
+h2#partida-nombre {
+  color: #ddd;
+  font-size: 1.2em;
+  margin-bottom: 25px;
 }
+
+/*===============================================
+=            Link de Invitación                 =
+================================================*/
+#lobby p {
+  margin-bottom: 20px;
+}
+
 #link-invitacion {
   background-color: rgba(255, 255, 255, 0.9);
   border: 1px solid #ccc;
@@ -111,82 +145,79 @@ h2#partida-nombre {
   border-radius: 4px;
   font-size: 14px;
 }
+
 button[onclick="copiarLink()"] {
-    padding: 8px 12px;
-    cursor: pointer;
-    margin-left: 5px;
-    vertical-align: middle;
+  padding: 8px 12px;
+  cursor: pointer;
+  margin-left: 5px;
+  vertical-align: middle;
 }
 
-/* --- Lista de Jugadores --- */
+/*===============================================
+=           Lista de Jugadores                  =
+================================================*/
 #lista-jugadores {
   list-style: none;
-  padding: 0;
+  padding: 10px;
   margin-bottom: 30px;
   max-height: 150px;
   overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 5px;
-  padding: 10px;
 }
+
 #lista-jugadores li {
+  display: flex;
+  align-items: center;
   margin: 8px 0;
-  padding: 6px 12px; /* Ajustado padding */
-  font-weight: normal;
+  padding: 6px 12px;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 3px;
   font-size: 0.95em;
-  display: flex; /* Ayuda a alinear logo y texto */
-  align-items: center; /* Centra verticalmente */
 }
 
-/* Estilo para el pequeño logo de la casa en la lista de jugadores */
 .jugador-casa-logo {
   width: 20px;
   height: 20px;
-  vertical-align: middle; /* Mantenido por si flex falla */
-  margin-right: 6px;
-  margin-left: 3px;
+  margin: 0 3px 0 6px;
   border-radius: 3px;
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-
-/* --- Sección Selección de Casa --- */
+/*===============================================
+=         Selección de Casa (Grid)              =
+================================================*/
 #seleccion-casa h3 {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
-/* --- Contenedor de Casas (Grid) --- */
 #casas-container {
   display: grid;
   grid-template-columns: repeat(3, auto);
   gap: 25px 20px;
   justify-content: center;
   width: fit-content;
-  max-width: 100%;
-  margin: 0 auto 30px auto;
+  margin: 0 auto 30px;
   padding: 10px;
 }
 
-/* --- Estilo de cada Casa (Grid Item) --- */
 .casa {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  padding: 12px 10px;
+  min-width: 110px;
   border: 3px solid transparent;
   border-radius: 10px;
-  padding: 12px 10px;
-  text-align: center;
   background-color: rgba(10, 10, 10, 0.7);
   color: #eee;
-  min-width: 110px;
-  box-sizing: border-box;
+  text-align: center;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .casa img {
@@ -194,16 +225,14 @@ button[onclick="copiarLink()"] {
   height: 75px;
   margin-bottom: 8px;
   object-fit: contain;
-  display: block;
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));
 }
 
-/* --- Estados de las Casas --- */
 .casa:not(.disabled):not(.selected):hover {
-    transform: translateY(-4px) scale(1.03);
-    border-color: rgba(255, 255, 255, 0.6);
-    background-color: rgba(30, 30, 30, 0.8);
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
+  transform: translateY(-4px) scale(1.03);
+  border-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(30, 30, 30, 0.8);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
 }
 
 .casa.selected {
@@ -223,13 +252,14 @@ button[onclick="copiarLink()"] {
   box-shadow: none;
   filter: grayscale(50%);
 }
-.casa.disabled:hover {
-    transform: scale(0.95);
-}
+
+/*===============================================
+=                   Botones                     =
+================================================*/
 #boton-jugar,
 #form-nombre button,
 button[onclick="copiarLink()"] {
-  background-color: var(--color-bg-button, #080706);
+  background-color: var(--color-bg-main);
   color: var(--color-text-primary);
   font-family: var(--font-family-title);
   border: 1px solid var(--color-border-button-highlight);
@@ -238,32 +268,36 @@ button[onclick="copiarLink()"] {
   text-transform: uppercase;
   letter-spacing: 0.8px;
   padding: 12px 20px;
-  transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  transition: all 0.2s ease;
 }
+
 #boton-jugar:hover,
 #form-nombre button:hover,
 button[onclick="copiarLink()"]:hover {
   background-color: #1f1b17;
   color: var(--color-text-title);
 }
+
 #boton-jugar:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
 }
 
+/*===============================================
+=                   Modal                       =
+================================================*/
 .modal {
   position: fixed;
-  z-index: 999;
-  left: 0;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.8);
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: rgba(0,0,0,0.8);
+  z-index: 999;
 }
 
 .modal-content {
@@ -280,14 +314,15 @@ button[onclick="copiarLink()"]:hover {
 }
 
 .close {
-  color: white;
   position: absolute;
   top: -10px;
-  right: 0px;
+  right: 0;
   font-size: 28px;
   font-weight: bold;
+  color: white;
   cursor: pointer;
 }
+
 .close:hover {
   color: red;
 }
@@ -299,39 +334,42 @@ button[onclick="copiarLink()"]:hover {
   align-items: center;
 }
 
-
-/* --- Input Readonly --- */
+/*===============================================
+=               Input Readonly                  =
+================================================*/
 input[readonly] {
   background-color: #eee;
   border: 1px solid #ccc;
   cursor: default;
 }
 
-/* --- Responsive --- */
+/*===============================================
+=               Responsive Diseño               =
+================================================*/
 @media (max-width: 600px) {
-    #lobby {
-        width: 95%;
-        padding: 15px;
-    }
-    #casas-container {
-        grid-template-columns: repeat(2, auto);
-        gap: 15px;
-    }
-    .casa {
-        min-width: 90px;
-        padding: 8px;
-    }
-    .casa img {
-        width: 60px;
-        height: 60px;
-    }
-    #link-invitacion {
-        width: 60%;
-    }
+  #lobby {
+    width: 95%;
+    padding: 15px;
+  }
+  #casas-container {
+    grid-template-columns: repeat(2, auto);
+    gap: 15px;
+  }
+  .casa {
+    min-width: 90px;
+    padding: 8px;
+  }
+  .casa img {
+    width: 60px;
+    height: 60px;
+  }
+  #link-invitacion {
+    width: 60%;
+  }
 }
 
 @media (max-width: 400px) {
-    #casas-container {
-        grid-template-columns: repeat(1, auto);
-    }
+  #casas-container {
+    grid-template-columns: repeat(1, auto);
+  }
 }

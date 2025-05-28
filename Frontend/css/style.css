@@ -1,33 +1,58 @@
+/*===============================================
+=            Variables CSS Globales             =
+================================================*/
 :root {
-  --color-bg-main: #0c0a08;
-  --color-text-title: #e8d8b8;
-  --color-text-primary: #d4c2a2;
-  --color-border-button-highlight: #ad8f63;
-  --font-family-title: "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  /* Color de fondo principal de la página */
+  --color-bg-main: #0c0a08; 
+
+  /* Color de títulos principales */
+  --color-text-title: #e8d8b8; 
+
+  /* Color de texto general */
+  --color-text-primary: #d4c2a2; 
+
+  /* Color del borde de botones resaltados */
+  --color-border-button-highlight: #ad8f63; 
+
+  /* Tipografía principal para títulos */
+  --font-family-title: "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, serif; 
+
+  /* Sombra fuerte para textos (títulos) */
   --text-shadow-strong: 1px 1px 2px rgba(0,0,0,0.9);
 }
-/* --- Estilos Generales del Body --- */
 
-
-
+/*===============================================
+=            Estilos Generales BODY             =
+================================================*/
 body {
+  /* Fondo oscuro con imagen de mapa centrada y cubierta */
   background-color: var(--color-bg-main);
   background-image: url('../imgs/mapa/mapafinal.jpeg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  /* Asegura que el contenido ocupe toda la altura */
   min-height: 100vh;
+
+  /* Tipografía y color de texto */
   font-family: var(--font-family-title);
   color: var(--color-text-primary);
+
+  /* Centrar horizontal y verticalmente el contenido */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-
-/* --- Contenedor Principal (Formulario) --- */
+/*===============================================
+=       Contenedor Principal (Overlay/Form)      =
+================================================*/
 #overlay {
+  /* Fondo semitransparente para resaltar formulario */
   background-color: rgba(0, 0, 0, 0.65);
+
+  /* Tamaño y centramiento */
   width: 90%;
   max-width: 450px;
   display: flex;
@@ -36,15 +61,23 @@ body {
   align-items: center;
   padding: 40px 30px;
   box-sizing: border-box;
+
+  /* Texto claro con sombra suave */
   color: #f0f0f0;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+
+  /* Bordes redondeados y sombra exterior */
   border-radius: 15px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+
+  /* Permite scroll interno si el contenido excede */
   overflow-y: auto;
 }
 
-/* --- Logo (el que está DENTRO del overlay - ASUMIENDO QUE LO QUIERES DE VUELTA) --- */
-/* Si eliminaste el logo de dentro del overlay en index.html, puedes borrar esta regla */
+/*===============================================
+=       Logo Dentro del Overlay (Opcional)       =
+================================================*/
+/* Si eliminaste el logo interno en el HTML, puedes borrar todo este bloque */
 #overlay > img {
   width: 180px;
   padding: 5px;
@@ -55,27 +88,37 @@ body {
   margin-bottom: 25px;
 }
 
-
-/* --- Título Principal --- */
+/*===============================================
+=            Título Principal del Overlay        =
+================================================*/
 #overlay h1 {
+  /* Tipografía y color definidos en variables */
   font-family: var(--font-family-title);
   color: var(--color-text-title);
+
+  /* Sombra de texto más intensa */
   text-shadow: var(--text-shadow-strong);
+
+  /* Tamaño y espaciados */
   font-size: 2.2em;
   font-weight: 600;
   margin-top: 0;
   margin-bottom: 30px;
 }
 
-
-/* --- Contenedores de Label + Input --- */
+/*===============================================
+=        Contenedores de Label + Input          =
+================================================*/
 #overlay > div {
+  /* Asegura que cada grupo ocupe todo el ancho */
   width: 100%;
   margin-bottom: 20px;
   box-sizing: border-box;
 }
 
-/* --- Etiquetas (Labels) --- */
+/*===============================================
+=                Estilos de Labels               =
+================================================*/
 #overlay label {
   display: block;
   margin-bottom: 8px;
@@ -85,7 +128,10 @@ body {
   text-align: left;
 }
 
-/* --- Campos de Entrada (Inputs) --- */
+/*===============================================
+=              Campos de Entrada                =
+================================================*/
+/* Inputs de texto y contraseña */
 #overlay input[type="text"],
 #overlay input[type="password"] {
   width: 100%;
@@ -99,6 +145,7 @@ body {
   transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
+/* Estilo específico para inputs de texto */
 #overlay input[type="text"] {
   background-color: #080706;
   border: 1px solid #2c251e;
@@ -107,7 +154,7 @@ body {
   padding: 10px;
 }
 
-
+/* Estado focus (cuando el usuario escribe) */
 #overlay input[type="text"]:focus,
 #overlay input[type="password"]:focus {
   outline: none;
@@ -115,26 +162,41 @@ body {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* --- Botones --- */
+/*===============================================
+=                   Botones                     =
+================================================*/
 #overlay button {
+  /* Fondo oscuro, texto claro y borde resaltado */
   background-color: #080706;
   color: var(--color-text-primary);
   border: 1px solid var(--color-border-button-highlight);
+
+  /* Tipografía para botones */
   font-family: var(--font-family-title);
   text-transform: uppercase;
   letter-spacing: 1px;
+
+  /* Transición suave en hover/active */
   transition: all 0.2s ease;
+
   padding: 12px 20px;
   font-size: 1em;
   cursor: pointer;
 }
 
+/* Hover general en botones */
 #overlay button:hover {
   background-color: #1f1b17;
   color: var(--color-text-title);
 }
 
-/* Botón Primario (Crear Partida) */
+/* Elevación al hacer clic */
+#overlay button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/*--- Botón Primario: Crear Partida ---*/
 button[onclick="crearPartida()"] {
   background-color: #4CAF50;
   color: white;
@@ -144,7 +206,7 @@ button[onclick="crearPartida()"]:hover {
   transform: translateY(-1px);
 }
 
-/* Botón Secundario (Unirse a Partida) */
+/*--- Botón Secundario: Unirse a Partida ---*/
 button[onclick="unirsePartida()"] {
   background-color: #007BFF;
   color: white;
@@ -154,24 +216,28 @@ button[onclick="unirsePartida()"]:hover {
   transform: translateY(-1px);
 }
 
-/* Efecto al presionar los botones */
-#overlay button:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-/* --- Estilos del Logo de Intro (Se mantienen) --- */
+/*===============================================
+=          Logo de Introducción (Pantalla)       =
+================================================*/
 #intro-logo {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100vh;
+
+  /* Fondo negro completo */
   background-color: black;
+
+  /* Centrado de la imagen */
   display: flex;
   justify-content: center;
   align-items: center;
+
+  /* Por encima de todo */
   z-index: 9999;
+
+  /* Animación de desaparición */
   animation: fadeOut 3s ease forwards;
   animation-delay: 2s;
 }
@@ -179,11 +245,17 @@ button[onclick="unirsePartida()"]:hover {
 #intro-logo img {
   width: 250px;
   max-width: 80%;
+
+  /* Suavizado en la aparición */
   animation: fadeIn 1.5s ease;
+
+  /* Sombra de luz */
   filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
 }
 
-/* --- Animaciones (Se mantienen) --- */
+/*===============================================
+=                 Animaciones                   =
+================================================*/
 @keyframes fadeIn {
   0% { opacity: 0; transform: scale(0.95); }
   100% { opacity: 1; transform: scale(1); }
@@ -194,19 +266,26 @@ button[onclick="unirsePartida()"]:hover {
   100% { opacity: 0; visibility: hidden; }
 }
 
-/* --- Responsive Básico --- */
+/*===============================================
+=               Responsive Básico               =
+================================================*/
 @media (max-width: 600px) {
+  /* Ajustes de padding y ancho en móvil */
   #overlay {
     width: 95%;
     padding: 30px 20px;
   }
+
+  /* Tamaño de título más pequeño */
   #overlay h1 {
-      font-size: 1.8em;
+    font-size: 1.8em;
   }
+
+  /* Ajuste de tamaño y padding en inputs y botones */
   #overlay input[type="text"],
   #overlay input[type="password"],
   #overlay button {
-      font-size: 0.95em;
-      padding: 10px 12px;
+    font-size: 0.95em;
+    padding: 10px 12px;
   }
 }

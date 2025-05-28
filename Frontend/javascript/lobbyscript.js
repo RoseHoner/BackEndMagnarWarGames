@@ -1,108 +1,100 @@
-
-
+// =============================
+//  Configuración de conexión
+// =============================
 const isLocalhost = window.location.hostname === 'localhost';
+// URL del backend: usa localhost en desarrollo o Railway en producción
 const BACKEND_URL = isLocalhost
   ? 'http://localhost:3000'
   : 'https://backendmagnarwargames-production.up.railway.app';
 
+const socket = io(BACKEND_URL, {
+  path: '/socket.io',
+  transports: ['websocket']
+});
 
-  const socket = io(BACKEND_URL, {
-    path: '/socket.io',
-    transports: ['websocket']
-  });
-  
-  
-// --- Variables Globales del Script ---
-let casasActuales = {};       // Estado { jugador: casa } recibido del servidor
-let jugadoresActuales = [];     // Array [nombre1, nombre2] recibido del servidor
-let casaSeleccionadaLocalmente = null; // Casa que ESTE cliente *cree* tener seleccionada
-let nombre = null;            // Nombre de ESTE cliente
-let partida = null;           // ID de la partida
-let clave = null;             // Clave de la partida
-let esHost = false;           // Si este cliente es el host
+// =============================
+//     Estado global del Lobby
+// =============================
+let casasActuales = {};              // { jugador: casa } según servidor
+let jugadoresActuales = [];           // [nombre1, nombre2, ...]
+let casaSeleccionadaLocalmente = null;// casa elegida optimistamente por este cliente
+let nombre = null;                    // nombre de este jugador
+let partida = null;                   // ID de la partida extraído de la URL
+let esHost = false;                   // si este cliente es el host
 
-// Array con la información de las casas
+// =====================================
+//  Definición de las casas disponibles
+// =====================================
 const casas = [
-    { nombre: "Stark",     logo: "../imgs/logos/casas/stark.png" },
-    { nombre: "Lannister", logo: "../imgs/logos/casas/lannister.png" },
-    { nombre: "Targaryen", logo: "../imgs/logos/casas/targaryen.png" },
-    { nombre: "Baratheon", logo: "../imgs/logos/casas/baratheon.png" },
-    { nombre: "Greyjoy",   logo: "../imgs/logos/casas/greyjoy.png" },
-    { nombre: "Martell",   logo: "../imgs/logos/casas/martell.png" },
-    { nombre: "Tyrell",    logo: "../imgs/logos/casas/tyrell.png" },
-    { nombre: "Arryn",     logo: "../imgs/logos/casas/arryn.png" },
-    { nombre: "Tully",     logo: "../imgs/logos/casas/tully.png" }
+  { nombre: "Stark",     logo: "../imgs/logos/casas/stark.png" },
+  { nombre: "Lannister", logo: "../imgs/logos/casas/lannister.png" },
+  { nombre: "Targaryen", logo: "../imgs/logos/casas/targaryen.png" },
+  { nombre: "Baratheon", logo: "../imgs/logos/casas/baratheon.png" },
+  { nombre: "Greyjoy",   logo: "../imgs/logos/casas/greyjoy.png" },
+  { nombre: "Martell",   logo: "../imgs/logos/casas/martell.png" },
+  { nombre: "Tyrell",    logo: "../imgs/logos/casas/tyrell.png" },
+  { nombre: "Arryn",     logo: "../imgs/logos/casas/arryn.png" },
+  { nombre: "Tully",     logo: "../imgs/logos/casas/tully.png" }
 ];
-window.casas = casas; // Hacer accesible globalmente para actualizarLista
+// Exponer globalmente para funciones de actualización de UI
+window.casas = casas;
 
-// --- Funciones ---
+// =============================
+//     Funciones principales
+// =============================
 
+// Inicia el juego (solo host)
 function iniciarJuego() {
-    if (!partida || !esHost) return;
-    // 1) Guardamos casa en localStorage
-    const miCasa = casasActuales[nombre];
-    localStorage.setItem('casaJugador', miCasa);
-    // 2) Pedimos al servidor que inicie el juego para todos
-    socket.emit('iniciar-juego', { partida });
-    console.log(`[Cliente ${nombre}] Lanzado 'iniciar-juego' en ${partida}`);
+  if (!partida || !esHost) return;
+  // Guardar casa seleccionada en localStorage
+  const miCasa = casasActuales[nombre];
+  localStorage.setItem('casaJugador', miCasa);
+  // Emitir evento para arrancar la partida en el servidor
+  socket.emit('iniciar-juego', { partida });
+  console.log(`[Cliente ${nombre}] Iniciando juego en ${partida}`);
 }
 
-
+// Extrae el ID de partida y nombre guardado de la URL/localStorage
 function configurarDesdeURL() {
-    // URL: /lobby/<partida>
-   const segmentos = window.location.pathname.split('/');
-   // Asumimos que el segmento justo después de "lobby" es el ID
-   const idx = segmentos.indexOf('lobby');
-   partida = (idx !== -1 && segmentos[idx+1]) || null;
-   // ya no usamos clave
+  const segmentos = window.location.pathname.split('/');
+  const idx = segmentos.indexOf('lobby');
+  partida = (idx !== -1 && segmentos[idx + 1]) || null;
 
-   // Leemos el nombre previamente guardado (si existe)
-   let nombreDesdeURL = localStorage.getItem('nombreJugador');
-
-    if (nombreDesdeURL) {
-        nombre = nombreDesdeURL;
-        localStorage.setItem('nombreJugador', nombre);
-    } else {
-        nombre = localStorage.getItem('nombreJugador');
-    }
-
-    if (partida) {
-        document.getElementById('partida-nombre').innerText = `Partida: ${partida}`;
-    } else {
-         console.error("Error: No se encontró ID de partida en la URL.");
-         alert("Error: Falta el identificador de la partida.");
-         window.location.href = 'index.html';
-         return false;
-    }
-    return true;
-}
-
-function manejarVisibilidadInicial() {
-    if (!nombre) {
-        document.getElementById('form-nombre').style.display = 'block';
-        document.getElementById('lobby').style.display = 'none';
-    } else {
-        document.getElementById('form-nombre').style.display = 'none';
-        conectarAlLobby();
-    }
-}
-
-function unirse() {
-  const inputEl = document.getElementById('nombre');
-  const intento = inputEl.value.trim();
-  if (!intento) {
-    alert('Por favor ingresa tu nombre para unirte.');
-    return;
+  if (partida) {
+    document.getElementById('partida-nombre').innerText = `Partida: ${partida}`;
+  } else {
+    alert("Error: Falta el identificador de la partida.");
+    window.location.href = 'index.html';
+    return false;
   }
 
-  // Llamamos al servidor para comprobar duplicados
+  // Recuperar nombre guardado en localStorage (si existe)
+  nombre = localStorage.getItem('nombreJugador') || null;
+  return true;
+}
+
+// Decide si mostrar el formulario de nombre o conectar al lobby directamente
+function manejarVisibilidadInicial() {
+  if (!nombre) {
+    document.getElementById('form-nombre').style.display = 'block';
+    document.getElementById('lobby').style.display = 'none';
+  } else {
+    document.getElementById('form-nombre').style.display = 'none';
+    conectarAlLobby();
+  }
+}
+
+// Valida el nombre ingresado y emite 'comprobar-nombre' antes de unirse
+function unirse() {
+  const intento = document.getElementById('nombre').value.trim();
+  if (!intento) {
+    alert('Por favor ingresa tu nombre.');
+    return;
+  }
   socket.emit('comprobar-nombre', { partida, nombre: intento }, ({ exists }) => {
     if (exists) {
-      alert('Ese nombre ya está en uso. Elige otro distinto.');
-      inputEl.value = '';
-      inputEl.focus();
+      alert('Ese nombre ya está en uso. Elige otro.');
     } else {
-      // Nombre libre: guardamos y entramos al lobby
       nombre = intento;
       localStorage.setItem('nombreJugador', nombre);
       window.history.replaceState({}, '', `/lobby/${partida}`);
@@ -112,288 +104,211 @@ function unirse() {
   });
 }
 
+// Muestra el lobby, genera QR y emite 'unirse-partida'
 function conectarAlLobby() {
   if (!nombre || !partida) {
-    console.error("Intento de conexión sin nombre o partida");
-    alert("Error: Falta nombre o identificador de partida. Volviendo al inicio.");
+    alert("Error: Falta nombre o ID de partida.");
     window.location.href = 'index.html';
     return;
   }
 
+  // Mostrar sección de lobby
   document.getElementById('lobby').style.display = 'block';
+
+  // Preparar link de invitación
   const linkInput = document.getElementById('link-invitacion');
   const url = `${window.location.origin}/lobby/${partida}`;
   linkInput.value = url;
 
-  // 🆕 Generar el QR
+  // Generar código QR pequeño
   const qrContainer = document.getElementById('qr-code');
-  qrContainer.innerHTML = ""; // limpiar por si ya existe uno
+  qrContainer.innerHTML = '';
   new QRCode(qrContainer, {
     text: url,
     width: 128,
     height: 128,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
 
   renderizarCasas();
-
-  console.log(`[Cliente ${nombre}] Emitiendo 'unirse-partida' a ${partida}`);
-  socket.emit('unirse-partida', { nombre, partida, clave });
+  socket.emit('unirse-partida', { nombre, partida });
 }
 
-
+// Copia el link de invitación al portapapeles
 function copiarLink() {
   const input = document.getElementById('link-invitacion');
   input.select();
-  input.setSelectionRange(0, 99999);
-  try {
-    navigator.clipboard.writeText(input.value).then(() => {
-        alert("¡Link copiado al portapapeles!");
-    }).catch(err => {
-        console.warn('Fallback a document.execCommand por error en Clipboard API:', err);
-        document.execCommand("copy");
-        alert("¡Link copiado al portapapeles! (método fallback)");
+  navigator.clipboard.writeText(input.value)
+    .then(() => alert("¡Link copiado!"))
+    .catch(() => {
+      document.execCommand("copy");
+      alert("¡Link copiado! (fallback)");
     });
-  } catch (err) {
-      console.error('Fallback execCommand falló:', err);
-      alert("No se pudo copiar el link automáticamente. Por favor, cópialo manualmente.");
+}
+
+// Dibuja todas las casas disponibles en el contenedor
+function renderizarCasas() {
+  const cont = document.getElementById('casas-container');
+  cont.innerHTML = '';
+  casas.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'casa';
+    div.dataset.casa = c.nombre;
+    div.innerHTML = `<img src="${c.logo}" alt="Logo ${c.nombre}"><div>${c.nombre}</div>`;
+    div.addEventListener('click', () => {
+      if (!div.classList.contains('disabled')) seleccionarCasa(c.nombre);
+    });
+    cont.appendChild(div);
+  });
+  actualizarVisualizacionCasas();
+}
+
+// Gestiona la selección/deselección de casa (optimista)
+function seleccionarCasa(nombreCasa) {
+  if (!nombre) {
+    alert("Error interno: nombre no definido.");
+    return;
+  }
+  if (casaSeleccionadaLocalmente === nombreCasa) {
+    socket.emit('quitar-casa', { partida, nombre });
+    casaSeleccionadaLocalmente = null;
+  } else {
+    socket.emit('elegir-casa', { partida, nombre, casa: nombreCasa });
+    casaSeleccionadaLocalmente = nombreCasa;
+    localStorage.setItem('casaJugador', nombreCasa);
+  }
+  actualizarVisualizacionCasas();
+}
+
+// Actualiza clases CSS de cada casa y controla el botón "Empezar partida"
+function actualizarVisualizacionCasas() {
+  const cont = document.getElementById('casas-container');
+  Array.from(cont.children).forEach(div => {
+    const nc = div.dataset.casa;
+    div.classList.remove('selected', 'disabled');
+    div.title = '';
+    // Comprobar ocupación según casasActuales
+    const ocupante = Object.keys(casasActuales)
+      .find(j => casasActuales[j] === nc);
+    if (ocupante) {
+      if (ocupante === nombre) {
+        div.classList.add('selected');
+        casaSeleccionadaLocalmente = nc;
+      } else {
+        div.classList.add('disabled');
+        div.title = `Ocupada por ${ocupante}`;
+      }
+    }
+  });
+
+  // Mostrar botón "Empezar partida" solo al host cuando todos tengan casa
+  if (esHost) {
+    const btn = document.getElementById('boton-jugar');
+    const todos = jugadoresActuales.length === Object.keys(casasActuales).length
+                 && jugadoresActuales.length > 0;
+    btn.style.display = todos ? 'inline-block' : 'none';
   }
 }
 
-function renderizarCasas() {
-  const contenedor = document.getElementById('casas-container');
-  contenedor.innerHTML = '';
-
-  casas.forEach(c => {
-    const divCasa = document.createElement('div');
-    divCasa.className = 'casa';
-    divCasa.dataset.casa = c.nombre;
-
-    const imgLogo = document.createElement('img');
-    imgLogo.src = c.logo;
-    imgLogo.alt = `Logo ${c.nombre}`;
-    divCasa.appendChild(imgLogo);
-
-    const nombreDiv = document.createElement('div');
-    nombreDiv.textContent = c.nombre;
-    nombreDiv.style.marginTop = '5px';
-    divCasa.appendChild(nombreDiv);
-
-    divCasa.addEventListener('click', () => {
-        if (!divCasa.classList.contains('disabled')) {
-            seleccionarCasa(c.nombre);
-        }
-    });
-    contenedor.appendChild(divCasa);
-  });
-  actualizarVisualizacionCasas(); // Aplicar estado visual inicial
-}
-
-// --- SELECCIONAR CASA: Modificado para usar la variable local 'casaSeleccionadaLocalmente' ---
-function seleccionarCasa(nombreCasa) {
-    if (!nombre) {
-        console.error("No se puede seleccionar casa: nombre de jugador no definido.");
-        alert("Error: Tu nombre no está definido.");
-        return;
-    }
-
-    // Comprobar si se está deseleccionando la casa actualmente seleccionada *localmente*
-    if (casaSeleccionadaLocalmente === nombreCasa) {
-      console.log(`[Cliente ${nombre}] Emitiendo deselección de ${nombreCasa}`);
-      socket.emit('quitar-casa', { partida, nombre });
-      casaSeleccionadaLocalmente = null; // Actualiza estado local inmediatamente (optimista)
-    } else {
-      // Seleccionando una nueva casa
-      console.log(`[Cliente ${nombre}] Emitiendo selección de ${nombreCasa}`);
-      socket.emit('elegir-casa', { partida, nombre, casa: nombreCasa });
-      casaSeleccionadaLocalmente = nombreCasa; // Actualiza estado local inmediatamente (optimista)
-      // 👉 Guardamos la casa en localStorage igual que el host
-        localStorage.setItem('casaJugador', nombreCasa);
-    }
-    // La actualización visual final se hará cuando llegue 'casas-actualizadas'
-    actualizarVisualizacionCasas(); // Actualiza la UI localmente de forma optimista
-}
-
-// --- ACTUALIZAR VISUALIZACIÓN CASAS: Sin cambios lógicos, usa variables globales ---
-function actualizarVisualizacionCasas() {
-    const contenedor = document.getElementById('casas-container');
-    if (!contenedor || !nombre) return;
-
-    // Usa 'casasActuales' (del servidor) y 'nombre' (local)
-    Array.from(contenedor.children).forEach(div => {
-      const nombreCasaDiv = div.dataset.casa;
-      div.classList.remove('selected', 'disabled');
-      div.style.cursor = 'pointer';
-      div.title = '';
-
-      let ocupante = null;
-      for (const jugador in casasActuales) {
-          if (casasActuales[jugador] === nombreCasaDiv) {
-              ocupante = jugador;
-              break;
-          }
-      }
-
-      if (ocupante) {
-          if (ocupante === nombre) { // Ocupada por MÍ (según el servidor)
-              div.classList.add('selected');
-              // Sincronizar estado local si difiere (por si hubo desync)
-              if (casaSeleccionadaLocalmente !== nombreCasaDiv) {
-                  console.log(`Sync local: ${nombre} ahora tiene ${nombreCasaDiv}`);
-                  casaSeleccionadaLocalmente = nombreCasaDiv;
-              }
-          } else { // Ocupada por OTRO
-              div.classList.add('disabled');
-              div.style.cursor = 'not-allowed';
-              div.title = `Ocupada por ${ocupante}`;
-          }
-      } else {
-           // Libre: quitar 'selected' si la tenía localmente pero el servidor no confirma
-           if (casaSeleccionadaLocalmente === nombreCasaDiv) {
-               console.log(`Sync local: ${nombre} ya no tiene ${nombreCasaDiv}`);
-               casaSeleccionadaLocalmente = null;
-           }
-      }
-    });
-
-    // Lógica del Botón de Jugar (Host)
-    if (esHost) {
-        const totalJugadores = jugadoresActuales.length;
-        const jugadoresConCasa = Object.keys(casasActuales).length;
-        const botonJugar = document.getElementById('boton-jugar');
-        if (!botonJugar) return;
-
-        if (totalJugadores > 0 && totalJugadores === jugadoresConCasa) {
-          botonJugar.style.display = 'inline-block';
-        } else {
-          botonJugar.style.display = 'none';
-        }
-    }
-}
-
-// --- ACTUALIZAR LISTA JUGADORES: Sin cambios lógicos ---
+// Reconstruye la lista de jugadores con sus casas (logos)
 function actualizarLista(listaJugadores, estadoCasas) {
-    const listaUL = document.getElementById('lista-jugadores');
-    if (!listaUL) return;
-    listaUL.innerHTML = '';
-
-    if (!Array.isArray(listaJugadores)) {
-        console.error("Error: 'listaJugadores' no es un array.", listaJugadores);
-        return;
-    }
-
-    listaJugadores.forEach(nombreJugador => {
-      const li = document.createElement('li');
-      li.dataset.nombre = nombreJugador;
-      li.appendChild(document.createTextNode(`${nombreJugador} – `));
-
-      const casaAsignada = estadoCasas[nombreJugador];
-
-      if (casaAsignada) {
-          const casaInfo = window.casas.find(c => c.nombre === casaAsignada);
-          if (casaInfo && casaInfo.logo) {
-              const logoImg = document.createElement('img');
-              logoImg.src = casaInfo.logo;
-              logoImg.alt = casaAsignada;
-              logoImg.classList.add('jugador-casa-logo');
-              li.appendChild(logoImg);
-          }
-          li.appendChild(document.createTextNode(` ${casaAsignada}`));
-      } else {
-          const textoSinCasa = document.createElement('span');
-          textoSinCasa.textContent = '(Eligiendo casa...)';
-          textoSinCasa.style.fontStyle = 'italic';
-          textoSinCasa.style.opacity = '0.7';
-          li.appendChild(textoSinCasa);
+  const ul = document.getElementById('lista-jugadores');
+  ul.innerHTML = '';
+  listaJugadores.forEach(j => {
+    const li = document.createElement('li');
+    li.textContent = j + ' – ';
+    const casa = estadoCasas[j];
+    if (casa) {
+      const info = casas.find(c => c.nombre === casa);
+      if (info) {
+        const img = document.createElement('img');
+        img.src = info.logo;
+        img.alt = casa;
+        img.className = 'jugador-casa-logo';
+        li.appendChild(img);
       }
-      listaUL.appendChild(li);
-    });
+      li.append(` ${casa}`);
+    } else {
+      const span = document.createElement('span');
+      span.textContent = '(Eligiendo casa...)';
+      span.style.fontStyle = 'italic';
+      li.appendChild(span);
+    }
+    ul.appendChild(li);
+  });
 }
 
-// --- Listeners de Socket.IO ---
+// =============================
+//   Listeners de Socket.IO
+// =============================
 socket.on('connect', () => {
-    console.log(`[Cliente ${nombre || 'Desconocido'}] Conectado al servidor con ID: ${socket.id}`);
-    if (nombre && partida) {
-        console.log(`[Cliente ${nombre}] Reconectando/Reuniendo a la partida ${partida}`);
-        socket.emit('unirse-partida', { nombre, partida, clave });
-    }
+  console.log(`[Cliente ${nombre||'?' }] Conectado como ${socket.id}`);
+  if (nombre && partida) {
+    socket.emit('unirse-partida', { nombre, partida });
+  }
 });
 
-socket.on('disconnect', (reason) => {
-    console.warn(`[Cliente ${nombre}] Desconectado del servidor: ${reason}`);
-    alert("Te has desconectado del servidor. Intenta recargar la página.");
+socket.on('disconnect', reason => {
+  alert("Desconectado del servidor: " + reason);
 });
 
-socket.on('error', (mensaje) => {
-  console.error(`[Cliente ${nombre}] Error recibido del servidor: ${mensaje}`);
-  alert(`Error: ${mensaje}`);
-   if (mensaje.includes("partida no existe") || mensaje.includes("Contraseña incorrecta") || mensaje.includes("llena")) {
-       window.location.href = 'index.html'; // Redirigir si el error es crítico para unirse
-   }
+socket.on('error', msg => {
+  alert("Error: " + msg);
+  if (/partida no existe|llena/.test(msg)) window.location.href = 'index.html';
 });
 
 socket.on('partida-cerrada', () => {
-  alert("El host ha salido. La partida ha sido eliminada.");
-  // Volvemos al inicio
+  alert("El host cerró la partida.");
   window.location.href = '/';
 });
 
 socket.on('host-info', hostName => {
   esHost = (nombre === hostName);
-  console.log(`[Lobby] Host= ${hostName}. ¿Soy host? ${esHost}`);
-  actualizarVisualizacionCasas(); // Habilita o deshabilita el botón según corresponda
+  actualizarVisualizacionCasas();
 });
 
-socket.on('jugadores-actualizados', (listaJugadores) => {
-  console.log("[Cliente] Recibido 'jugadores-actualizados':", listaJugadores);
-  jugadoresActuales = listaJugadores; // Actualiza variable global
+socket.on('jugadores-actualizados', lista => {
+  jugadoresActuales = lista;
   actualizarLista(jugadoresActuales, casasActuales);
-  actualizarVisualizacionCasas(); // Re-evaluar botón jugar
+  actualizarVisualizacionCasas();
 });
 
-socket.on('casas-actualizadas', (casasRecibidas) => {
-    console.log("[Cliente] Recibido 'casas-actualizadas':", casasRecibidas);
-    casasActuales = casasRecibidas; // Actualiza estado global de casas
-    // Actualizar la UI
-    actualizarLista(jugadoresActuales, casasActuales);
-    actualizarVisualizacionCasas();
+socket.on('casas-actualizadas', nuevas => {
+  casasActuales = nuevas;
+  actualizarLista(jugadoresActuales, casasActuales);
+  actualizarVisualizacionCasas();
 });
 
 socket.on('juego-iniciado', () => {
-  // Redirigimos a la ruta bonita: /juego/<partida>
   localStorage.setItem('casaJugador', casaSeleccionadaLocalmente);
   window.location.href = `${window.location.origin}/juego/${partida}`;
-  
 });
 
-// --- Inicialización al Cargar la Página ---
+// =============================
+// Inicialización al cargar DOM
+// =============================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[Cliente] DOM Cargado. Configurando desde URL...");
-    if (configurarDesdeURL()) {
-        manejarVisibilidadInicial();
-    }
+  if (configurarDesdeURL()) manejarVisibilidadInicial();
 });
 
-// Manejar el modal del QR
-document.addEventListener('click', function (e) {
+// =============================
+//   Gestión del modal QR
+// =============================
+// Al hacer clic sobre el QR pequeño, abrir versión grande
+document.addEventListener('click', e => {
   if (e.target.closest('#qr-code')) {
-    const url = `${window.location.origin}/lobby/${partida}`;
-    const qrGrande = document.getElementById('qr-grande');
-    qrGrande.innerHTML = '';
-    new QRCode(qrGrande, {
-      text: url,
+    const qrG = document.getElementById('qr-grande');
+    qrG.innerHTML = '';
+    new QRCode(qrG, {
+      text: `${window.location.origin}/lobby/${partida}`,
       width: 256,
       height: 256,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.H
     });
     document.getElementById('qr-modal').style.display = 'flex';
   }
 });
-
+// Cerrar modal al pulsar la X
 document.querySelector('#qr-modal .close').addEventListener('click', () => {
   document.getElementById('qr-modal').style.display = 'none';
 });

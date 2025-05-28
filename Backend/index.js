@@ -1849,7 +1849,7 @@ socket.on('targaryen-activar-alianza-sangre', ({ partida, nombre, casaElegida })
     // =============================
   // CONSTRUCCIÓN DE EDIFICIOS
   // =============================
-  socket.on('solicitud-construccion', ({ partida, nombre, territorio, tipoEdificio }) => {
+  socket.on('solicitud-construccion', ({ partida, nombre, territorio, tipoEdificio, segundaConstruccion }) => {
     const room = rooms[partida];
     if (!room) return;
   
@@ -1929,13 +1929,13 @@ if (tipoEdificio === "Puerto Fluvial") {
       accion: room.accionActual
     });
   
-    // Marcar que terminó la acción de construir
-    if (!room.jugadoresAccionTerminada.includes(nombre)) {
-      room.jugadoresAccionTerminada.push(nombre);
+// Sólo marco fin de acción y avanzo si NO es la segundaConstruccion
+    if (!segundaConstruccion) {
+      if (!room.jugadoresAccionTerminada.includes(nombre)) {
+        room.jugadoresAccionTerminada.push(nombre);
     }
-  
     const listos = room.jugadoresAccionTerminada.length;
-    const total = room.players.length;
+    const total  = room.players.length;
   
     io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
   
@@ -2039,6 +2039,8 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
 
         }
       }
+    }
+  
   
       io.to(partida).emit('actualizar-estado-juego', {
         territorios: room.estadoTerritorios,
@@ -2061,7 +2063,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
     }
-  });
+});
 
   // =============================
 // RECLUTAMIENTO DE UNIDADES

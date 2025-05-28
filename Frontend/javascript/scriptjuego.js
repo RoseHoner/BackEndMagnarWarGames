@@ -1145,7 +1145,7 @@ function terminarAccionEspecifica(tipoAccion) {
   deshabilitarBotonesAccion(true);
 
   // Emitir evento solo para mover o reorganizar
-  if (tipoAccion === 'Mover/Atacar' || tipoAccion === 'Reorganizar') {
+  if (tipoAccion === 'Mover/Atacar' || tipoAccion === 'Reorganizar' || tipoAccion === 'Construir2') {
     console.log(`Emitiendo 'accion-terminada' para ${tipoAccion}`);
     socket.emit('accion-terminada', { partida, nombre});
   }
@@ -1562,12 +1562,24 @@ function confirmarConstruir() {
       return;
     }
 
-    // Enviar siempre el primero
-    socket.emit('solicitud-construccion', { partida, nombre, territorio: territorio1, tipoEdificio: edificio1 });
+    // Enviar siempre el primero (no es la segunda construcción)
+    socket.emit('solicitud-construccion', {
+      partida,
+      nombre,
+      territorio: territorio1,
+      tipoEdificio: edificio1,
+      segundaConstruccion: false
+    });
 
-    // Si también eligió un segundo edificio, lo envías también
+    // Si eligió un segundo edificio, lo envías marcándolo como segundaConstruccion
     if (territorio2 && edificio2) {
-      socket.emit('solicitud-construccion', { partida, nombre, territorio: territorio2, tipoEdificio: edificio2 });
+      socket.emit('solicitud-construccion', {
+        partida,
+        nombre,
+       territorio: territorio2,
+        tipoEdificio: edificio2,
+        segundaConstruccion: true
+      });
     }
 
   } else {
@@ -1585,9 +1597,9 @@ function confirmarConstruir() {
   // SI construyó un taller de asedio, abrimos inmediatamente el modal de elección
   if (edificio1 === "Taller de maquinaria de asedio" || edificio2 === "Taller de maquinaria de asedio") {
     abrirModal('modal-elegir-asedio');
-  } else {
-    terminarAccionEspecifica('Construir');
   }
+    terminarAccionEspecifica('Construir');
+
 
 }
 

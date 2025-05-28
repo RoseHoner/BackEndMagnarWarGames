@@ -3,53 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <title>Lobby de la Partida</title>
+  <!-- Socket.IO para comunicación en tiempo real -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <!-- Estilos del Lobby -->
   <link rel="stylesheet" href="../css/styleLobby.css">
 </head>
 <body>
+
+  <!-- ============================================= -->
+  <!-- Formulario de ingreso de nombre (oculto al iniciar) -->
+  <!-- ============================================= -->
   <div id="form-nombre" style="display:none;">
     <h2>Ingresa tu nombre para unirte a la partida</h2>
     <input type="text" id="nombre" placeholder="Tu nombre" />
-    <br>
     <button onclick="unirse()">Jugar</button>
   </div>
 
+  <!-- ============================================= -->
+  <!-- Sección principal del Lobby (oculta al iniciar) -->
+  <!-- ============================================= -->
   <div id="lobby" style="display:none;">
+    <!-- Título del Lobby -->
     <h1>Lobby de la Partida</h1>
+    <!-- Muestra el ID o nombre de la partida -->
     <h2 id="partida-nombre"></h2>
 
+    <!-- Contenedor para el código QR de invitación -->
+    <div id="qr-code"></div>
 
-    <div id="qr-code" style="margin-top: 15px;"></div>
+    <!-- Enlace de invitación para compartir -->
+    <p>Link de invitación:</p>
+    <input id="link-invitacion" readonly />
+    <button onclick="copiarLink()">📋 Copiar link</button>
 
-    <p>
-      Link de invitación:<br>
-      <input id="link-invitacion" readonly style="width: 80%; padding: 5px;" />
-      <br>
-      <button onclick="copiarLink()">📋 Copiar link</button>
-    </p>
-
+    <!-- Lista dinámica de jugadores conectados -->
     <ul id="lista-jugadores"></ul>
 
-    <div id="seleccion-casa" style="margin-top: 30px;">
+    <!-- Selección de casa antes de iniciar el juego -->
+    <div id="seleccion-casa">
       <h3>Elige tu casa</h3>
+      <!-- Contenedor de tarjetas de casas -->
       <div id="casas-container"></div>
+      <!-- Botón para empezar la partida (se muestra tras elegir casa) -->
       <button id="boton-jugar" onclick="iniciarJuego()" style="display:none;">
         🎮 Empezar partida
       </button>
-
     </div>
   </div>
 
-  <!-- Modal del QR grande -->
-<div id="qr-modal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <div id="qr-grande"></div>
+  <!-- ============================================= -->
+  <!-- Modal para mostrar el código QR ampliado -->
+  <!-- (oculto al iniciar y aparece al hacer clic) -->
+  <!-- ============================================= -->
+  <div id="qr-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <!-- Botón para cerrar el modal -->
+      <span class="close">&times;</span>
+      <!-- Contenedor del QR ampliado -->
+      <div id="qr-grande"></div>
+    </div>
   </div>
-</div>
 
-
+  <!-- ============================================= -->
+  <!-- Scripts del Lobby: lógica y generación de QR   -->
+  <!-- ============================================= -->
   <script src="../javascript/lobbyscript.js?v=10"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 </body>
 </html>
