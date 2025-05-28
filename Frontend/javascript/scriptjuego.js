@@ -612,7 +612,6 @@ function elegirAsedioGratis(tipo) {
   jugador[tipo] = (jugador[tipo] || 0) + 1;
   actualizarUnidadesMilitares();
   cerrarModal('modal-elegir-asedio');
-  terminarAccionEspecifica('Construir');
 }
 
   
@@ -2850,7 +2849,7 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
           div.dataset.costo = '6';
           div.innerHTML = `
             <h3>Arquero</h3>
-            <img src="../imgs/reclutas/soldado.png" alt="Arquero" style="width: 80px;">
+            <img src="../imgs/reclutar/arqueros.png" alt="Arquero" style="width: 80px;">
             <div class="control-numero">
               <button class="btn-control" onclick="ajustarCantidad('arquero', -1)">-</button>
               <span id="cantidad-arquero">0</span>
@@ -2885,7 +2884,7 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
             div.dataset.costo = '10';
             div.innerHTML = `
               <h3>Caballero</h3>
-              <img src="../imgs/reclutas/caballero.png" alt="Caballero" style="width: 80px;">
+              <img src="../imgs/reclutar/caballero.png" alt="Caballero" style="width: 80px;">
               <div class="control-numero">
                 <button class="btn-control" onclick="ajustarCantidad('caballero', -1)">-</button>
                 <span id="cantidad-caballero">0</span>
@@ -2904,7 +2903,7 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
             div.dataset.costo = '6';
             div.innerHTML = `
               <h3>Soldado con Armadura</h3>
-              <img src="../imgs/reclutas/soldado.png" alt="Soldado Blindado" style="width: 80px;">
+              <img src="../imgs/reclutar/tropablindada.png" alt="Soldado Blindado" style="width: 80px;">
               <div class="control-numero">
                 <button class="btn-control" onclick="ajustarCantidad('soldadoBlindado', -1)">-</button>
                 <span id="cantidad-soldadoBlindado">0</span>
@@ -2923,7 +2922,7 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
             div.dataset.costo = '6';
             div.innerHTML = `
               <h3>Armadura (Convertir Tropas)</h3>
-              <img src="../imgs/reclutas/soldado.png" alt="Armadura" style="width: 80px;">
+              <img src="../imgs/reclutar/tropablindada.png" alt="Armadura" style="width: 80px;">
               <div class="control-numero">
                 <button class="btn-control" onclick="ajustarCantidad('armadura', -1)">-</button>
                 <span id="cantidad-armadura">0</span>
@@ -2942,7 +2941,7 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
             div.dataset.costo = '6';
             div.innerHTML = `
               <h3>Arquero</h3>
-              <img src="../imgs/reclutas/soldado.png" alt="Arquero" style="width: 80px;">
+              <img src="../imgs/reclutar/arqueros.png" alt="Arquero" style="width: 80px;">
               <div class="control-numero">
                 <button class="btn-control" onclick="ajustarCantidad('arquero', -1)">-</button>
                 <span id="cantidad-arquero">0</span>
@@ -2975,7 +2974,7 @@ window.confirmarAtaqueSimple = confirmarAtaqueSimple;
           div.dataset.costo = '6';
           div.innerHTML = `
             <h3>Soldado con Armadura</h3>
-            <img src="../imgs/reclutas/soldado.png" alt="Soldado Blindado" style="width: 80px;">
+            <img src="../imgs/reclutar/tropablindada.png" alt="Soldado Blindado" style="width: 80px;">
             <div class="control-numero">
               <button class="btn-control" onclick="ajustarCantidad('soldadoBlindado', -1)">-</button>
               <span id="cantidad-soldadoBlindado">0</span>
@@ -2993,7 +2992,7 @@ if (!contenedor.querySelector('.recluta-box[data-tipo="armadura"]')) {
   div.dataset.costo = '6';
   div.innerHTML = `
     <h3>Armadura (Convertir Tropas)</h3>
-    <img src="../imgs/reclutas/soldado.png" alt="Armadura" style="width: 80px;">
+    <img src="../imgs/reclutar/tropablindada.png" alt="Armadura" style="width: 80px;">
     <div class="control-numero">
       <button class="btn-control" onclick="ajustarCantidad('armadura', -1)">-</button>
       <span id="cantidad-armadura">0</span>
@@ -3182,7 +3181,7 @@ function agregarReclutaBarcoSiAplica() {
     div.dataset.costo = '20';
     div.innerHTML = `
       <h3>Barco</h3>
-      <img src="../imgs/reclutas/barco.png" alt="Barco" style="width: 80px;">
+      <img src="../imgs/reclutar/barco.png" alt="Barco" style="width: 80px;">
       <div class="control-numero">
         <button class="btn-control" onclick="ajustarCantidad('barco', -1)">-</button>
         <span id="cantidad-barco">0</span>
@@ -3206,7 +3205,7 @@ if (casa === "Martell" && tienePuerto && tieneRumorCorsarios) {
   divCorsario.dataset.costo = '25';
   divCorsario.innerHTML = `
     <h3>Barco Corsario</h3>
-    <img src="../imgs/reclutas/barco.png" alt="Barco Corsario" style="width: 80px;">
+    <img src="../imgs/reclutar/barco.png" alt="Barco Corsario" style="width: 80px;">
     <div class="control-numero">
       <button class="btn-control" onclick="ajustarCantidad('barcocorsario', -1)">-</button>
       <span id="cantidad-barcocorsario">0</span>
@@ -3232,7 +3231,7 @@ const tieneTaller = Object.values(gameState.territorios).some(
   if (tieneTaller) {
     const unidadesAsedio = [
       { tipo: 'catapulta', nombre: 'Catapulta', costo: 20, imagen: 'catapulta.png' },
-      { tipo: 'torre', nombre: 'Torre de Asedio', costo: 20, imagen: 'torre.png' },
+      { tipo: 'torre', nombre: 'Torre de Asedio', costo: 20, imagen: 'torreasedio.png' },
       { tipo: 'escorpion', nombre: 'Escorpión', costo: 20, imagen: 'escorpion.png' },
     ];
   
@@ -3243,7 +3242,7 @@ const tieneTaller = Object.values(gameState.territorios).some(
       div.dataset.costo = costo;
       div.innerHTML = `
         <h3>${nombre}</h3>
-        <img src="../imgs/reclutas/${imagen}" alt="${nombre}" style="width: 80px;">
+        <img src="../imgs/reclutar/${imagen}" alt="${nombre}" style="width: 80px;">
         <div class="control-numero">
           <button class="btn-control" onclick="ajustarCantidad('${tipo}', -1)">-</button>
           <span id="cantidad-${tipo}">0</span>
@@ -3269,7 +3268,7 @@ if (casa === "Tully") {
     div.dataset.costo = '6';
     div.innerHTML = `
       <h3>Arquero</h3>
-      <img src="../imgs/reclutas/soldado.png" alt="Arquero" style="width: 80px;">
+      <img src="../imgs/reclutar/arqueros.png" alt="Arquero" style="width: 80px;">
       <div class="control-numero">
         <button class="btn-control" onclick="ajustarCantidad('arquero', -1)">-</button>
         <span id="cantidad-arquero">0</span>
@@ -3308,7 +3307,7 @@ if (!tieneAcademia) return;
   div.dataset.costo = '10';
   div.innerHTML = `
     <h3>Caballero</h3>
-    <img src="../imgs/reclutas/caballero.png" alt="Caballero" style="width: 80px;">
+    <img src="../imgs/reclutar/caballero.png" alt="Caballero" style="width: 80px;">
     <div class="control-numero">
       <button class="btn-control" onclick="ajustarCantidad('caballero', -1)">-</button>
       <span id="cantidad-caballero">0</span>
@@ -3331,7 +3330,7 @@ function agregarSacerdoteLuzSiBaratheon() {
     div.dataset.costo = '20';
     div.innerHTML = `
       <h3>Sacerdote de Luz</h3>
-      <img src="../imgs/reclutas/sacerdote.png" alt="Sacerdote de Luz" style="width: 80px;">
+      <img src="../imgs/reclutar/sacerdoteluz.png" alt="Sacerdote de Luz" style="width: 80px;">
       <div class="control-numero">
         <button class="btn-control" onclick="ajustarCantidad('sacerdoteLuz', -1)">-</button>
         <span id="cantidad-sacerdoteLuz">0</span>
@@ -3355,7 +3354,7 @@ function agregarSacerdoteSalSiGreyjoy() {
   div.dataset.costo = '20';
   div.innerHTML = `
     <h3>Sacerdote de Sal</h3>
-    <img src="../imgs/reclutas/sacerdote_sal.png" alt="Sacerdote de Sal" style="width: 80px;">
+    <img src="../imgs/reclutar/sacerdoteluz.png" alt="Sacerdote de Sal" style="width: 80px;">
     <div class="control-numero">
       <button class="btn-control" onclick="ajustarCantidad('sacerdoteSal', -1)">-</button>
       <span id="cantidad-sacerdoteSal">0</span>
@@ -3386,7 +3385,7 @@ function agregarReclutaAsedioSiAplica() {
 
     const unidadesAsedio = [
         { tipo: 'catapulta', nombre: 'Catapulta', costo: 20, imagen: 'catapulta.png' },
-        { tipo: 'torre', nombre: 'Torre de Asedio', costo: 20, imagen: 'torre.png' },
+        { tipo: 'torre', nombre: 'Torre de Asedio', costo: 20, imagen: 'torreasedio.png' },
         { tipo: 'escorpion', nombre: 'Escorpión', costo: 20, imagen: 'escorpion.png' }
     ];
 
@@ -3397,7 +3396,7 @@ function agregarReclutaAsedioSiAplica() {
         div.dataset.costo = costo;
         div.innerHTML = `
             <h3>${nombre}</h3>
-            <img src="../imgs/reclutas/${imagen}" alt="${nombre}" style="width: 80px;">
+            <img src="../imgs/reclutar/${imagen}" alt="${nombre}" style="width: 80px;">
             <div class="control-numero">
               <button class="btn-control" onclick="ajustarCantidad('${tipo}', -1)">-</button>
               <span id="cantidad-${tipo}">0</span>
