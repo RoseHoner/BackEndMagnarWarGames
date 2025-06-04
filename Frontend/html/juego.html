@@ -409,6 +409,43 @@
   </div>
 </div>
 
+<!-- Modal Espera Construcciones NPC -->
+<div id="modal-espera-npc" style="display: none; z-index: 100000;">
+  <div class="modal-contenido-central">
+    <p id="texto-espera-npc">⌛ Esperando...</p>
+  </div>
+</div>
+
+<!-- Modal Pregunta NPC -->
+<div id="modal-npc-pregunta" class="modal-juego" style="display: none;">
+  <h2>¿Los NPC construyen?</h2>
+  <button id="btn-npc-si">Sí</button>
+  <button id="btn-npc-no">No</button>
+</div>
+
+<!-- Modal Construir NPC -->
+<div id="modal-npc-construir" class="modal-juego" style="display: none;">
+  <h2>Construcción NPC</h2>
+  <div class="campo-formulario">
+    <label for="select-territorio-npc">Territorio:</label>
+    <select id="select-territorio-npc"></select>
+  </div>
+  <div class="campo-formulario">
+    <label for="select-edificio-npc">Edificio:</label>
+    <select id="select-edificio-npc"></select>
+  </div>
+  <div class="botones-modal">
+    <button id="btn-npc-confirmar" class="btn-confirmar">✔️ Aceptar</button>
+  </div>
+</div>
+
+<!-- Modal Más Construcciones -->
+<div id="modal-npc-mas" class="modal-juego" style="display: none;">
+  <h2>¿Hay más construcciones?</h2>
+  <button id="btn-npc-mas-si">Sí</button>
+  <button id="btn-npc-mas-no">No</button>
+</div>
+
 <!-- Modal de Ingresos -->
 <div id="modal-ingresos" class="modal-juego" style="display: none;">
   <button class="modal-cerrar" onclick="cerrarModal('modal-ingresos')">X</button>
