@@ -742,10 +742,35 @@ p {
     font-size: 1.5rem; 
   }
 
-  #pc-large-logo-oro { 
-    width: 35px; 
-    height: 35px; 
+  #pc-large-logo-oro {
+    width: 35px;
+    height: 35px;
     filter: drop-shadow(0 0 4px var(--color-accent-gold));
+  }
+
+  /* Mostrar tambien el contenedor principal en PC */
+  #mobile-main-feature {
+    display: flex !important;
+    position: fixed;
+    top: calc(50px + var(--spacing-s));
+    right: var(--spacing-m);
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-s);
+    z-index: 50;
+  }
+
+  #mobile-main-feature #logo-casa-container img {
+    width: 140px;
+    height: 140px;
+  }
+
+  #mobile-main-feature #oro-jugador {
+    font-size: 1.2rem;
+  }
+
+  #mobile-main-feature #oro-jugador img {
+    width: 24px;
   }
 
   #pc-large-cantidad-oro { 
