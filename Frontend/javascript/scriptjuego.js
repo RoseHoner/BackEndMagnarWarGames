@@ -31,6 +31,9 @@ let modalInicialYaMostrado = false;
 
 window.esAtaqueNorteStark = false;
 
+// Indica si el modal de refuerzos Tully se abrió durante la fase neutral
+window.refuerzoTullyEnFaseNeutral = false;
+
 let jinetesPendientes = 0;
 let ataquePendiente = null;
 
@@ -424,9 +427,13 @@ function confirmarRefuerzosTully(acepta) {
     }
   }
 
-
-
-  renderizarModalPerdidasDefensor();
+  if (window.refuerzoTullyEnFaseNeutral) {
+    window.refuerzoTullyEnFaseNeutral = false;
+    renderizarInputsPerdidas();
+    abrirModal('modal-fase-neutral');
+  } else {
+    renderizarModalPerdidasDefensor();
+  }
 }
 
 
@@ -3958,20 +3965,27 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         territoriosPerdidos = [];
         nuevoPropietarioPorTerritorio = {};
 
-        
+
         // Reiniciar pasos visuales del modal
   document.getElementById('fase-neutral-paso1').style.display = 'block';
   document.getElementById('fase-neutral-paso2').style.display = 'none';
   document.getElementById('fase-neutral-paso3').style.display = 'none';
   document.getElementById('fase-neutral-paso4').style.display = 'none';
-    
+
         // Reiniciar pasos del modal
          document.getElementById('btn-stark-atacar').style.display = 'none'
   document.getElementById('btn-stark-mover').style.display = 'none'
 
-    
-        renderizarInputsPerdidas();
-        abrirModal('modal-fase-neutral');
+        window.refuerzoTullyConfirmado = false;
+        window.refuerzoTullyEnFaseNeutral = false;
+
+        if (casa === 'Tully' && gameState.jugadores?.[nombre] && !gameState.jugadores[nombre].refuerzoTullyUsadoEsteTurno) {
+          window.refuerzoTullyEnFaseNeutral = true;
+          abrirModal('modal-refuerzos-tully');
+        } else {
+          renderizarInputsPerdidas();
+          abrirModal('modal-fase-neutral');
+        }
 
     }
        actualizarTurnoAccionUI();
