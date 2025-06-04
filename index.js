@@ -12,6 +12,14 @@ const mysql = require('mysql2/promise'); // <- driver MySQL
 const app = express();
 app.use(cors()); // Permitimos cualquier origen (útil en desarrollo)
 
+// Desactivar cache para forzar que los usuarios obtengan siempre la
+// última versión de los archivos estáticos. Se añade la cabecera
+// 'Cache-Control: no-store' a todas las respuestas.
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 
  // Servir estáticos de la carpeta Frontend
  // Ahora definimos frontPath apuntando a ../Frontend
@@ -65,6 +73,13 @@ if (process.env.DATABASE_URL) {
 
 // Diccionario donde guardaremos todas las partidas creadas
 const rooms = {};
+
+function iniciarConstruccionNPC(room, partida) {
+  if (!room.players || room.players.length === 0) return;
+  const jugador = room.players[Math.floor(Math.random() * room.players.length)];
+  room.npcBuilder = jugador;
+  io.to(partida).emit('npc-construccion-iniciar', { jugador });
+}
 
 // Configuración inicial del juego
 const TERRITORIOS_BASE = [
@@ -375,6 +390,9 @@ socket.on("tyrell-confirmar-territorios-revuelta", ({ partida, nombre, casaObjet
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 });
 
@@ -463,6 +481,9 @@ socket.on("tyrell-revuelta-perdidas", ({ partida, nombre, perdidas, territoriosP
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 });
 
@@ -616,6 +637,9 @@ revisarYEmitirRoboMoral(socket, room, nombre);
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
     }
     return;
   }
@@ -699,12 +723,15 @@ revisarYEmitirRoboMoral(socket, room, nombre);
         turno: room.turnoActual,
         accion: room.accionActual
       });
-  
+
       io.to(partida).emit('avanzar-accion', {
         turno: room.turnoActual,
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
     }
 
 
@@ -763,6 +790,9 @@ revisarYEmitirRoboMoral(socket, room, nombre);
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
     }
   });
   
@@ -836,6 +866,9 @@ revisarYEmitirRoboMoral(socket, room, nombre);
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
     }
   });
   
@@ -875,6 +908,9 @@ revisarYEmitirRoboMoral(socket, room, nombre);
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
     }
 
    
@@ -959,6 +995,9 @@ room.players.forEach(jugador => {
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 });
 
@@ -1398,6 +1437,9 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
 
 
 
@@ -1614,6 +1656,9 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 
   });
@@ -1718,6 +1763,15 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     // Inicializamos estado de juego
     room.estadoTerritorios = inicializarEstadoTerritorios();
     room.estadoJugadores = inicializarEstadoJugadores(room.players, room.casas);
+
+    // Si ningún jugador eligió Tyrell, colocar una Granja en Altojardín
+    const hayTyrell = Object.values(room.casas).includes("Tyrell");
+    if (!hayTyrell) {
+      const altojardin = room.estadoTerritorios["Altojardín"];
+      if (altojardin && !altojardin.edificios.includes("Granja")) {
+        altojardin.edificios.push("Granja");
+      }
+    }
     room.turnoActual = 1;
     room.accionActual = 1;
     room.jugadoresAccionTerminada = [];
@@ -1786,6 +1840,9 @@ room.playerSockets[nombre] = socket.id;
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 });
 
@@ -2062,6 +2119,9 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
     }
 });
 
@@ -2433,6 +2493,9 @@ socket.on('levas-stark', ({ partida, nombre, cantidad }) => {
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 });
 
@@ -2629,6 +2692,9 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 });
 
@@ -2782,7 +2848,10 @@ if (casa === "Tyrell") {
             accion: room.accionActual,
             fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
           });
-          
+        if (room.accionActual === 4) {
+          iniciarConstruccionNPC(room, partida);
+        }
+
       }
       
     }
@@ -2895,6 +2964,9 @@ if (tieneCetro) {
       accion: room.accionActual,
       fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
     });
+    if (room.accionActual === 4) {
+      iniciarConstruccionNPC(room, partida);
+    }
   }
 });
 
@@ -2987,9 +3059,12 @@ if (tieneCetro) {
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+      if (room.accionActual === 4) {
+        iniciarConstruccionNPC(room, partida);
+      }
     }
-    
-    
+
+
   });
   
   
@@ -3069,6 +3144,27 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
     accion:     room.accionActual
   });
 });
+
+  // ───── Construcciones de NPC ─────
+  socket.on('npc-construccion-agregar', ({ partida, nombre, territorio, edificio }) => {
+    const room = rooms[partida];
+    if (!room || room.npcBuilder !== nombre) return;
+    if (!room.estadoTerritorios[territorio]) return;
+    room.estadoTerritorios[territorio].edificios.push(edificio);
+    io.to(partida).emit('actualizar-estado-juego', {
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('npc-construccion-finalizar', ({ partida, nombre }) => {
+    const room = rooms[partida];
+    if (!room || room.npcBuilder !== nombre) return;
+    room.npcBuilder = null;
+    io.to(partida).emit('npc-construccion-finalizada');
+  });
 
   
 
