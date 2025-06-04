@@ -2347,11 +2347,17 @@ function finalizarFaseNeutralYEmitir() {
 
             abrirModal('modal-construir');
           });
-        setupListener('btn-mover', 'click', () => terminarAccionEspecifica('Mover/Atacar')); // Acción simplificada
+        setupListener('btn-mover', 'click', () => abrirModal('modal-confirmar-mover'));
         setupListener('btn-batalla', 'click', () => {
   poblarSelectTerritorioAtaque();
   abrirModal('modal-ataque-simple');
 });
+        setupListener('btn-confirmar-mover', 'click', () => {
+          cerrarModal('modal-confirmar-mover');
+          terminarAccionEspecifica('Mover/Atacar');
+        });
+        setupListener('btn-cancelar-mover', 'click', () => cerrarModal('modal-confirmar-mover'));
+
 
         
         setupListener('btn-reorganizar', 'click', () => {
