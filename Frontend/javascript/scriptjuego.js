@@ -343,6 +343,8 @@ function confirmarReclutarCaballerosTully() {
 
 
 
+  // Último turno y acción en la que se usó "Reorganizar". Sirven para saber
+  // cuándo volver a habilitar el botón.
   let turnoReorganizarUsado = null;
   let accionReorganizarUsado = null;
 
@@ -908,6 +910,17 @@ if (btnLevas) {
     btnLevas.style.display = 'none';
   }
 }
+
+  // ─── Disponibilidad del botón Reorganizar ──────────────────────────────
+  const btnReorganizar = document.getElementById('btn-reorganizar');
+  if (btnReorganizar) {
+    if (turnoReorganizarUsado !== null &&
+        gameState.turno <= turnoReorganizarUsado + 1) {
+      btnReorganizar.style.display = 'none';
+    } else {
+      btnReorganizar.style.display = 'flex';
+    }
+  }
 
 
 
