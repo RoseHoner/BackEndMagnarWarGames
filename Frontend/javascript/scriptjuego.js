@@ -2360,15 +2360,17 @@ function finalizarFaseNeutralYEmitir() {
 
 
         
-        setupListener('btn-reorganizar', 'click', () => {
-  const turno = gameState?.turno || 1;
-  const accion = gameState?.accion || 1;
-  turnoReorganizarUsado = turno;
-  accionReorganizarUsado = accion;
-
-  socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
-  terminarAccionEspecifica('Reorganizar');
-});
+        setupListener('btn-reorganizar', 'click', () => abrirModal('modal-confirmar-reorganizar'));
+        setupListener('btn-confirmar-reorganizar', 'click', () => {
+          cerrarModal('modal-confirmar-reorganizar');
+          const turno = gameState?.turno || 1;
+          const accion = gameState?.accion || 1;
+          turnoReorganizarUsado = turno;
+          accionReorganizarUsado = accion;
+          socket.emit('usar-reorganizar', { partida, nombre, turno, accion });
+          terminarAccionEspecifica('Reorganizar');
+        });
+        setupListener('btn-cancelar-reorganizar', 'click', () => cerrarModal('modal-confirmar-reorganizar'));
 
 
 
