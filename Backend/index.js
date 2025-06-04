@@ -1755,6 +1755,15 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     // Inicializamos estado de juego
     room.estadoTerritorios = inicializarEstadoTerritorios();
     room.estadoJugadores = inicializarEstadoJugadores(room.players, room.casas);
+
+    // Si ningún jugador eligió Tyrell, colocar una Granja en Altojardín
+    const hayTyrell = Object.values(room.casas).includes("Tyrell");
+    if (!hayTyrell) {
+      const altojardin = room.estadoTerritorios["Altojardín"];
+      if (altojardin && !altojardin.edificios.includes("Granja")) {
+        altojardin.edificios.push("Granja");
+      }
+    }
     room.turnoActual = 1;
     room.accionActual = 1;
     room.jugadoresAccionTerminada = [];
