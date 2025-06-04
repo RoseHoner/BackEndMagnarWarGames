@@ -17,6 +17,7 @@ let alianzaDeSangrePendiente = false;
 
 let barcosPerdidosPendientes = 0;
 let transferenciasBarcos = [];
+let esperandoConstruccionNPC = false;
 
 
 
@@ -2472,6 +2473,34 @@ setupListener('btn-confirmar-casamiento', 'click', () => {
         // --- Listeners para Modal Mis Territorios ---
         setupListener('btn-cerrar-modal-territorios', 'click', () => cerrarModal('modal-mis-territorios'));
         setupListener('btn-ok-modal-territorios', 'click', () => cerrarModal('modal-mis-territorios'));
+
+        // --- Listeners Construcción NPC ---
+        setupListener('btn-npc-si', 'click', () => {
+          cerrarModal('modal-npc-pregunta');
+          poblarTodosLosTerritorios('select-territorio-npc');
+          poblarTodosLosEdificios('select-edificio-npc');
+          abrirModal('modal-npc-construir');
+        });
+        setupListener('btn-npc-no', 'click', () => {
+          socket.emit('npc-construccion-finalizar', { partida, nombre });
+        });
+        setupListener('btn-npc-confirmar', 'click', () => {
+          const territorio = document.getElementById('select-territorio-npc').value;
+          const edificio = document.getElementById('select-edificio-npc').value;
+          if (!territorio || !edificio) { alert('Debes seleccionar territorio y edificio'); return; }
+          socket.emit('npc-construccion-agregar', { partida, nombre, territorio, edificio });
+          cerrarModal('modal-npc-construir');
+          abrirModal('modal-npc-mas');
+        });
+        setupListener('btn-npc-mas-si', 'click', () => {
+          poblarTodosLosTerritorios('select-territorio-npc');
+          poblarTodosLosEdificios('select-edificio-npc');
+          cerrarModal('modal-npc-mas');
+          abrirModal('modal-npc-construir');
+        });
+        setupListener('btn-npc-mas-no', 'click', () => {
+          socket.emit('npc-construccion-finalizar', { partida, nombre });
+        });
         
         setupListener('btn-confirmar-perdidas-neutral', 'click', () => {
   perdidasPorUnidad = {};
@@ -4018,12 +4047,14 @@ socket.on('avanzar-accion', (nuevoEstado) => {
         window.refuerzoTullyConfirmado = false;
         window.refuerzoTullyEnFaseNeutral = false;
 
-        if (casa === 'Tully' && gameState.jugadores?.[nombre] && !gameState.jugadores[nombre].refuerzoTullyUsadoEsteTurno) {
-          window.refuerzoTullyEnFaseNeutral = true;
-          abrirModal('modal-refuerzos-tully');
-        } else {
-          renderizarInputsPerdidas();
-          abrirModal('modal-fase-neutral');
+        if (!esperandoConstruccionNPC) {
+          if (casa === 'Tully' && gameState.jugadores?.[nombre] && !gameState.jugadores[nombre].refuerzoTullyUsadoEsteTurno) {
+            window.refuerzoTullyEnFaseNeutral = true;
+            abrirModal('modal-refuerzos-tully');
+          } else {
+            renderizarInputsPerdidas();
+            abrirModal('modal-fase-neutral');
+          }
         }
 
     }
@@ -4065,6 +4096,33 @@ socket.on('estado-espera-jugadores', (mensaje) => {
      } else if (estadoTurnoEl) {
          estadoTurnoEl.textContent = ""; // Limpiar en otros casos
      }
+});
+
+socket.on('npc-construccion-iniciar', ({ jugador }) => {
+  esperandoConstruccionNPC = true;
+  if (jugador === nombre) {
+    abrirModal('modal-npc-pregunta');
+  } else {
+    document.getElementById('texto-espera-npc').textContent = `⌛ Espera, ${jugador} está colocando las construcciones de los NPC`;
+    abrirModal('modal-espera-npc');
+  }
+});
+
+socket.on('npc-construccion-finalizada', () => {
+  cerrarModal('modal-espera-npc');
+  cerrarModal('modal-npc-pregunta');
+  cerrarModal('modal-npc-construir');
+  cerrarModal('modal-npc-mas');
+  esperandoConstruccionNPC = false;
+  if (gameState?.fase === 'Neutral') {
+    if (casa === 'Tully' && gameState.jugadores?.[nombre] && !gameState.jugadores[nombre].refuerzoTullyUsadoEsteTurno) {
+      window.refuerzoTullyEnFaseNeutral = true;
+      abrirModal('modal-refuerzos-tully');
+    } else {
+      renderizarInputsPerdidas();
+      abrirModal('modal-fase-neutral');
+    }
+  }
 });
 
 socket.on('abrir-modal-asignar-territorios', ({ territorios, posiblesCasas }) => {
@@ -4889,6 +4947,20 @@ function poblarTerritoriosEnSelect(idSelect) {
     });
 }
 
+function poblarTodosLosTerritorios(idSelect) {
+  const select = document.getElementById(idSelect);
+  if (!select || !gameState?.territorios) return;
+  select.innerHTML = '<option value="">-- Selecciona --</option>';
+  Object.values(gameState.territorios)
+    .sort((a,b) => a.nombre.localeCompare(b.nombre))
+    .forEach(t => {
+      const op = document.createElement('option');
+      op.value = t.nombre;
+      op.textContent = t.nombre;
+      select.appendChild(op);
+    });
+}
+
 function poblarTerritoriosCheckbox() {
   const cont = document.getElementById("lista-territorios-checkbox");
   cont.innerHTML = '';
@@ -4948,6 +5020,18 @@ function poblarEdificiosEnSelect(idSelect) {
       <option value="Taller de maquinaria de asedio">Taller de Asedio</option>
     </optgroup>
   `;
+}
+
+function poblarTodosLosEdificios(idSelect) {
+  const select = document.getElementById(idSelect);
+  if (!select) return;
+  select.innerHTML = '<option value="">-- Selecciona --</option>';
+  Object.keys(iconosEdificio).forEach(ed => {
+    const op = document.createElement('option');
+    op.value = ed;
+    op.textContent = ed;
+    select.appendChild(op);
+  });
 }
 
 
