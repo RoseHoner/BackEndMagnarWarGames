@@ -167,17 +167,28 @@ const CAPITALES = ["Invernalia", "Rocadragón", "Desembarco del Rey", "Aguasdulc
 const territoriosOriginalesGreyjoy = ["Pyke", "Harlaw", "Monte Orca", "Gran Wyk"];
 
 // Función que calcula el límite de reclutamiento de Greyjoy
+// Nuevo cálculo: +1 por cada 2 territorios conquistados y +1 adicional por
+// cada capital controlada (no original)
 function calcularLimiteGreyjoy(territoriosJugador) {
   let limite = 7;
-  for (const t of territoriosJugador) {
-    if (!territoriosOriginalesGreyjoy.includes(t.nombre)) {
-      if (t.edificios.includes("Castillo")) {
-        limite += 2;
-      } else {
-        limite += 1;
-      }
-    }
-  }
+
+  // Filtrar territorios que no son parte del dominio inicial Greyjoy
+  const conquistados = territoriosJugador.filter(
+    t => !territoriosOriginalesGreyjoy.includes(t.nombre)
+  );
+
+  // Contar capitales conquistadas
+  const numCapitales = conquistados.filter(t => CAPITALES.includes(t.nombre)).length;
+
+  // Contar territorios no capitales
+  const numNoCapitales = conquistados.length - numCapitales;
+
+  // +1 por cada par de territorios no capitales
+  limite += Math.floor(numNoCapitales / 2);
+
+  // +1 por cada capital conquistada
+  limite += numCapitales;
+
   return limite;
 }
 
