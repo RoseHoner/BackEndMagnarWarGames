@@ -478,11 +478,21 @@ p {
   padding: 2px; 
 }
 
-.modal-juego img { 
-  max-width: 90%; 
-  height: auto; 
-  display: block; 
-  margin: var(--spacing-s) auto; 
+.modal-juego img {
+  max-width: 90%;
+  height: auto;
+  display: block;
+  margin: var(--spacing-s) auto;
+}
+
+/*
+ * Override the generic modal rule for small inline icons so
+ * coin images displayed next to numbers don't drop to a new line.
+ */
+.modal-juego .icono-inline {
+  display: inline-block;
+  margin: 0 var(--spacing-xs);
+  vertical-align: -0.15em;
 }
 
 #modal-elegir-asedio img { 
