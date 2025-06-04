@@ -12,6 +12,14 @@ const mysql = require('mysql2/promise'); // <- driver MySQL
 const app = express();
 app.use(cors()); // Permitimos cualquier origen (útil en desarrollo)
 
+// Desactivar cache para forzar que los usuarios obtengan siempre la
+// última versión de los archivos estáticos. Se añade la cabecera
+// 'Cache-Control: no-store' a todas las respuestas.
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 
  // Servir estáticos de la carpeta Frontend
  // Ahora definimos frontPath apuntando a ../Frontend
