@@ -30,6 +30,7 @@ let inicialYaConfirmado = false;
 let modalInicialYaMostrado = false;
 
 window.esAtaqueNorteStark = false;
+window.esMoverNorteStark = false;
 
 // Indica si el modal de refuerzos Tully se abrió durante la fase neutral
 window.refuerzoTullyEnFaseNeutral = false;
@@ -939,7 +940,10 @@ if (esStark) {
   mostrarBotonesStark(); // los mostramos por defecto si es Stark
 
 
-  btnStarkMover?.addEventListener('click', incrementarContadorNorte);
+  btnStarkMover?.addEventListener('click', () => {
+    window.esMoverNorteStark = true;
+    abrirModal('modal-confirmar-mover');
+  });
 } else {
   ocultarBotonesStark(); // si no es Stark, asegurarse que no se vean
 }
@@ -2354,16 +2358,27 @@ function finalizarFaseNeutralYEmitir() {
 
             abrirModal('modal-construir');
           });
-        setupListener('btn-mover', 'click', () => abrirModal('modal-confirmar-mover'));
+        setupListener('btn-mover', 'click', () => {
+          window.esMoverNorteStark = false;
+          abrirModal('modal-confirmar-mover');
+        });
         setupListener('btn-batalla', 'click', () => {
   poblarSelectTerritorioAtaque();
   abrirModal('modal-ataque-simple');
 });
         setupListener('btn-confirmar-mover', 'click', () => {
           cerrarModal('modal-confirmar-mover');
-          terminarAccionEspecifica('Mover/Atacar');
+          if (window.esMoverNorteStark) {
+            incrementarContadorNorte();
+            window.esMoverNorteStark = false;
+          } else {
+            terminarAccionEspecifica('Mover/Atacar');
+          }
         });
-        setupListener('btn-cancelar-mover', 'click', () => cerrarModal('modal-confirmar-mover'));
+        setupListener('btn-cancelar-mover', 'click', () => {
+          window.esMoverNorteStark = false;
+          cerrarModal('modal-confirmar-mover');
+        });
 
 
         
