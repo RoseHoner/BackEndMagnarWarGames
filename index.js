@@ -338,6 +338,7 @@ if (idSocketTyrell) {
 
   // Actualizar estado
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -360,6 +361,7 @@ socket.on("tyrell-confirmar-territorios-revuelta", ({ partida, nombre, casaObjet
   });
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -423,6 +425,7 @@ socket.on("tyrell-revuelta-perdidas", ({ partida, nombre, perdidas, territoriosP
   }
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -458,6 +461,7 @@ socket.on("tyrell-revuelta-perdidas", ({ partida, nombre, perdidas, territoriosP
   }
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -496,6 +500,7 @@ socket.on("targaryen-reponer-jinete", ({ partida, nombre }) => {
   jugador.jinete = (jugador.jinete || 0) + 1;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -618,6 +623,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
   
     // Emitimos estado actualizado (opcional)
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -657,6 +663,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
 
   // Solo actualizamos estado para refrescar UI con el nuevo kraken
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -700,6 +707,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     }
   
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -718,6 +726,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
       }
   
       io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -748,6 +757,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     jugador.torneoUsadoEsteTurno = true;
   
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -779,6 +789,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     
   
       io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -830,6 +841,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     }
   
     io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -855,6 +867,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
       }
   
       io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -888,6 +901,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     }
   
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -975,6 +989,7 @@ room.players.forEach(jugador => {
 
   // Emitir estado actualizado
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -1026,6 +1041,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
 
   // Actualizar estado de ese jugador
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -1104,6 +1120,7 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
 }
   
     io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -1187,6 +1204,7 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
 
   // Emitir estado actualizado
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -1208,6 +1226,7 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
   t.edificios.push("Granja");
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -1270,6 +1289,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
 
   
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -1414,10 +1434,15 @@ const costosacerdotesal = j.sacerdoteSal || 0;
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios 
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa - costoguardiadelalba
-  - costosacerdotizaroja - costobarbaros - costocaballerosdelaguila - costosacerdotesal
-);
+const oroAntesGastos = j.oro;
+const costoTotal = costoTropas + costoBarcos + costoMaquinas + costoDragones + costoSacerdotes + costoCaballeros + costoHuargos + costounicornios
+  + costomurcielagos + costoguardiareal + costoBarcoLegendario + costobarcocorsario + costovenadosblancos + costomartilladores + costocaballerosdelarosa + costoguardiadelalba
+  + costosacerdotizaroja + costobarbaros + costocaballerosdelaguila + costosacerdotesal;
+j.oro = Math.max(0, oroAntesGastos - costoTotal);
+if (oroAntesGastos < costoTotal) {
+  const sock = room.playerSockets[jugadorNombre];
+  if (sock) io.to(sock).emit('abrir-modal-morosidad');
+}
 
 
 
@@ -1426,6 +1451,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
       }
   
       io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -1501,6 +1527,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
   victima.tropas = Math.max(0, (victima.tropas || 0) - cantidadFinal);
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -1518,6 +1545,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
   
     // Opcional: mandar estado actualizado de ese jugador
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -1621,6 +1649,7 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
 
   
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -1645,6 +1674,7 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
     }
 
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -1674,7 +1704,8 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     players: [],
     casas: {},
     playerSockets: {},
-    host: nombre
+    host: nombre,
+    npcBuilder: null
   };
   console.log(`[Lobby] Partida '${partida}' creada por ${nombre}.`);
 
@@ -1700,7 +1731,8 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
         players: [],
         casas: {},
         playerSockets: {},
-        host: nombre
+        host: nombre,
+        npcBuilder: null
       };
     }
 
@@ -1747,6 +1779,16 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
 
     io.to(partida).emit('casas-actualizadas', room.casas);
     io.to(partida).emit('jugadores-actualizados', room.players);
+  });
+
+  // Enviar listado de casas de una partida (útil para reconexión)
+  socket.on('obtener-casas', ({ partida }, callback) => {
+    const room = rooms[partida];
+    if (room && typeof callback === 'function') {
+      callback(room.casas);
+    } else if (typeof callback === 'function') {
+      callback({});
+    }
   });
 
   
@@ -1796,11 +1838,13 @@ room.playerSockets[nombre] = socket.id;
 
       console.log(`[Juego] ${nombre} se conectó a la sala de ${partida}`);
       socket.emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
-        accion: room.accionActual
-      });      
+        accion: room.accionActual,
+        fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+      });
     }
   });
 
@@ -1817,6 +1861,7 @@ room.playerSockets[nombre] = socket.id;
   }
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -1864,6 +1909,7 @@ socket.on('targaryen-activar-alianza-sangre', ({ partida, nombre, casaElegida })
   }
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -1895,6 +1941,7 @@ socket.on('targaryen-activar-alianza-sangre', ({ partida, nombre, casaElegida })
     }
 
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       recursos: {
         [atacante]: room.estadoJugadores[atacante],
@@ -1980,6 +2027,7 @@ if (tipoEdificio === "Puerto Fluvial") {
   
     // Emitir estado actualizado
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -2089,9 +2137,15 @@ const costosacerdotesal = j.sacerdoteSal || 0;
 
 
 j.oro += ingreso;
-j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costoCaballeros - costoHuargos - costounicornios
-  - costomurcielagos - costoguardiareal - costoBarcoLegendario - costobarcocorsario - costovenadosblancos - costomartilladores - costocaballerosdelarosa
-- costoguardiadelalba - costosacerdotizaroja - costobarbaros - costocaballerosdelaguila - costosacerdotesal);
+const oroAntes = j.oro;
+const totalCost = costoTropas + costoBarcos + costoMaquinas + costoDragones + costoSacerdotes + costoCaballeros + costoHuargos + costounicornios
+  + costomurcielagos + costoguardiareal + costoBarcoLegendario + costobarcocorsario + costovenadosblancos + costomartilladores + costocaballerosdelarosa
+  + costoguardiadelalba + costosacerdotizaroja + costobarbaros + costocaballerosdelaguila + costosacerdotesal;
+j.oro = Math.max(0, oroAntes - totalCost);
+if (oroAntes < totalCost) {
+  const sock = room.playerSockets[jugadorNombre];
+  if (sock) io.to(sock).emit('abrir-modal-morosidad');
+}
 
 
         }
@@ -2100,6 +2154,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
   
   
       io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -2108,6 +2163,7 @@ j.oro = Math.max(0, j.oro - costoTropas - costoBarcos - costoMaquinas - costoDra
   
       // Emitir estado actualizado ANTES de avanzar acción
       io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -2142,6 +2198,7 @@ socket.on("rumor-desbloqueado", ({ partida, nombre, rumor }) => {
   }
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2162,6 +2219,7 @@ socket.on('stark-reclutar-huargos', ({ partida, nombre, cantidad }) => {
   jugador.huargos = (jugador.huargos || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2181,6 +2239,7 @@ socket.on("stark-reclutar-unicornios", ({ partida, nombre, cantidad }) => {
   jugador.unicornios = (jugador.unicornios || 0) + cantidad;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2204,6 +2263,7 @@ socket.on("tully-reclutar-murcielagos", ({ partida, nombre, cantidad }) => {
 }
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2223,6 +2283,7 @@ socket.on("tully-reclutar-caballeros", ({ partida, nombre, cantidad }) => {
   jugador.caballero = (jugador.caballero || 0) + cantidad;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2242,6 +2303,7 @@ socket.on("targaryen-reclutar-guardiareal", ({ partida, nombre, cantidad }) => {
   jugador.guardiareal = (jugador.guardiareal || 0) + cantidad;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2259,6 +2321,7 @@ socket.on("greyjoy-reclutar-barcolegendario", ({ partida, nombre, cantidad }) =>
   jugador.barcolegendario = 1;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2276,6 +2339,7 @@ socket.on("greyjoy-reclutar-tritones", ({ partida, nombre, cantidad }) => {
   jugador.tritones = (jugador.tritones || 0) + cantidad;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2296,6 +2360,7 @@ socket.on('baratheon-reclutar-venadosblancos', ({ partida, nombre, cantidad }) =
   jugador.venadosblancos = (jugador.venadosblancos || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2316,6 +2381,7 @@ socket.on('baratheon-reclutar-martilladores', ({ partida, nombre, cantidad }) =>
   jugador.martilladores = (jugador.martilladores || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2333,6 +2399,7 @@ socket.on("baratheon-reclutar-sacerdotizaroja", ({ partida, nombre, cantidad }) 
   jugador.oro -= 1;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2353,6 +2420,7 @@ socket.on('tyrell-reclutar-caballerosdelarosa', ({ partida, nombre, cantidad }) 
   jugador.caballerosdelarosa = (jugador.caballerosdelarosa || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2373,6 +2441,7 @@ socket.on('martell-reclutar-guardiadelalba', ({ partida, nombre, cantidad }) => 
   jugador.guardiadelalba = (jugador.guardiadelalba || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2393,6 +2462,7 @@ socket.on('arryn-reclutar-barbaros', ({ partida, nombre, cantidad }) => {
   jugador.barbaros = (jugador.barbaros || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2413,6 +2483,7 @@ socket.on('arryn-reclutar-caballerosdelaguila', ({ partida, nombre, cantidad }) 
   jugador.caballerosdelaguila = (jugador.caballerosdelaguila || 0) + cantidad;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2433,6 +2504,7 @@ socket.on('refuerzos-tully', ({ partida, nombre }) => {
   jugador.refuerzoTullyUsadoEsteTurno = true;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2450,6 +2522,7 @@ socket.on('arryn-ganar-caballero', ({ partida, nombre }) => {
   jugador.caballero = (jugador.caballero || 0) + 1;
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2473,6 +2546,7 @@ socket.on('levas-stark', ({ partida, nombre, cantidad }) => {
   }
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2513,6 +2587,7 @@ socket.on("transferencia-oro", ({ partida, nombre, casaDestino, cantidad }) => {
   jugadorDestino.oro += cantidad;
 
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2535,6 +2610,40 @@ socket.on("transferencia-barcos", ({ partida, nombre, transferencias }) => {
 
   // Emitimos el estado actualizado
   io.to(partida).emit("actualizar-estado-juego", {
+    npcBuilder: room.npcBuilder,
+    territorios: room.estadoTerritorios,
+    jugadores: room.estadoJugadores,
+    turno: room.turnoActual,
+    accion: room.accionActual
+  });
+});
+
+socket.on('morosidad-confirmar', ({ partida, nombre, perdidas, territorios }) => {
+  const room = rooms[partida];
+  if (!room) return;
+  const jugador = room.estadoJugadores[nombre];
+  if (!jugador) return;
+
+  if (perdidas && typeof perdidas === 'object') {
+    for (const key in perdidas) {
+      const val = parseInt(perdidas[key]) || 0;
+      if (jugador.hasOwnProperty(key)) {
+        jugador[key] = Math.max(0, jugador[key] - val);
+      }
+    }
+  }
+
+  if (Array.isArray(territorios)) {
+    territorios.forEach(t => {
+      const terr = room.estadoTerritorios[t];
+      if (terr && terr.propietario === jugador.casa) {
+        terr.propietario = "Nadie";
+      }
+    });
+  }
+
+  io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2644,6 +2753,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
   }
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2653,6 +2763,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
   if (reclutarNorte) {
   // No avanzar acción global, solo actualizamos el estado y salimos
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2681,6 +2792,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
     }
 
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -2816,7 +2928,13 @@ const costoCaballeros = caballeros * 1;
 const costosacerdotesal = jugador.sacerdoteSal || 0;
 
 
-            jugador.oro = Math.max(0, jugador.oro - costoTropas - costoBarcos - costoMaquinas - costoDragones - costoSacerdotes - costosacerdotesal);
+            const oroPrevio = jugador.oro;
+            const totalCost = costoTropas + costoBarcos + costoMaquinas + costoDragones + costoSacerdotes + costosacerdotesal;
+            jugador.oro = Math.max(0, oroPrevio - totalCost);
+            if (oroPrevio < totalCost) {
+              const sock = room.playerSockets[jugadorNombre];
+              if (sock) io.to(sock).emit('abrir-modal-morosidad');
+            }
 
 
             // ✅ Si el jugador es Tyrell y tiene un Septo, lanzar el modal
@@ -2836,6 +2954,7 @@ if (casa === "Tyrell") {
 
       
           io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
             territorios: room.estadoTerritorios,
             jugadores: room.estadoJugadores,
             turno: room.turnoActual,
@@ -2867,6 +2986,7 @@ if (casa === "Tyrell") {
     jugador.militantesFe = (jugador.militantesFe || 0) + cantidad;
   
     io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -2944,6 +3064,7 @@ if (tieneCetro) {
   }
 
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores: room.estadoJugadores,
     turno: room.turnoActual,
@@ -2982,6 +3103,7 @@ if (tieneCetro) {
     jugador.tropas = Math.max(0, jugador.tropas - perdidas);
   
     io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -3011,6 +3133,7 @@ if (tieneCetro) {
     delete room.sobornoEnCurso;
   
     io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -3019,6 +3142,7 @@ if (tieneCetro) {
     
     if (defensor && room.playerSockets[defensor]) {
       io.to(room.playerSockets[defensor]).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -3048,6 +3172,7 @@ if (tieneCetro) {
       }
     
       io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
@@ -3102,6 +3227,7 @@ jugador.oro = Math.max(0, jugador.oro - cantidad * costoSoborno);
     }
   
     io.to(room.playerSockets[nombre]).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -3122,6 +3248,7 @@ jugador.oro = Math.max(0, jugador.oro - cantidad * costoSoborno);
     jugador.oro = Math.max(0, jugador.oro - 20); // Cuesta 20 de oro
   
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
@@ -3138,6 +3265,7 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
   jugador[tipo] = (jugador[tipo] || 0) + 1;
   // Emitimos estado completo
   io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
     territorios: room.estadoTerritorios,
     jugadores:  room.estadoJugadores,
     turno:      room.turnoActual,
@@ -3152,6 +3280,7 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
     if (!room.estadoTerritorios[territorio]) return;
     room.estadoTerritorios[territorio].edificios.push(edificio);
     io.to(partida).emit('actualizar-estado-juego', {
+    npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
       jugadores: room.estadoJugadores,
       turno: room.turnoActual,
