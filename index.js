@@ -60,7 +60,7 @@ if (process.env.DATABASE_URL) {
     connectionLimit: 10
   });
 } else {
-  console.log('⚠️  MySQL deshabilitado: no hay DATABASE_URL');
+  console.log('MySQL deshabilitado: no hay DATABASE_URL');
   // Simula un pool con un método query que no hace nada
   db = {
     query: async () => {
@@ -184,7 +184,9 @@ function inicializarEstadoTerritorios() {
         estadoTerritorios[t.nombre] = {
     nombre: t.nombre,
     propietario: t.propietarioInicial,
+    propietarioInicial: t.propietarioInicial,
     oroBase: t.oro,
+    asediador: null,
     edificios: (() => {
       if (CAPITALES.includes(t.nombre)) {
         if (t.nombre === "Lanza del Sol" || t.nombre === "Pyke") {
@@ -771,13 +773,13 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     const listos = room.jugadoresAccionTerminada.length;
     const total = room.players.length;
   
-    io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+    io.to(partida).emit('estado-espera-jugadores', listos < total ? `Esperando a ${total - listos}...` : `Procesando...`);
   
     if (listos === total) {
       room.jugadoresAccionTerminada = [];
       room.accionActual += 1;
     
-      // ⚠️ RESETEO de torneo: al empezar nueva acción (aunque no cambie el turno)
+      // RESETEO de torneo: al empezar nueva acción (aunque no cambie el turno)
       for (const j of Object.values(room.estadoJugadores)) {
         
       }
@@ -855,7 +857,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     const listos = room.jugadoresAccionTerminada.length;
     const total = room.players.length;
   
-    io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+    io.to(partida).emit('estado-espera-jugadores', listos < total ? `Esperando a ${total - listos}...` : `Procesando...`);
   
     if (listos === total) {
       // avanzar acción
@@ -885,7 +887,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     }
   });
   
-  socket.on('asignar-territorios-post-batalla', ({ partida, nombre, asignaciones }) => {
+  socket.on('asignar-territorios-post-batalla', ({ partida, nombre, asignaciones, esAtaqueNorteStark }) => {
     const room = rooms[partida];
     if (!room) return;
   
@@ -896,8 +898,10 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     }
   
     // Avanzar acción solo para el atacante principal
-    if (!room.jugadoresAccionTerminada.includes(nombre)) {
-      room.jugadoresAccionTerminada.push(nombre);
+    if (!esAtaqueNorteStark) {
+      if (!room.jugadoresAccionTerminada.includes(nombre)) {
+        room.jugadoresAccionTerminada.push(nombre);
+      }
     }
   
     io.to(partida).emit('actualizar-estado-juego', {
@@ -930,7 +934,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
    
 
 
-    // ✅ LIMPIAR datos del ataque al final del modal 3
+    // LIMPIAR datos del ataque al final del modal 3
 room.atacantePrincipalTurno = null;
 room.casaAtacantePrincipal = null;
 room.territoriosAtacadosPorTurno = null;
@@ -962,18 +966,21 @@ room.casasAtacantesTurno = null;
   // Procesar territorios atacados
   for (const t of territorios) {
     const territorio = room.estadoTerritorios?.[t.nombre];
-    if (territorio && territorio.propietario !== casa && t.gano) {
-  territorio.propietario = t.propietario || casa;
-}
-
+    if (!territorio) continue;
+    if (t.levantar) {
+      if (t.nuevoPropietario && t.nuevoPropietario !== 'Nadie') {
+        territorio.propietario = t.nuevoPropietario;
+      }
+      territorio.asediador = null;
+    }
+    if (territorio.propietario !== casa && t.gano) {
+      territorio.propietario = t.propietario || casa;
+      territorio.asediador = null;
+    }
   }
 
-  if (!esAtaqueNorteStark) {
-    if (!room.jugadoresAccionTerminada.includes(nombre)) {
-      room.jugadoresAccionTerminada.push(nombre);
-    } 
-  }
-  // Marcar acción terminada
+  // La acción se marcará como terminada únicamente cuando el cliente
+  // emita explicitamente 'accion-terminada'.
   
   revisarYEmitirRoboMoral(socket, room, nombre);
 
@@ -1067,7 +1074,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
   
     for (const nombreT in territorios) {
       const t = territorios[nombreT];
-      if (t.propietario === "Arryn") {
+      if (t.propietario === "Arryn" && !t.asediador) {
         ingreso += t.oroBase || 0;
         ingreso += (t.edificios.filter(e => e === "Mina").length) * 10;
         ingreso += (t.edificios.filter(e => e === "Cantera").length) * 5;
@@ -1147,7 +1154,7 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
   // Calcular ingresos
   let ingreso = 0;
   for (const terr of Object.values(room.estadoTerritorios)) {
-    if (terr.propietario === "Tyrell") {
+    if (terr.propietario === "Tyrell" && !terr.asediador) {
       ingreso += terr.oroBase || 0;
       ingreso += (terr.edificios.filter(e => e === "Mina").length) * 10;
       ingreso += (terr.edificios.filter(e => e === "Cantera").length) * 5;
@@ -1155,8 +1162,8 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
     }
   }
 
-  // 💰 BONUS directo por el rumor Diezmo de la Abundancia
-  // 💰 BONUS directo por el rumor Diezmo de la Abundancia
+  // BONUS directo por el rumor Diezmo de la Abundancia
+  // BONUS directo por el rumor Diezmo de la Abundancia
 if (rumorInicial === "Diezmo de la Abundancia") {
   ingreso += 15; // porque al inicio siempre hay 1 granja
 }
@@ -1304,7 +1311,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
     const listos = room.jugadoresAccionTerminada.length;
     const total = room.players.length;
   
-    io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+    io.to(partida).emit('estado-espera-jugadores', listos < total ? `Esperando a ${total - listos}...` : `Procesando...`);
   
     if (listos === total) {
       room.jugadoresAccionTerminada = [];
@@ -1327,7 +1334,7 @@ revisarYEmitirRoboMoral(socket, room, nombre);
 }
 
           
-          // 💍 Bonus por casarse con Casa Celtigar
+          // Bonus por casarse con Casa Celtigar
 if (j.casa === "Targaryen" && (j.casadoCon === "Celtigar" || j.casamientoExtra === "Celtigar")) {
   ingreso += 30;
 }
@@ -1336,14 +1343,14 @@ if (j.casa === "Targaryen" && (j.casadoCon === "Celtigar" || j.casamientoExtra =
 
           for (const nombreTerritorio in territorios) {
             const t = territorios[nombreTerritorio];
-            if (t.propietario === casa) {
+            if (t.propietario === casa && !t.asediador) {
               ingreso += t.oroBase || 0;
             }
           }
-            // 🔨 BONUS por cada mina construida en territorios del jugador
+            // BONUS por cada mina construida en territorios del jugador
   for (const nombreTerritorio in territorios) {
     const territorio = territorios[nombreTerritorio];
-    if (territorio.propietario === casa && Array.isArray(territorio.edificios)) {
+    if (territorio.propietario === casa && !territorio.asediador && Array.isArray(territorio.edificios)) {
         const minas = territorio.edificios.filter(e => e === "Mina").length;
         const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
         const canteras = territorio.edificios.filter(e => e === "Cantera").length;
@@ -1392,7 +1399,7 @@ if (casa === "Martell") {
 }
 
 
-// 💰 Martell con "Mercancía de Sombras": +10 por edificio de producción
+// Martell con "Mercancía de Sombras": +10 por edificio de producción
 if (j.casa === "Martell" && j.rumoresDesbloqueados?.includes("Mercancía de Sombras")) {
   let edificiosProduccion = 0;
   for (const t of Object.values(territorios)) {
@@ -1577,7 +1584,7 @@ if (oroAntesGastos < costoTotal) {
   
     for (const nombreTerritorio in territorios) {
       const territorio = territorios[nombreTerritorio];
-      if (territorio.propietario === casa) {
+      if (territorio.propietario === casa && !territorio.asediador) {
         ingreso += territorio.oroBase || 0;
   
         const minas = territorio.edificios.filter(e => e === "Mina").length;
@@ -1595,7 +1602,7 @@ if (oroAntesGastos < costoTotal) {
           ingreso += granjas * 10;
         } else if (casa !== "Tyrell") ingreso += granjas * (esGreyjoy ? 8 : 5);
 
-        // 💰 Bonus Martell por Puerto inicial en Lanza del Sol
+        // Bonus Martell por Puerto inicial en Lanza del Sol
 
 
         
@@ -1661,7 +1668,7 @@ if (rumorInicial && RUMORES_POR_CASA[jugador.casa]?.includes(rumorInicial)) {
 
   io.to(partida).emit(
     'estado-espera-jugadores',
-    listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`
+    listos < total ? `Esperando a ${total - listos}...` : `Procesando...`
   );
 
   if (listos === total) {
@@ -1709,15 +1716,15 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
   };
   console.log(`[Lobby] Partida '${partida}' creada por ${nombre}.`);
 
-  // 🔥 Inserta en la tabla partidas
+  // Inserta en la tabla partidas
   try {
     await db.query(
     'INSERT INTO `Partidas` (`nombre`,`nombre_delhost`,`fecha_creacion`,`estado`) VALUES (?, ?, CURDATE(), ?)',
     [partida, nombre, 'Lobby']
   );
-    console.log('✅ Partida registrada en la BD');
+    console.log('Partida registrada en la BD');
   } catch (err) {
-    console.error('❌ Error guardando partida en BD:', err);
+    console.error('Error guardando partida en BD:', err);
   }
 });
 
@@ -1960,6 +1967,10 @@ socket.on('targaryen-activar-alianza-sangre', ({ partida, nombre, casaElegida })
     const jugador = room.estadoJugadores[nombre];
     const territorioObj = room.estadoTerritorios[territorio];
     if (!jugador || !territorioObj || territorioObj.propietario !== jugador.casa) return;
+    if (territorioObj.asediador) {
+      io.to(room.playerSockets[nombre]).emit('error-accion', 'No puedes construir en un territorio asediado.');
+      return;
+    }
     
   
     const COSTOS = {
@@ -2042,7 +2053,7 @@ if (tipoEdificio === "Puerto Fluvial") {
     const listos = room.jugadoresAccionTerminada.length;
     const total  = room.players.length;
   
-    io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+    io.to(partida).emit('estado-espera-jugadores', listos < total ? `Esperando a ${total - listos}...` : `Procesando...`);
   
     if (listos === total) {
       room.jugadoresAccionTerminada = [];
@@ -2060,7 +2071,7 @@ if (tipoEdificio === "Puerto Fluvial") {
           const casa = j.casa;
           let ingreso = 0;
 
-          // 💍 Bonus por casarse con Casa Celtigar
+          // Bonus por casarse con Casa Celtigar
 if (j.casa === "Targaryen" && (j.casadoCon === "Celtigar" || j.casamientoExtra === "Celtigar")) {
   ingreso += 30;
 }
@@ -2068,14 +2079,14 @@ if (j.casa === "Targaryen" && (j.casadoCon === "Celtigar" || j.casamientoExtra =
 
           for (const nombreTerritorio in territorios) {
             const t = territorios[nombreTerritorio];
-            if (t.propietario === casa) {
+            if (t.propietario === casa && !t.asediador) {
               ingreso += t.oroBase || 0;
             }
           }
-            // 🔨 BONUS por cada mina construida en territorios del jugador
+            // BONUS por cada mina construida en territorios del jugador
   for (const nombreTerritorio in territorios) {
     const territorio = territorios[nombreTerritorio];
-    if (territorio.propietario === casa && Array.isArray(territorio.edificios)) {
+    if (territorio.propietario === casa && !territorio.asediador && Array.isArray(territorio.edificios)) {
       const minas = territorio.edificios.filter(e => e === "Mina").length;
       const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
       const canteras = territorio.edificios.filter(e => e === "Cantera").length;
@@ -2780,7 +2791,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
   const listos = room.jugadoresAccionTerminada.length;
   const total = room.players.length;
 
-  io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+  io.to(partida).emit('estado-espera-jugadores', listos < total ? `Esperando a ${total - listos}...` : `Procesando...`);
 
   if (listos === total) {
     room.jugadoresAccionTerminada = [];
@@ -2812,7 +2823,7 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
 
 
   // Cuando un jugador termina su acción
-  socket.on('accion-terminada', ({ partida, nombre }) => {
+  socket.on('accion-terminada', ({ partida, nombre, ignorarAsedio }) => {
     const room = rooms[partida];
     if (!room || !room.players.includes(nombre)) return;
 
@@ -2822,21 +2833,39 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
       const listos = room.jugadoresAccionTerminada.length;
       const total = room.players.length;
 
-      io.to(partida).emit('estado-espera-jugadores', listos < total ? `⌛ Esperando a ${total - listos}...` : `✅ Procesando...`);
+      if (!ignorarAsedio) {
+        const jugador = room.estadoJugadores[nombre];
+        if (jugador) {
+          const tieneAsedio = Object.values(room.estadoTerritorios)
+            .some(t => t.propietario === jugador.casa && t.asediador);
+          if (tieneAsedio) {
+            const sid = room.playerSockets[nombre];
+            if (sid) {
+              io.to(sid).emit('abrir-modal-perdidas-asedio', {
+                jugador: nombre,
+                datosJugador: jugador,
+                mostrarCastillo: true
+              });
+            }
+          }
+        }
+      }
+
+      io.to(partida).emit('estado-espera-jugadores', listos < total ? `Esperando a ${total - listos}...` : `Procesando...`);
 
       if (listos === total) {
         // Todos terminaron su acción, se avanza al siguiente paso
         room.jugadoresAccionTerminada = [];
         room.accionActual += 1;
       
-        // 👉 Si se acaba de terminar la acción 4 (fase neutral), avanzamos de turno
+        // Si se acaba de terminar la acción 4 (fase neutral), avanzamos de turno
         if (room.accionActual > 4) {
           torneoUsadoEsteTurno = false;
           refuerzoTullyUsadoEsteTurno = false;
           room.accionActual = 1;
           room.turnoActual += 1;
 
-          // 💰 FASE DE RECAUDACIÓN Y MANTENIMIENTO
+          // FASE DE RECAUDACIÓN Y MANTENIMIENTO
           const jugadores = room.estadoJugadores;
           const territorios = room.estadoTerritorios;
           
@@ -2860,12 +2889,12 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
 
             for (const nombreTerritorio in territorios) {
                 const territorio = territorios[nombreTerritorio];
-                if (territorio.propietario === casa) {
+                if (territorio.propietario === casa && !territorio.asediador) {
                     ingreso += territorio.oroBase || 0;
                 }
             }
 
-            // 💰 Bonus Martell por Puerto inicial en Lanza del Sol
+            // Bonus Martell por Puerto inicial en Lanza del Sol
 if (casa === "Martell") {
   const puertoInicial = territorios["Lanza del Sol"];
   if (puertoInicial && puertoInicial.propietario === "Martell" && puertoInicial.edificios.includes("Puerto")) {
@@ -2874,10 +2903,10 @@ if (casa === "Martell") {
 }
 
 
-              // 🔨 BONUS por cada mina construida en territorios del jugador
+              // BONUS por cada mina construida en territorios del jugador
   for (const nombreTerritorio in territorios) {
     const territorio = territorios[nombreTerritorio];
-    if (territorio.propietario === casa && Array.isArray(territorio.edificios)) {
+    if (territorio.propietario === casa && !territorio.asediador && Array.isArray(territorio.edificios)) {
       const minas = territorio.edificios.filter(e => e === "Mina").length;
       const aserraderos = territorio.edificios.filter(e => e === "Aserradero").length;
       const canteras = territorio.edificios.filter(e => e === "Cantera").length;
@@ -2937,7 +2966,7 @@ const costosacerdotesal = jugador.sacerdoteSal || 0;
             }
 
 
-            // ✅ Si el jugador es Tyrell y tiene un Septo, lanzar el modal
+            // Si el jugador es Tyrell y tiene un Septo, lanzar el modal
 if (casa === "Tyrell") {
   const tieneSepto = Object.values(territorios).some(
     t => t.propietario === casa && t.edificios.includes("Septo")
@@ -3013,7 +3042,7 @@ if (casa === "Tyrell") {
   let ingreso = 0;
   for (const nombreTerritorio in room.estadoTerritorios) {
     const territorio = room.estadoTerritorios[nombreTerritorio];
-    if (territorio.propietario === jugador.casa) {
+    if (territorio.propietario === jugador.casa && !territorio.asediador) {
       ingreso += territorio.oroBase || 0;
 
       const minas = territorio.edificios.filter(e => e === "Mina").length;
@@ -3049,9 +3078,9 @@ if (casa === "Tyrell") {
   const tieneCetro = jugador.rumoresDesbloqueados?.includes("Cetro del León");
 const ingresoFinal = ingreso * 2; // SIEMPRE se multiplica por 2
 if (tieneCetro) {
-  console.log("✨ Cetro del León activado: ingresos completos multiplicados.");
+  console.log("Cetro del León activado: ingresos completos multiplicados.");
 } else {
-  console.log("✨ MARICO TERRITORIOS X 2");
+  console.log("MARICO TERRITORIOS X 2");
 }
 
 
@@ -3159,7 +3188,7 @@ if (tieneCetro) {
     
     io.to(partida).emit(
       'estado-espera-jugadores',
-      listos < totalJugadores ? `⌛ Esperando a ${totalJugadores - listos}...` : `✅ Procesando...`
+      listos < totalJugadores ? `Esperando a ${totalJugadores - listos}...` : `Procesando...`
     );
     
     if (listos === totalJugadores) {
@@ -3273,6 +3302,115 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
   });
 });
 
+  // Marcar o actualizar un asedio en un territorio
+  socket.on('marcar-asedio', ({ partida, territorio, asediador }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    if (room.estadoTerritorios[territorio]) {
+      room.estadoTerritorios[territorio].asediador = asediador;
+      const propietario = room.estadoTerritorios[territorio].propietario;
+      const defensorEntry = Object.entries(room.estadoJugadores)
+        .find(([_, j]) => j.casa === propietario);
+      if (defensorEntry) {
+        const [nombreDef, datosDef] = defensorEntry;
+        const sid = room.playerSockets[nombreDef];
+        if (sid) {
+          io.to(sid).emit('abrir-modal-perdidas-asedio', {
+            jugador: nombreDef,
+            datosJugador: datosDef,
+            mostrarCastillo: true
+          });
+        }
+      }
+    }
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  // Finalizar un asedio existente sin consumir acción
+  socket.on('terminar-asedio', ({ partida, territorio, nuevoPropietario }) => {
+    const room = rooms[partida];
+    if (!room) return;
+
+    const t = room.estadoTerritorios[territorio];
+    if (!t) return;
+
+    t.asediador = null;
+    if (nuevoPropietario) {
+      if (nuevoPropietario === 'Nadie') {
+        t.propietario = null;
+      } else {
+        t.propietario = nuevoPropietario;
+      }
+    }
+
+    // Preguntar pérdidas de asedio a todos los jugadores
+    for (const [nombreJ, sid] of Object.entries(room.playerSockets)) {
+      const datosJ = room.estadoJugadores[nombreJ];
+      if (sid && datosJ) {
+        io.to(sid).emit('abrir-modal-perdidas-asedio', {
+          jugador: nombreJ,
+          datosJugador: datosJ,
+          mostrarCastillo: false
+        });
+      }
+    }
+
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('perdidas-asedio', ({ partida, nombre, perdidas }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores[nombre];
+    if (!jugador) return;
+    for (const key in perdidas) {
+      const val = parseInt(perdidas[key]) || 0;
+      if (jugador.hasOwnProperty(key)) {
+        jugador[key] = Math.max(0, jugador[key] - val);
+      }
+    }
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('asedio-castillo-vacio', ({ partida, nombre }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores[nombre];
+    if (!jugador) return;
+    const casaJugador = jugador.casa;
+    for (const terr of Object.values(room.estadoTerritorios)) {
+      if (terr.propietario === casaJugador && terr.asediador) {
+        terr.propietario = terr.asediador;
+        terr.asediador = null;
+      }
+    }
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
   // ───── Construcciones de NPC ─────
   socket.on('npc-construccion-agregar', ({ partida, nombre, territorio, edificio }) => {
     const room = rooms[partida];
@@ -3300,7 +3438,7 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
   // Cuando un jugador se desconecta
   // index.js (servidor)
 socket.on('disconnect', async (reason) => {
-  console.log(`❌ Desconectado: ${socket.id} (${reason})`);
+  console.log(`Desconectado: ${socket.id} (${reason})`);
 
   for (const partidaId of Object.keys(rooms)) {
     const room = rooms[partidaId];
@@ -3312,15 +3450,15 @@ socket.on('disconnect', async (reason) => {
       // Host  
       if (!room.started) {
         io.to(partidaId).emit('partida-cerrada');
-          // 🔥 Borra de la BD
+          // Borra de la BD
           try {
             await db.query(
               'DELETE FROM `Partidas` WHERE `nombre` = ?',
               [partidaId]
             );
-            console.log(`✅ Registro de partida '${partidaId}' eliminado de la BD`);
+            console.log(`Registro de partida '${partidaId}' eliminado de la BD`);
           } catch (err) {
-            console.error(`❌ Error eliminando partida '${partidaId}' de la BD:`, err);
+            console.error(`Error eliminando partida '${partidaId}' de la BD:`, err);
           }
           delete rooms[partidaId];
           console.log(`[Lobby] Host salió, partida '${partidaId}' eliminada.`);
