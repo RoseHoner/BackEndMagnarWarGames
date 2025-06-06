@@ -12,11 +12,11 @@ const mysql = require('mysql2/promise'); // <- driver MySQL
 const app = express();
 app.use(cors()); // Permitimos cualquier origen (útil en desarrollo)
 
-// Desactivar cache para forzar que los usuarios obtengan siempre la
-// última versión de los archivos estáticos. Se añade la cabecera
-// 'Cache-Control: no-store' a todas las respuestas.
+// Desactivar cache para que siempre se cargue la última versión de los archivos
+// estáticos. Enviamos una cabecera estricta que evita almacenamiento en los
+// distintos navegadores y proxies.
 app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store');
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   next();
 });
 
