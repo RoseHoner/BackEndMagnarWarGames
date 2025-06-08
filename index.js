@@ -2844,8 +2844,22 @@ socket.on('reclutamiento-multiple', ({ partida, nombre, territorio, unidades, re
               io.to(sid).emit('abrir-modal-perdidas-asedio', {
                 jugador: nombre,
                 datosJugador: jugador,
-                mostrarCastillo: true
+                mostrarCastillo: true,
+                territorio: null
               });
+            }
+          }
+
+          // Si el jugador está asediando un castillo sin jugador defensor,
+          // mostrarle directamente el modal para comprobar si está vacío.
+          const territorioNPC = Object.values(room.estadoTerritorios)
+            .find(t => t.asediador === jugador.casa &&
+              !Object.values(room.estadoJugadores)
+                .some(j => j.casa === t.propietario));
+          if (territorioNPC) {
+            const sid = room.playerSockets[nombre];
+            if (sid) {
+              io.to(sid).emit('abrir-modal-castillo-vacio', { territorio: territorioNPC.nombre });
             }
           }
         }
@@ -3318,7 +3332,8 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
           io.to(sid).emit('abrir-modal-perdidas-asedio', {
             jugador: nombreDef,
             datosJugador: datosDef,
-            mostrarCastillo: true
+            mostrarCastillo: true,
+            territorio
           });
         }
       }
@@ -3356,7 +3371,8 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
         io.to(sid).emit('abrir-modal-perdidas-asedio', {
           jugador: nombreJ,
           datosJugador: datosJ,
-          mostrarCastillo: false
+          mostrarCastillo: false,
+          territorio: null
         });
       }
     }
@@ -3390,18 +3406,30 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
     });
   });
 
-  socket.on('asedio-castillo-vacio', ({ partida, nombre }) => {
+  socket.on('asedio-castillo-vacio', ({ partida, nombre, territorio }) => {
     const room = rooms[partida];
     if (!room) return;
+
     const jugador = room.estadoJugadores[nombre];
     if (!jugador) return;
     const casaJugador = jugador.casa;
-    for (const terr of Object.values(room.estadoTerritorios)) {
-      if (terr.propietario === casaJugador && terr.asediador) {
+
+    if (territorio) {
+      const terr = room.estadoTerritorios[territorio];
+      if (terr && terr.asediador && (terr.asediador === casaJugador || terr.propietario === casaJugador)) {
         terr.propietario = terr.asediador;
         terr.asediador = null;
       }
+    } else {
+      for (const terr of Object.values(room.estadoTerritorios)) {
+        if (terr.asediador === casaJugador &&
+            !Object.values(room.estadoJugadores).some(j => j.casa === terr.propietario)) {
+          terr.propietario = casaJugador;
+          terr.asediador = null;
+        }
+      }
     }
+
     io.to(partida).emit('actualizar-estado-juego', {
       npcBuilder: room.npcBuilder,
       territorios: room.estadoTerritorios,
