@@ -16,7 +16,7 @@ app.use(cors()); // Permitimos cualquier origen (útil en desarrollo)
 // estáticos. Enviamos una cabecera estricta que evita almacenamiento en los
 // distintos navegadores y proxies.
 app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Cache-Control', 'public, max-age=600');
   next();
 });
 
