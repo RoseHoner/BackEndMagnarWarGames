@@ -37,11 +37,20 @@ app.use((req, res, next) => {
    ));
  });
 
- app.get('/juego/:partida', (req, res) => {
+app.get('/juego/:partida', (req, res) => {
   res.sendFile(path.join(
     frontPath,     // ../Frontend
     'html',        // si tu juego está en Frontend/html/
     'juego.html'
+  ));
+});
+
+// Ruta para el modo "Mano del Rey"
+app.get('/manodelrey/:partida', (req, res) => {
+  res.sendFile(path.join(
+    frontPath,
+    'html',
+    'Manodelrey.html'
   ));
 });
 
@@ -73,6 +82,26 @@ if (process.env.DATABASE_URL) {
 
 // Diccionario donde guardaremos todas las partidas creadas
 const rooms = {};
+
+// Programa la eliminación de una partida después de 20 minutos sin jugadores
+function programarEliminacion(partidaId) {
+  const room = rooms[partidaId];
+  if (!room) return;
+  if (room.deleteTimer) clearTimeout(room.deleteTimer);
+  room.deleteTimer = setTimeout(async () => {
+    const sinConectados = !room.playerSockets ||
+      Object.keys(room.playerSockets).length === 0;
+    if (sinConectados) {
+      try {
+        await db.query('DELETE FROM `Partidas` WHERE `nombre` = ?', [partidaId]);
+      } catch (err) {
+        console.error('Error eliminando partida', partidaId, err);
+      }
+      delete rooms[partidaId];
+      console.log(`Partida '${partidaId}' eliminada por inactividad.`);
+    }
+  }, 20 * 60 * 1000); // 20 minutos
+}
 
 function iniciarConstruccionNPC(room, partida) {
   if (!room.players || room.players.length === 0) return;
@@ -223,15 +252,16 @@ function revisarYEmitirRoboMoral(socket, room, nombre) {
 
 
 
+// No otorgar barcos iniciales por defecto a ninguna casa
 const BARCOS_INICIALES = {
-  Greyjoy: 4,
-  Stark: 2,
-  Arryn: 1,
-  Targaryen: 2,
-  Baratheon: 2,
-  Martell: 1,
-  Tyrell: 2,
-  Lannister: 1,
+  Greyjoy: 0,
+  Stark: 0,
+  Arryn: 0,
+  Targaryen: 0,
+  Baratheon: 0,
+  Martell: 0,
+  Tyrell: 0,
+  Lannister: 0,
   Tully: 0
 };
 
@@ -279,6 +309,9 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   dobleImpuestosUsado: false,
   levasStarkUsadas: false,
   refuerzoTullyUsadoEsteTurno: false,
+  ejercitoInicialListo: false,
+  edificiosInicialesListos: false,
+  oroInicialListo: false,
 
 
 };
@@ -293,8 +326,19 @@ io.on('connection', (socket) => {
   console.log(`🔌 Connect: ${socket.id}`);
 
   // Permitir al cliente verificar si un ID de sala ya existe
-  socket.on('verificar-partida', (partidaId, callback) => {
-    const exists = !!rooms[partidaId];
+  socket.on('verificar-partida', async (partidaId, callback) => {
+    let exists = !!rooms[partidaId];
+    if (!exists) {
+      try {
+        const [rows] = await db.query(
+          'SELECT nombre FROM `Partidas` WHERE `nombre` = ? LIMIT 1',
+          [partidaId]
+        );
+        if (rows.length > 0) exists = true;
+      } catch (err) {
+        console.error('Error consultando partida en BD:', err);
+      }
+    }
     callback({ exists });
   });
 
@@ -1712,7 +1756,9 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     casas: {},
     playerSockets: {},
     host: nombre,
-    npcBuilder: null
+    npcBuilder: null,
+    territorioPersonalizado: false,
+    modoMano: false
   };
   console.log(`[Lobby] Partida '${partida}' creada por ${nombre}.`);
 
@@ -1739,8 +1785,10 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
         casas: {},
         playerSockets: {},
         host: nombre,
-        npcBuilder: null
-      };
+        npcBuilder: null,
+        territorioPersonalizado: false,
+        modoMano: false
+        };
     }
 
     const room = rooms[partida];
@@ -1754,13 +1802,27 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     // Le mandamos al jugador el estado inicial del lobby
     socket.emit('casas-actualizadas', room.casas);
     socket.emit('jugadores-actualizados', room.players);
+    socket.emit('config-territorios-actualizada', room.territorioPersonalizado);
+    socket.emit('config-mano-actualizada', room.modoMano);
 
     // Avisamos a todos los jugadores del lobby del nuevo jugador
     io.to(partida).emit('jugadores-actualizados', room.players);
 
-  
     // Avisar a todos quién es el host
-   io.to(partida).emit('host-info', room.host);
+    io.to(partida).emit('host-info', room.host);
+    io.to(partida).emit('config-territorios-actualizada', room.territorioPersonalizado);
+    io.to(partida).emit('config-mano-actualizada', room.modoMano);
+
+    // Si la partida ya empezó, redirigir al jugador inmediatamente
+    if (room.started) {
+      socket.emit('juego-iniciado');
+    }
+
+    // Cancelar temporizador de eliminación si existía
+    if (room.deleteTimer) {
+      clearTimeout(room.deleteTimer);
+      room.deleteTimer = null;
+    }
   });
 
   // Cuando un jugador elige una casa
@@ -1798,6 +1860,90 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     }
   });
 
+  // Devuelve jugadores desconectados y su casa
+  socket.on('obtener-desconectados', ({ partida }, callback) => {
+    const room = rooms[partida];
+    if (!room || typeof callback !== 'function') {
+      if (typeof callback === 'function') callback({});
+      return;
+    }
+    const info = {};
+    room.players.forEach(nombre => {
+      if (!room.playerSockets[nombre]) {
+        info[nombre] = room.casas[nombre];
+      }
+    });
+    callback(info);
+  });
+
+  // Guarda el estado inicial de un jugador en el modo Mano del Rey
+  socket.on('mano-guardar-estado', ({ partida, nombre, unidades, edificios, oro }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!jugador) return;
+
+    if (typeof oro === 'number') {
+      jugador.oro = oro;
+      jugador.oroInicialListo = true;
+    }
+
+    if (unidades && typeof unidades === 'object') {
+      for (const [k, v] of Object.entries(unidades)) {
+        if (typeof v === 'number') {
+          jugador[k] = v;
+        }
+      }
+      jugador.ejercitoInicialListo = true;
+    }
+
+    if (edificios && typeof edificios === 'object') {
+      jugador.edificiosIniciales = edificios;
+      jugador.edificiosInicialesListos = true;
+    }
+  });
+
+  // Devuelve el estado guardado de un jugador para el modo Mano del Rey
+  socket.on('mano-obtener-estado', ({ partida, nombre }, callback) => {
+    const room = rooms[partida];
+    if (!room || typeof callback !== 'function') {
+      if (typeof callback === 'function') callback(null);
+      return;
+    }
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!jugador) {
+      callback(null);
+      return;
+    }
+    callback({
+      oro: jugador.oro,
+      unidades: Object.fromEntries(
+        Object.entries(jugador).filter(([k, v]) => typeof v === 'number' && k !== 'oro')
+      ),
+      edificios: jugador.edificiosIniciales || {},
+      ejercitoListo: jugador.ejercitoInicialListo || false,
+      edificiosListos: jugador.edificiosInicialesListos || false,
+      oroListo: jugador.oroInicialListo || false
+    });
+  });
+
+  // Host cambia el modo de territorios
+  socket.on('actualizar-config-territorios', ({ partida, nombre, personalizado }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    if (room.host !== nombre) return;
+    room.territorioPersonalizado = !!personalizado;
+    io.to(partida).emit('config-territorios-actualizada', room.territorioPersonalizado);
+  });
+
+  socket.on('actualizar-config-mano', ({ partida, nombre, mano }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    if (room.host !== nombre) return;
+    room.modoMano = !!mano;
+    io.to(partida).emit('config-mano-actualizada', room.modoMano);
+  });
+
   
   
 
@@ -1808,6 +1954,11 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
 
 
     room.started = true;
+
+    if (room.deleteTimer) {
+      clearTimeout(room.deleteTimer);
+      room.deleteTimer = null;
+    }
   
     // Inicializamos estado de juego
     room.estadoTerritorios = inicializarEstadoTerritorios();
@@ -1832,6 +1983,7 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
    );
 
     console.log(`[Juego] Juego iniciado en ${partida}`);
+    io.to(partida).emit('config-mano-actualizada', room.modoMano);
     io.to(partida).emit('juego-iniciado', { ok: true });
   });
 
@@ -1841,17 +1993,468 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     if (room && room.players.includes(nombre)) {
       socket.join(partida);
       if (!room.playerSockets) room.playerSockets = {};
-room.playerSockets[nombre] = socket.id;
+      room.playerSockets[nombre] = socket.id;
+
+      if (room.deleteTimer) {
+        clearTimeout(room.deleteTimer);
+        room.deleteTimer = null;
+      }
 
       console.log(`[Juego] ${nombre} se conectó a la sala de ${partida}`);
       socket.emit('actualizar-estado-juego', {
-    npcBuilder: room.npcBuilder,
+        npcBuilder: room.npcBuilder,
         territorios: room.estadoTerritorios,
         jugadores: room.estadoJugadores,
         turno: room.turnoActual,
         accion: room.accionActual,
         fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
       });
+    }
+  });
+
+  // === Modo Mano del Rey ===
+  socket.on('unirse-sala-mano', ({ partida, nombre }) => {
+    const room = rooms[partida];
+    if (!room || !room.players.includes(nombre)) return;
+    socket.join(partida);
+    if (!room.playerSockets) room.playerSockets = {};
+    room.playerSockets[nombre] = socket.id;
+
+    if (room.deleteTimer) {
+      clearTimeout(room.deleteTimer);
+      room.deleteTimer = null;
+    }
+
+    room.turnoManoActual = room.turnoManoActual || 1;
+    room.jugadoresTurnoListo = room.jugadoresTurnoListo || [];
+
+    const pendientes = room.players
+      .filter(p => !room.jugadoresTurnoListo.includes(p))
+      .map(p => room.casas[p]);
+
+    socket.emit('mano-turno-estado', {
+      turno: room.turnoManoActual,
+      restantes: pendientes
+    });
+
+    // Enviar también el estado actual del juego (territorios y jugadores)
+    socket.emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual,
+      fase: room.accionActual === 4 ? 'Neutral' : 'Accion'
+    });
+  });
+
+  socket.on('mano-confirmar-turno', ({ partida, nombre }) => {
+    const room = rooms[partida];
+    if (!room || !room.players.includes(nombre)) return;
+
+    room.turnoManoActual = room.turnoManoActual || 1;
+    room.jugadoresTurnoListo = room.jugadoresTurnoListo || [];
+
+    if (!room.jugadoresTurnoListo.includes(nombre)) {
+      room.jugadoresTurnoListo.push(nombre);
+    }
+
+    const pendientes = room.players
+      .filter(p => !room.jugadoresTurnoListo.includes(p))
+      .map(p => room.casas[p]);
+
+    if (pendientes.length === 0) {
+      room.turnoManoActual += 1;
+      room.jugadoresTurnoListo = [];
+      io.to(partida).emit('mano-turno-avanzado', {
+        turno: room.turnoManoActual
+      });
+    } else {
+      const sid = room.playerSockets[nombre];
+      if (sid) {
+        io.to(sid).emit('mano-turno-espera', {
+          casa: room.casas[nombre],
+          restantes: pendientes
+        });
+      }
+    }
+  });
+
+  socket.on('mano-editar-oro', ({ partida, nombre, oro }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!jugador) return;
+    jugador.oro = typeof oro === 'number' ? oro : jugador.oro;
+    io.to(partida).emit('mano-oro-actualizado', {
+      jugador: nombre,
+      casa: room.casas[nombre],
+      oro: jugador.oro
+    });
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('mano-enviar-oro', ({ partida, nombre, destino, cantidad }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const emisor = room.estadoJugadores?.[nombre];
+    const receptor = room.estadoJugadores?.[destino];
+    if (!emisor || !receptor) return;
+    const cant = parseInt(cantidad, 10) || 0;
+    if (cant <= 0 || emisor.oro < cant) return;
+    emisor.oro -= cant;
+    receptor.oro = (receptor.oro || 0) + cant;
+    io.to(partida).emit('mano-oro-enviado', {
+      deCasa: room.casas[nombre],
+      aCasa: room.casas[destino],
+      cantidad: cant
+    });
+    io.to(partida).emit('mano-oro-actualizado', { jugador: nombre, casa: room.casas[nombre], oro: emisor.oro });
+    io.to(partida).emit('mano-oro-actualizado', { jugador: destino, casa: room.casas[destino], oro: receptor.oro });
+    const sid = room.playerSockets[destino];
+    if (sid) io.to(sid).emit('mano-recibir-oro', { deCasa: room.casas[nombre], cantidad: cant });
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('mano-editar-unidades', ({ partida, nombre, unidades }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!jugador) return;
+    if (unidades && typeof unidades === 'object') {
+      for (const [k, v] of Object.entries(unidades)) {
+        if (typeof v === 'number') jugador[k] = v;
+      }
+    }
+    io.to(partida).emit('mano-unidades-actualizadas', {
+      jugador: nombre,
+      casa: room.casas[nombre],
+      unidades: Object.fromEntries(
+        Object.entries(jugador).filter(([k, v]) => typeof v === 'number' && k !== 'oro')
+      )
+    });
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('mano-registrar-bajas', ({ partida, nombre, bajas }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!jugador) return;
+    if (bajas && typeof bajas === 'object') {
+      for (const [k, v] of Object.entries(bajas)) {
+        const val = parseInt(v, 10) || 0;
+        if (typeof jugador[k] === 'number') {
+          jugador[k] = Math.max(0, jugador[k] - val);
+        }
+      }
+    }
+    const unidadesAct = Object.fromEntries(
+      Object.entries(jugador).filter(([key, val]) => typeof val === 'number' && key !== 'oro')
+    );
+    io.to(partida).emit('mano-bajas-registradas', {
+      jugador: nombre,
+      casa: room.casas[nombre],
+      bajas,
+      unidades: unidadesAct
+    });
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('mano-reclutar-tropas', ({ partida, nombre, reclutas }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!jugador) return;
+
+    const COSTOS = {
+      tropas: 4,
+      mercenarios: 8,
+      dothraki: 15,
+      companadorada: 15,
+      inmaculados: 15
+    };
+
+    let total = 0;
+    if (reclutas && typeof reclutas === 'object') {
+      for (const [k, v] of Object.entries(reclutas)) {
+        const val = parseInt(v, 10) || 0;
+        if (val > 0) total += val * (COSTOS[k] || 0);
+      }
+    }
+
+    if (jugador.oro < total) {
+      const sid = room.playerSockets[nombre];
+      if (sid) io.to(sid).emit('error-accion', 'Oro insuficiente para reclutar.');
+      return;
+    }
+
+    jugador.oro -= total;
+    if (reclutas && typeof reclutas === 'object') {
+      for (const [k, v] of Object.entries(reclutas)) {
+        const val = parseInt(v, 10) || 0;
+        if (val > 0) jugador[k] = (jugador[k] || 0) + val;
+      }
+    }
+
+    const unidadesAct = Object.fromEntries(
+      Object.entries(jugador).filter(([key, val]) => typeof val === 'number' && key !== 'oro')
+    );
+
+    io.to(partida).emit('mano-tropas-reclutadas', {
+      jugador: nombre,
+      casa: room.casas[nombre],
+      reclutas,
+      unidades: unidadesAct,
+      oro: jugador.oro
+    });
+
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('mano-editar-edificios', ({ partida, nombre, edificios }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!jugador) return;
+    if (edificios && typeof edificios === 'object') {
+      jugador.edificiosIniciales = edificios;
+    }
+    io.to(partida).emit('mano-edificios-actualizados', {
+      jugador: nombre,
+      casa: room.casas[nombre],
+      edificios: jugador.edificiosIniciales || {}
+    });
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('solicitar-cambio-turno', ({ partida, nombre, turno }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const nuevoTurno = parseInt(turno, 10) || room.turnoActual;
+    const pendientes = room.players.filter(p => p !== nombre);
+
+    // Si no hay más jugadores en la partida, confirma inmediatamente el cambio
+    if (pendientes.length === 0) {
+      room.turnoActual = nuevoTurno;
+      room.turnoManoActual = nuevoTurno; // mantener sincronizado el turno de la Mano
+      io.to(partida).emit('cambio-turno-confirmado', { turno: room.turnoActual });
+      io.to(partida).emit('actualizar-estado-juego', {
+        npcBuilder: room.npcBuilder,
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+      return;
+    }
+
+    room.cambioTurno = {
+      solicitante: nombre,
+      turno: nuevoTurno,
+      pendientes
+    };
+    const pendientesCasas = pendientes.map(p => room.casas[p]);
+    const sidSolicitante = room.playerSockets[nombre];
+    if (sidSolicitante) {
+      io.to(sidSolicitante).emit('cambio-turno-esperando', { pendientes: pendientesCasas });
+    }
+    for (const p of pendientes) {
+      const sid = room.playerSockets[p];
+      if (sid) io.to(sid).emit('cambio-turno-peticion', { solicitanteCasa: room.casas[nombre], turno: nuevoTurno });
+    }
+  });
+
+  socket.on('responder-cambio-turno', ({ partida, nombre, aceptar }) => {
+    const room = rooms[partida];
+    if (!room || !room.cambioTurno) return;
+    if (!room.cambioTurno.pendientes.includes(nombre)) return;
+
+    if (!aceptar) {
+      io.to(partida).emit('cambio-turno-cancelado');
+      room.cambioTurno = null;
+      return;
+    }
+
+    room.cambioTurno.pendientes = room.cambioTurno.pendientes.filter(p => p !== nombre);
+    const pendientesCasas = room.cambioTurno.pendientes.map(p => room.casas[p]);
+
+    if (room.cambioTurno.pendientes.length === 0) {
+      room.turnoActual = room.cambioTurno.turno;
+      room.turnoManoActual = room.cambioTurno.turno; // sincronizar ambos contadores
+      io.to(partida).emit('cambio-turno-confirmado', { turno: room.turnoActual });
+      io.to(partida).emit('actualizar-estado-juego', {
+        npcBuilder: room.npcBuilder,
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+      room.cambioTurno = null;
+    } else {
+      const notificar = room.players.filter(p => !room.cambioTurno.pendientes.includes(p));
+      for (const p of notificar) {
+        const sid = room.playerSockets[p];
+        if (sid) io.to(sid).emit('cambio-turno-esperando', { pendientes: pendientesCasas });
+      }
+    }
+  });
+
+  socket.on('solicitar-editar-territorios', ({ partida, nombre, territorios }) => {
+    const room = rooms[partida];
+    if (!room || !Array.isArray(territorios)) return;
+    const pendientes = room.players.filter(p => p !== nombre);
+    const casa = room.casas[nombre];
+
+    if (pendientes.length === 0) {
+      territorios.forEach(t => {
+        if (room.estadoTerritorios[t]) room.estadoTerritorios[t].propietario = casa;
+      });
+      io.to(partida).emit('editar-territorios-confirmado', { territorios, casa });
+      io.to(partida).emit('actualizar-estado-juego', {
+        npcBuilder: room.npcBuilder,
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+      return;
+    }
+
+    room.cambioTerritorios = { solicitante: nombre, territorios, pendientes };
+    const pendientesCasas = pendientes.map(p => room.casas[p]);
+    const nuevos = territorios.filter(t => room.estadoTerritorios[t]?.propietario !== casa);
+    const sidSolicitante = room.playerSockets[nombre];
+    if (sidSolicitante) {
+      io.to(sidSolicitante).emit('editar-territorios-esperando', { pendientes: pendientesCasas });
+    }
+    for (const p of pendientes) {
+      const sid = room.playerSockets[p];
+      if (sid) io.to(sid).emit('editar-territorios-peticion', { solicitanteCasa: casa, territorios: nuevos });
+    }
+  });
+
+  socket.on('responder-editar-territorios', ({ partida, nombre, aceptar }) => {
+    const room = rooms[partida];
+    if (!room || !room.cambioTerritorios) return;
+    if (!room.cambioTerritorios.pendientes.includes(nombre)) return;
+
+    if (!aceptar) {
+      io.to(partida).emit('editar-territorios-cancelado');
+      room.cambioTerritorios = null;
+      return;
+    }
+
+    room.cambioTerritorios.pendientes = room.cambioTerritorios.pendientes.filter(p => p !== nombre);
+    const pendientesCasas = room.cambioTerritorios.pendientes.map(p => room.casas[p]);
+
+    if (room.cambioTerritorios.pendientes.length === 0) {
+      const { solicitante, territorios } = room.cambioTerritorios;
+      const casaSolicitante = room.casas[solicitante];
+      territorios.forEach(t => {
+        if (room.estadoTerritorios[t]) room.estadoTerritorios[t].propietario = casaSolicitante;
+      });
+      io.to(partida).emit('editar-territorios-confirmado', { territorios, casa: casaSolicitante });
+      io.to(partida).emit('actualizar-estado-juego', {
+        npcBuilder: room.npcBuilder,
+        territorios: room.estadoTerritorios,
+        jugadores: room.estadoJugadores,
+        turno: room.turnoActual,
+        accion: room.accionActual
+      });
+      room.cambioTerritorios = null;
+    } else {
+      const notificar = room.players.filter(p => !room.cambioTerritorios.pendientes.includes(p));
+      for (const p of notificar) {
+        const sid = room.playerSockets[p];
+        if (sid) io.to(sid).emit('editar-territorios-esperando', { pendientes: pendientesCasas });
+      }
+    }
+  });
+
+  socket.on('solicitar-fin-partida', ({ partida, nombre }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const pendientes = room.players.filter(p => p !== nombre);
+    if (pendientes.length === 0) {
+      io.to(partida).emit('fin-partida-confirmado');
+      return;
+    }
+    room.finPartida = { solicitante: nombre, pendientes, aceptados: [nombre] };
+    const sidSolicitante = room.playerSockets[nombre];
+    if (sidSolicitante) {
+      io.to(sidSolicitante).emit('fin-partida-esperando', {
+        aceptados: 1,
+        total: room.players.length
+      });
+    }
+    for (const p of pendientes) {
+      const sid = room.playerSockets[p];
+      if (sid) io.to(sid).emit('fin-partida-peticion', { solicitanteCasa: room.casas[nombre], total: room.players.length });
+    }
+  });
+
+  socket.on('responder-fin-partida', ({ partida, nombre, aceptar }) => {
+    const room = rooms[partida];
+    if (!room || !room.finPartida) return;
+    if (!room.finPartida.pendientes.includes(nombre)) return;
+
+    if (!aceptar) {
+      io.to(partida).emit('fin-partida-cancelado');
+      room.finPartida = null;
+      return;
+    }
+
+    room.finPartida.pendientes = room.finPartida.pendientes.filter(p => p !== nombre);
+    room.finPartida.aceptados.push(nombre);
+
+    const aceptados = room.finPartida.aceptados.length;
+    const total = room.players.length;
+
+    if (room.finPartida.pendientes.length === 0) {
+      io.to(partida).emit('fin-partida-confirmado');
+      room.finPartida = null;
+    } else {
+      const sidSolicitante = room.playerSockets[room.finPartida.solicitante];
+      if (sidSolicitante) {
+        io.to(sidSolicitante).emit('fin-partida-esperando', { aceptados, total });
+      }
     }
   });
 
@@ -3493,6 +4096,10 @@ socket.on('disconnect', async (reason) => {
       } else {
         io.to(partidaId).emit('host-desconectado');
         console.log(`[Juego] Host desconectado en '${partidaId}', la partida continúa.`);
+        delete room.playerSockets[nombreSaliente];
+        if (Object.keys(room.playerSockets).length === 0) {
+          programarEliminacion(partidaId);
+        }
       }
     } else {
       // Jugador normal
@@ -3508,6 +4115,12 @@ socket.on('disconnect', async (reason) => {
         // Durante el juego: solo borramos el socket, para permitir reconexión
         delete room.playerSockets[nombreSaliente];
         console.log(`[Juego] Jugador '${nombreSaliente}' perdió conexión, esperando reconexión.`);
+      }
+
+      if (!room.started && room.players.length === 0) {
+        programarEliminacion(partidaId);
+      } else if (room.started && Object.keys(room.playerSockets).length === 0) {
+        programarEliminacion(partidaId);
       }
     }
 
