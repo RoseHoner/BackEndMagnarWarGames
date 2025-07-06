@@ -6,11 +6,21 @@ const { Server } = require('socket.io'); // Para comunicación en tiempo real
 const cors = require('cors'); // Permitir conexiones entre dominios diferentes (frontend y backend)
 require('dotenv').config();              // <- carga .env
 const mysql = require('mysql2/promise'); // <- driver MySQL
+const fs = require('fs');
 
 
 // Creamos la aplicación Express
 const app = express();
 app.use(cors()); // Permitimos cualquier origen (útil en desarrollo)
+app.use(express.json());
+
+const reglasPath = path.join(__dirname, '..', 'Frontend', 'pdf', 'reglamento', 'reglas generales.txt');
+let reglasTexto = '';
+try {
+  reglasTexto = fs.readFileSync(reglasPath, 'utf8');
+} catch (err) {
+  console.error('Error cargando reglamento', err);
+}
 
 // Desactivar cache para que siempre se cargue la última versión de los archivos
 // estáticos. Enviamos una cabecera estricta que evita almacenamiento en los
@@ -52,6 +62,58 @@ app.get('/manodelrey/:partida', (req, res) => {
     'html',
     'Manodelrey.html'
   ));
+});
+
+function obtenerFragmento(pregunta) {
+  const palabras = pregunta.toLowerCase().split(/\s+/);
+  const lineas = reglasTexto.split(/\r?\n/);
+  let mejorLinea = '';
+  let mejorPuntuacion = 0;
+  lineas.forEach((l) => {
+    let puntuacion = 0;
+    palabras.forEach((p) => {
+      if (l.toLowerCase().includes(p)) puntuacion++;
+    });
+    if (puntuacion > mejorPuntuacion) {
+      mejorPuntuacion = puntuacion;
+      mejorLinea = l;
+    }
+  });
+  return mejorLinea;
+}
+
+async function consultarOpenAI(pregunta, fragmento) {
+  if (!process.env.OPENAI_API_KEY) return 'Clave API no configurada.';
+  const body = {
+    model: 'gpt-3.5-turbo',
+    messages: [
+      { role: 'system', content: `Responde usando el reglamento del juego. Fragmento: "${fragmento}"` },
+      { role: 'user', content: pregunta }
+    ]
+  };
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() || 'Sin respuesta';
+}
+
+app.post('/api/chat', async (req, res) => {
+  const pregunta = req.body.pregunta;
+  if (!pregunta) return res.status(400).json({ error: 'Pregunta requerida' });
+  const fragmento = obtenerFragmento(pregunta);
+  try {
+    const respuesta = await consultarOpenAI(pregunta, fragmento);
+    res.json({ respuesta });
+  } catch (err) {
+    console.error('Error consultando OpenAI', err);
+    res.status(500).json({ error: 'Error generando respuesta' });
+  }
 });
 
 // Creamos el servidor HTTP y lo conectamos con socket.io
@@ -197,38 +259,35 @@ const TERRITORIOS_BASE = [
 const ORO_INICIAL_POR_DEFECTO = 0;
 const TROPAS_INICIALES_POR_DEFECTO = 0;
 
+const LIMITE_TROPAS_CASA = {
+  Stark: 7,
+  Lannister: 9,
+  Targaryen: 6,
+  Baratheon: 8,
+  Tully: 7,
+  Martell: 5,
+  Tyrell: 12,
+  Arryn: 7,
+  Greyjoy: 7
+};
+
 
 
 
 
 // Función que genera el estado inicial de los territorios al comenzar la partida
 function inicializarEstadoTerritorios() {
-    const CAPITALES = [
-        "Invernalia", "Aguasdulces", "Nido de Águilas", "Roca Casterly",
-        "Altojardín", "Desembarco del Rey", "Bastión de Tormentas", "Lanza del Sol", "Pyke"
-    ];
-
     const estadoTerritorios = {};
     TERRITORIOS_BASE.forEach(t => {
         estadoTerritorios[t.nombre] = {
-    nombre: t.nombre,
-    propietario: t.propietarioInicial,
-    propietarioInicial: t.propietarioInicial,
-    oroBase: t.oro,
-    asediador: null,
-    edificios: (() => {
-      if (CAPITALES.includes(t.nombre)) {
-        if (t.nombre === "Lanza del Sol" || t.nombre === "Pyke") {
-            return ["Castillo", "Puerto"];
-        }
-        return ["Castillo"];
-    }
-    
-        return [];
-    })(),
-    tropas: {}
-};
-
+            nombre: t.nombre,
+            propietario: t.propietarioInicial,
+            propietarioInicial: t.propietarioInicial,
+            oroBase: t.oro,
+            asediador: null,
+            edificios: [],
+            tropas: {}
+        };
     });
     return estadoTerritorios;
 }
@@ -272,13 +331,14 @@ function inicializarEstadoJugadores(players, casasAsignadas) {
   const estadoJugadores = {};
   players.forEach(nombre => {
     estadoJugadores[nombre] = {
-  sacerdotes: casasAsignadas[nombre] === "Baratheon" ? 1 : 0,
-  dragones: casasAsignadas[nombre] === "Targaryen" ? 1 : 0,
+  // La Casa Baratheon ya no inicia con un Sacerdote de Luz por defecto
+  sacerdotes: 0,
+  dragones: 0,
   casa: casasAsignadas[nombre] || 'Desconocida',
   tropas: TROPAS_INICIALES_POR_DEFECTO, // soldado
   mercenarios: 0,
   elite: 0,
-  jinete: casasAsignadas[nombre] === "Targaryen" ? 1 : 0,
+  jinete: 0,
   huevos: 0,
   casadoCon: null,
   caballero: 0,
@@ -1915,12 +1975,20 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
       callback(null);
       return;
     }
+    const edificiosContados = {};
+    for (const t of Object.values(room.estadoTerritorios)) {
+      if (t.propietario === jugador.casa && Array.isArray(t.edificios)) {
+        t.edificios.forEach(e => {
+          edificiosContados[e] = (edificiosContados[e] || 0) + 1;
+        });
+      }
+    }
     callback({
       oro: jugador.oro,
       unidades: Object.fromEntries(
         Object.entries(jugador).filter(([k, v]) => typeof v === 'number' && k !== 'oro')
       ),
-      edificios: jugador.edificiosIniciales || {},
+      edificios: edificiosContados,
       ejercitoListo: jugador.ejercitoInicialListo || false,
       edificiosListos: jugador.edificiosInicialesListos || false,
       oroListo: jugador.oroInicialListo || false
@@ -2191,12 +2259,17 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
     const jugador = room.estadoJugadores?.[nombre];
     if (!jugador) return;
 
+    const aserraderos = Object.values(room.estadoTerritorios)
+      .filter(t => t.propietario === jugador.casa && Array.isArray(t.edificios))
+      .reduce((acc, t) => acc + t.edificios.filter(e => e === 'Aserradero').length, 0);
+    const costoBarco = Math.max(0, 20 - aserraderos * 5);
     const COSTOS = {
       tropas: 4,
       mercenarios: 8,
       dothraki: 15,
       companadorada: 15,
-      inmaculados: 15
+      inmaculados: 15,
+      barcos: costoBarco
     };
 
     let total = 0;
@@ -2211,6 +2284,17 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
       const sid = room.playerSockets[nombre];
       if (sid) io.to(sid).emit('error-accion', 'Oro insuficiente para reclutar.');
       return;
+    }
+
+    const limite = LIMITE_TROPAS_CASA[jugador.casa];
+    if (typeof limite === 'number') {
+      const reclutaTropas = parseInt(reclutas?.tropas || 0, 10) || 0;
+      const disponible = limite - (jugador.tropas || 0);
+      if (reclutaTropas > disponible) {
+        const sid = room.playerSockets[nombre];
+        if (sid) io.to(sid).emit('error-accion', 'Límite de tropas alcanzado.');
+        return;
+      }
     }
 
     jugador.oro -= total;
@@ -2406,6 +2490,27 @@ socket.on('crear-partida', async ({ nombre, partida, clave }) => {
         if (sid) io.to(sid).emit('editar-territorios-esperando', { pendientes: pendientesCasas });
       }
     }
+  });
+
+  // Permite a la Mano del Rey asignarse territorios conquistados de forma
+  // inmediata sin requerir confirmación del resto de jugadores
+  socket.on('mano-obtener-territorios', ({ partida, nombre, territorios }) => {
+    const room = rooms[partida];
+    if (!room || !Array.isArray(territorios)) return;
+    const casa = room.casas[nombre];
+    territorios.forEach(t => {
+      if (room.estadoTerritorios[t]) {
+        room.estadoTerritorios[t].propietario = casa;
+      }
+    });
+    io.to(partida).emit('editar-territorios-confirmado', { territorios, casa });
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
   });
 
   socket.on('solicitar-fin-partida', ({ partida, nombre }) => {
@@ -4062,6 +4167,42 @@ socket.on('recompensa-asedio', ({ partida, nombre, tipo }) => {
     if (!room || room.npcBuilder !== nombre) return;
     room.npcBuilder = null;
     io.to(partida).emit('npc-construccion-finalizada');
+  });
+
+  // ───── Mano del Rey: Gestionar edificios por territorio ─────
+  socket.on('mano-agregar-edificio', ({ partida, nombre, territorio, edificio }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const t = room.estadoTerritorios[territorio];
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!t || !jugador || t.propietario !== jugador.casa) return;
+    if (!Array.isArray(t.edificios)) t.edificios = [];
+    t.edificios.push(edificio);
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
+  });
+
+  socket.on('mano-quitar-edificio', ({ partida, nombre, territorio, edificio }) => {
+    const room = rooms[partida];
+    if (!room) return;
+    const t = room.estadoTerritorios[territorio];
+    const jugador = room.estadoJugadores?.[nombre];
+    if (!t || !jugador || t.propietario !== jugador.casa) return;
+    if (!Array.isArray(t.edificios)) t.edificios = [];
+    const idx = t.edificios.indexOf(edificio);
+    if (idx !== -1) t.edificios.splice(idx, 1);
+    io.to(partida).emit('actualizar-estado-juego', {
+      npcBuilder: room.npcBuilder,
+      territorios: room.estadoTerritorios,
+      jugadores: room.estadoJugadores,
+      turno: room.turnoActual,
+      accion: room.accionActual
+    });
   });
 
   
